@@ -6,9 +6,9 @@ import {
   Plus,
   Search,
   Calendar,
-  Target,
-  Hash,
-  Type,
+  Camera,
+  Pin,
+  Briefcase,
   MoreHorizontal,
   Layers,
   Clock,
@@ -56,31 +56,31 @@ const KANBAN_STATUSES: PostStatus[] = [
 ];
 
 const STATUS_CONFIG: Record<PostStatus, { title: string; dot: string; pill: string }> = {
-  IDEA: { title: 'Ideas', dot: 'bg-slate-400', pill: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
-  SELECTED: { title: 'Selected', dot: 'bg-blue-500', pill: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300' },
-  DRAFTED: { title: 'Drafted', dot: 'bg-amber-500', pill: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' },
-  IN_REVISION: { title: 'In Revision', dot: 'bg-orange-500', pill: 'bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300' },
-  APPROVED: { title: 'Approved', dot: 'bg-emerald-500', pill: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' },
-  SCHEDULED: { title: 'Scheduled', dot: 'bg-indigo-500', pill: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300' },
-  POSTED: { title: 'Published', dot: 'bg-emerald-500', pill: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' },
-  FAILED: { title: 'Failed', dot: 'bg-rose-500', pill: 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300' },
+  IDEA: { title: 'Ideas', dot: 'bg-muted-foreground/40', pill: 'badge-idea' },
+  SELECTED: { title: 'Selected', dot: 'bg-primary/50', pill: 'badge-selected' },
+  DRAFTED: { title: 'Drafted', dot: 'bg-primary/70', pill: 'badge-drafted' },
+  IN_REVISION: { title: 'In Revision', dot: 'bg-primary/80', pill: 'badge-in_revision' },
+  APPROVED: { title: 'Approved', dot: 'bg-blue-500', pill: 'badge-approved' },
+  SCHEDULED: { title: 'Scheduled', dot: 'bg-primary', pill: 'badge-scheduled' },
+  POSTED: { title: 'Published', dot: 'bg-emerald-500', pill: 'badge-posted' },
+  FAILED: { title: 'Failed', dot: 'bg-rose-500', pill: 'badge-failed' },
 };
 
 const PLATFORM_CONFIG: Record<Platform, { name: string; pill: string; icon: React.ReactNode }> = {
   INSTAGRAM: {
     name: 'Instagram',
-    pill: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
-    icon: <Target className="h-3 w-3" />,
+    pill: 'badge-instagram',
+    icon: <Camera className="h-3 w-3" />,
   },
   PINTEREST: {
     name: 'Pinterest',
-    pill: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800',
-    icon: <Hash className="h-3 w-3" />,
+    pill: 'badge-pinterest',
+    icon: <Pin className="h-3 w-3" />,
   },
   LINKEDIN: {
     name: 'LinkedIn',
-    pill: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
-    icon: <Type className="h-3 w-3" />,
+    pill: 'badge-linkedin',
+    icon: <Briefcase className="h-3 w-3" />,
   },
 };
 
@@ -137,12 +137,12 @@ function KanbanCard({ post, onClick }: KanbanCardProps) {
       </div>
 
       <div className="flex items-center flex-wrap gap-1.5">
-        <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0 h-4.5 font-medium flex items-center gap-1', PLATFORM_CONFIG[post.platform].pill)}>
+        <Badge variant="outline" className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0 h-4.5 flex items-center gap-1', PLATFORM_CONFIG[post.platform].pill)}>
           {PLATFORM_CONFIG[post.platform].icon}
           {PLATFORM_CONFIG[post.platform].name}
         </Badge>
 
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground bg-surface px-1.5 py-0.5 rounded border border-border/50">
+        <div className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground bg-surface px-1.5 py-0.5 rounded border border-border/50">
           <Layers className="h-3 w-3" />
           <span>{post.content?.slides?.length || 1}</span>
         </div>
@@ -151,7 +151,7 @@ function KanbanCard({ post, onClick }: KanbanCardProps) {
           <Badge
             variant="outline"
             className={cn(
-              'text-[10px] px-1.5 py-0 h-4.5 font-medium flex items-center gap-1',
+              'text-[10px] font-mono font-medium px-1.5 py-0 h-4.5 flex items-center gap-1',
               isOverdue
                 ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
                 : 'bg-surface text-muted-foreground border-border/60'

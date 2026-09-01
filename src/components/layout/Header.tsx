@@ -158,7 +158,7 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
         );
       case 'POST_SCHEDULED':
         return (
-          <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 shrink-0">
+          <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
             <CalendarIcon className="h-4 w-4" />
           </div>
         );
@@ -310,7 +310,7 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
                             <p className={cn('text-xs line-clamp-1', !item.read ? 'font-semibold text-foreground' : 'font-medium text-foreground/80')}>
                               {item.title}
                             </p>
-                            <span className="text-[10px] text-muted-foreground shrink-0 font-normal">
+                            <span className="text-[10px] font-mono text-muted-foreground shrink-0 font-normal">
                               {formatTimeAgo(item.createdAt)}
                             </span>
                           </div>

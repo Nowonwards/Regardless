@@ -24,6 +24,13 @@ import {
   Send,
   Bookmark,
   MoreHorizontal,
+  Flame,
+  Zap,
+  Target,
+  TrendingDown,
+  Camera,
+  Pin,
+  Briefcase,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -58,27 +65,27 @@ interface DraftPreviewProps {
   onDelete?: (postId: string) => void;
 }
 
-const PLATFORM_COLORS: Record<Platform, { bg: string; text: string; border: string }> = {
-  INSTAGRAM: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
-  PINTEREST: { bg: 'bg-red-50', text: 'bg-red-700', border: 'border-red-200' },
-  LINKEDIN: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+const PLATFORM_COLORS: Record<Platform, string> = {
+  INSTAGRAM: 'badge-instagram',
+  PINTEREST: 'badge-pinterest',
+  LINKEDIN: 'badge-linkedin',
 };
 
-const STATUS_CONFIG: Record<PostStatus, { label: string; color: string }> = {
-  IDEA: { label: 'Idea', color: 'bg-gray-100 text-gray-700' },
-  SELECTED: { label: 'Selected', color: 'bg-blue-100 text-blue-700' },
-  DRAFTED: { label: 'Drafted', color: 'bg-yellow-100 text-yellow-700' },
-  IN_REVISION: { label: 'In Revision', color: 'bg-orange-100 text-orange-700' },
-  APPROVED: { label: 'Approved', color: 'bg-green-100 text-green-700' },
-  SCHEDULED: { label: 'Scheduled', color: 'bg-purple-100 text-purple-700' },
-  POSTED: { label: 'Posted', color: 'bg-blue-100 text-blue-700' },
-  FAILED: { label: 'Failed', color: 'bg-red-100 text-red-700' },
+const STATUS_CONFIG: Record<PostStatus, { label: string; className: string }> = {
+  IDEA: { label: 'Idea', className: 'badge-idea' },
+  SELECTED: { label: 'Selected', className: 'badge-selected' },
+  DRAFTED: { label: 'Drafted', className: 'badge-drafted' },
+  IN_REVISION: { label: 'In Revision', className: 'badge-in_revision' },
+  APPROVED: { label: 'Approved', className: 'badge-approved' },
+  SCHEDULED: { label: 'Scheduled', className: 'badge-scheduled' },
+  POSTED: { label: 'Published', className: 'badge-posted' },
+  FAILED: { label: 'Failed', className: 'badge-failed' },
 };
 
 const PLATFORM_ICONS: Record<Platform, React.ReactNode> = {
-  INSTAGRAM: <span className="mr-1">📸</span>,
-  PINTEREST: <span className="mr-1">📌</span>,
-  LINKEDIN: <span className="mr-1">💼</span>,
+  INSTAGRAM: <Camera className="h-3 w-3 mr-1 inline" />,
+  PINTEREST: <Pin className="h-3 w-3 mr-1 inline" />,
+  LINKEDIN: <Briefcase className="h-3 w-3 mr-1 inline" />,
 };
 
 export function DraftPreview({
@@ -550,7 +557,7 @@ export function DraftPreview({
               variant="outline"
               onClick={() => handleGenerateImage(slides[activeSlide]?.id, undefined, false, 'ai')}
               disabled={generatingSlideId !== null}
-              className="text-xs gap-1.5 flex-1 border-purple-500/30 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+              className="text-xs gap-1.5 flex-1 border-primary/30 text-primary hover:bg-primary/10"
             >
               {generatingSlideId === slides[activeSlide]?.id ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -617,14 +624,14 @@ export function DraftPreview({
             <div className="flex-1 min-w-0">
               <div className="flex items-center flex-wrap gap-2 mb-2">
                 <CardTitle className="text-lg truncate">{post.title}</CardTitle>
-                <Badge variant="outline" className={statusConfig.color}>
+                <Badge variant="outline" className={cn('font-mono text-[10px] font-medium', STATUS_CONFIG[post.status].className)}>
                   {STATUS_CONFIG[post.status].label}
                 </Badge>
-                <Badge variant="secondary" className="text-xs capitalize">
+                <Badge variant="outline" className={cn('font-mono text-[10px] font-semibold uppercase tracking-wider', PLATFORM_COLORS[post.platform])}>
                   {PLATFORM_ICONS[post.platform]}
                   {post.platform}
                 </Badge>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="font-mono text-[10px] font-medium text-muted-foreground">
                   v{post.currentVersion}
                 </Badge>
               </div>
@@ -635,7 +642,7 @@ export function DraftPreview({
                     From: {post.ideaTitle}
                   </span>
                 )}
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1 font-mono text-[11px]">
                   <FileText className="h-3 w-3" />
                   {slides.length} slide{slides.length !== 1 ? 's' : ''}
                 </span>
@@ -644,13 +651,13 @@ export function DraftPreview({
                 </span>
               </div>
               {post.status === 'SCHEDULED' && scheduledDate ? (
-                <div className="mt-3 flex items-center justify-between p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300">
+                <div className="mt-3 flex items-center justify-between p-3 rounded-xl bg-primary/10 border border-primary/30 text-primary">
                   <div className="flex items-center gap-2 text-xs font-medium">
-                    <Calendar className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
-                    <span>Auto-publishing scheduled for <strong>{scheduledDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} at {scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong></span>
+                    <Calendar className="h-4 w-4 text-primary shrink-0" />
+                    <span>Auto-publishing scheduled for <strong className="font-mono">{scheduledDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} at {scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong></span>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <Button size="sm" variant="outline" onClick={() => setShowScheduleModal(true)} className="h-7 text-xs font-medium border-purple-500/40 hover:bg-purple-500/10">
+                    <Button size="sm" variant="outline" onClick={() => setShowScheduleModal(true)} className="h-7 text-xs font-medium border-primary/40 hover:bg-primary/10">
                       Change Time
                     </Button>
                     <Button size="sm" variant="ghost" onClick={handleUnscheduleClick} className="h-7 text-xs text-muted-foreground hover:text-destructive">
@@ -724,7 +731,7 @@ export function DraftPreview({
                       variant="outline"
                       onClick={() => handleGenerateImage(undefined, undefined, true, 'ai')}
                       disabled={generatingSlideId !== null}
-                      className="gap-1.5 text-xs border-purple-500/30 text-purple-400 hover:text-purple-300"
+                      className="gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10"
                     >
                       <Sparkles className="h-3.5 w-3.5" />
                       AI Graphics (Gemini)
@@ -737,7 +744,7 @@ export function DraftPreview({
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-4 mb-4">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">Slide {idx + 1}</span>
+                          <span className="text-xs text-muted-foreground font-mono">Slide {idx + 1}</span>
                           <Badge variant="outline" className="text-xs capitalize">{slide.type}</Badge>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -760,7 +767,7 @@ export function DraftPreview({
                             size="sm"
                             onClick={() => handleGenerateImage(slide.id, slide.imagePrompt, false, 'ai')}
                             disabled={generatingSlideId !== null}
-                            className="text-xs gap-1 h-7 border-purple-500/30 text-purple-400 hover:text-purple-300"
+                            className="text-xs gap-1 h-7 border-primary/30 text-primary hover:bg-primary/10"
                           >
                             <Sparkles className="h-3 w-3" />
                             AI Visual
@@ -769,27 +776,20 @@ export function DraftPreview({
                             <TooltipTrigger asChild>
                               <Button
                                 variant="ghost"
-                                size="icon"
-                                onClick={() => copyToClipboard(slide.imagePrompt || '', `slide-prompt-${idx}`)}
-                                className="text-muted-foreground h-7 w-7"
+                                size="sm"
+                                onClick={() => setActiveSlide(idx)}
+                                className={cn(
+                                  'text-xs h-7 px-2',
+                                  activeSlide === idx && 'bg-primary/10 text-primary'
+                                )}
                               >
-                                <Copy className="h-3.5 w-3.5" />
+                                {activeSlide === idx ? 'Viewing' : 'Select'}
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent side="top">Copy image prompt</TooltipContent>
+                            <TooltipContent side="top">Show in preview</TooltipContent>
                           </Tooltip>
                         </div>
                       </div>
-
-                      {slide.imagePrompt && (
-                        <div className="mb-3 p-3 bg-muted rounded-lg">
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Image Prompt</p>
-                          <p className="text-xs font-mono">{slide.imagePrompt}</p>
-                          {copiedField === `slide-prompt-${idx}` && (
-                            <p className="text-xs text-green-600 mt-1">Copied!</p>
-                          )}
-                        </div>
-                      )}
 
                       {slide.imageUrl && (
                         <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 mb-3 border">
@@ -874,12 +874,12 @@ export function DraftPreview({
                         if (isEditingCaption) setIsEditingCaption(false);
                       }}
                       disabled={isRegeneratingCaption}
-                      className="gap-1.5 text-xs font-medium h-8 border-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10"
+                      className="gap-1.5 text-xs font-medium h-8 border-primary/30 text-primary hover:bg-primary/10"
                     >
                       {isRegeneratingCaption ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
-                        <Sparkles className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                        <Sparkles className="h-3.5 w-3.5 text-primary" />
                       )}
                       Regenerate with AI
                     </Button>
@@ -903,10 +903,10 @@ export function DraftPreview({
 
                 {/* AI Regenerate Prompt Bar */}
                 {showRegenerateCaptionPrompt && (
-                  <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        <Sparkles className="h-4 w-4 text-primary" />
                         <span className="text-xs font-semibold text-foreground">AI Caption Copilot</span>
                       </div>
                       <span className="text-[11px] text-muted-foreground">Add specific guidance or comment</span>
@@ -930,7 +930,7 @@ export function DraftPreview({
                         size="sm"
                         onClick={() => handleRegenerateCaption()}
                         disabled={isRegeneratingCaption}
-                        className="h-9 text-xs font-semibold shrink-0 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white gap-1.5 px-3.5"
+                        className="h-9 text-xs font-semibold shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 px-3.5"
                       >
                         {isRegeneratingCaption ? (
                           <>
@@ -950,24 +950,28 @@ export function DraftPreview({
                     <div className="flex items-center flex-wrap gap-1.5 pt-0.5">
                       <span className="text-[11px] text-muted-foreground mr-1">Presets:</span>
                       {[
-                        { label: '🔥 Punchier & bolder', comment: 'Make it punchier, bolder, and more provocative' },
-                        { label: '⚡️ More sarcastic tone', comment: 'Enhance the sarcastic and opinionated brand voice' },
-                        { label: '🎯 Strong call to action', comment: 'End with an irresistible question and strong call to action' },
-                        { label: '📉 Shorter (under 3 lines)', comment: 'Keep it super concise, under 3 lines with high impact' },
-                      ].map((preset, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          disabled={isRegeneratingCaption}
-                          onClick={() => {
-                            setCaptionAiComment(preset.comment);
-                            handleRegenerateCaption(preset.comment);
-                          }}
-                          className="text-[10px] font-medium bg-background hover:bg-purple-500/10 text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 border border-border/80 hover:border-purple-500/30 px-2 py-0.5 rounded-md transition-colors"
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
+                        { label: 'Punchier & bolder', icon: Flame, comment: 'Make it punchier, bolder, and more provocative' },
+                        { label: 'More sarcastic tone', icon: Zap, comment: 'Enhance the sarcastic and opinionated brand voice' },
+                        { label: 'Strong call to action', icon: Target, comment: 'End with an irresistible question and strong call to action' },
+                        { label: 'Shorter (under 3 lines)', icon: TrendingDown, comment: 'Keep it super concise, under 3 lines with high impact' },
+                      ].map((preset, idx) => {
+                        const Icon = preset.icon;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            disabled={isRegeneratingCaption}
+                            onClick={() => {
+                              setCaptionAiComment(preset.comment);
+                              handleRegenerateCaption(preset.comment);
+                            }}
+                            className="inline-flex items-center gap-1 text-[10px] font-medium bg-background hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/80 hover:border-primary/30 px-2 py-0.5 rounded-md transition-colors"
+                          >
+                            <Icon className="h-3 w-3" />
+                            <span>{preset.label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

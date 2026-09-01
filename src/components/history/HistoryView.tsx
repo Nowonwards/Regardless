@@ -4,9 +4,9 @@ import { useState } from 'react';
 import {
   Calendar,
   Clock,
-  Target,
-  Hash,
-  Type,
+  Camera,
+  Pin,
+  Briefcase,
   RefreshCw,
   Copy,
   Check,
@@ -30,26 +30,26 @@ import { cn } from '@/lib/utils';
 import { Platform, PostWithRelations, PostStatus } from '@/types';
 
 const PLATFORM_COLORS: Record<Platform, { badge: string; border: string }> = {
-  INSTAGRAM: { badge: 'bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300', border: 'border-purple-200 dark:border-purple-800' },
-  PINTEREST: { badge: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300', border: 'border-red-200 dark:border-red-800' },
-  LINKEDIN: { badge: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800' },
+  INSTAGRAM: { badge: 'badge-instagram', border: 'border-[hsl(var(--instagram))]/20' },
+  PINTEREST: { badge: 'badge-pinterest', border: 'border-[hsl(var(--pinterest))]/20' },
+  LINKEDIN: { badge: 'badge-linkedin', border: 'border-[hsl(var(--linkedin))]/20' },
 };
 
 const PLATFORM_ICONS: Record<Platform, React.ReactNode> = {
-  INSTAGRAM: <Target className="h-3.5 w-3.5" />,
-  PINTEREST: <Hash className="h-3.5 w-3.5" />,
-  LINKEDIN: <Type className="h-3.5 w-3.5" />,
+  INSTAGRAM: <Camera className="h-3.5 w-3.5" />,
+  PINTEREST: <Pin className="h-3.5 w-3.5" />,
+  LINKEDIN: <Briefcase className="h-3.5 w-3.5" />,
 };
 
 const STATUS_COLORS: Record<PostStatus, string> = {
-  IDEA: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  SELECTED: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
-  DRAFTED: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300',
-  IN_REVISION: 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300',
-  APPROVED: 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300',
-  SCHEDULED: 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300',
-  POSTED: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-  FAILED: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
+  IDEA: 'badge-idea',
+  SELECTED: 'badge-selected',
+  DRAFTED: 'badge-drafted',
+  IN_REVISION: 'badge-in_revision',
+  APPROVED: 'badge-approved',
+  SCHEDULED: 'badge-scheduled',
+  POSTED: 'badge-posted',
+  FAILED: 'badge-failed',
 };
 
 interface HistoryViewProps {
@@ -169,11 +169,11 @@ export function HistoryView({
                 className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50 group overflow-hidden"
               >
                 <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
-                  <Badge variant="secondary" className={cn('text-xs gap-1', PLATFORM_COLORS[post.platform]?.badge)}>
+                  <Badge variant="outline" className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider gap-1', PLATFORM_COLORS[post.platform]?.badge)}>
                     {PLATFORM_ICONS[post.platform]}
                     {post.platform}
                   </Badge>
-                  <Badge className={cn('text-xs font-normal', STATUS_COLORS[post.status])} variant="outline">
+                  <Badge className={cn('text-[10px] font-mono font-medium', STATUS_COLORS[post.status])} variant="outline">
                     {post.status}
                   </Badge>
                 </CardHeader>
@@ -185,9 +185,9 @@ export function HistoryView({
                     {post.content?.caption || 'No caption available'}
                   </p>
                   <div className="pt-2 flex items-center justify-between text-xs text-muted-foreground border-t">
-                    <span>{post.content?.slides?.length || 1} slide(s)</span>
+                    <span className="font-mono text-[11px]">{post.content?.slides?.length || 1} slide(s)</span>
                     {post.publishedAt && (
-                      <span>{format(new Date(post.publishedAt), 'MMM d, yyyy')}</span>
+                      <span className="font-mono text-[11px]">{format(new Date(post.publishedAt), 'MMM d, yyyy')}</span>
                     )}
                   </div>
                 </CardContent>
@@ -207,7 +207,7 @@ export function HistoryView({
               >
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <Badge variant="secondary" className={cn('text-xs gap-1 shrink-0', PLATFORM_COLORS[post.platform]?.badge)}>
+                    <Badge variant="outline" className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider gap-1 shrink-0', PLATFORM_COLORS[post.platform]?.badge)}>
                       {PLATFORM_ICONS[post.platform]}
                       {post.platform}
                     </Badge>
@@ -220,11 +220,11 @@ export function HistoryView({
                   </div>
 
                   <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
-                    <Badge className={cn('font-normal', STATUS_COLORS[post.status])} variant="outline">
+                    <Badge className={cn('font-mono font-medium text-[10px]', STATUS_COLORS[post.status])} variant="outline">
                       {post.status}
                     </Badge>
                     {post.publishedAt && (
-                      <span className="flex items-center gap-1 hidden sm:inline-flex">
+                      <span className="flex items-center gap-1 hidden sm:inline-flex font-mono text-[11px]">
                         <Calendar className="h-3 w-3" />
                         {format(new Date(post.publishedAt), 'MMM d, yyyy')}
                       </span>

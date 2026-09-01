@@ -13,6 +13,7 @@ import {
   Sun,
   Moon,
 } from 'lucide-react';
+import { RegardlessMark } from '@/components/icons/RegardlessMark';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/theme-provider';
 import { cn } from '@/lib/utils';
@@ -48,17 +49,16 @@ export function Sidebar({ collapsed = false, onToggleCollapse, isMobile = false,
       <div className={cn('flex items-center h-16 px-4 border-b border-border/60', collapsed && !isMobile ? 'justify-center' : 'justify-between')}>
         {!collapsed || isMobile ? (
           <Link href="/" className="flex min-w-0 items-center gap-2.5 group" aria-label="Regardless home">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-500 text-white shadow-md shadow-purple-500/25 group-hover:scale-105 transition-transform" aria-hidden="true">
-              <Sparkles className="h-4.5 w-4.5" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs group-hover:scale-105 transition-transform" aria-hidden="true">
+              <RegardlessMark size={20} className="text-primary-foreground" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-base tracking-tight truncate bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text">Regardless</span>
-              <span className="text-[10px] text-muted-foreground/80 font-medium tracking-wide uppercase">AI Studio</span>
+              <span className="font-bold text-base tracking-tight truncate text-foreground">Regardless</span>
             </div>
           </Link>
         ) : (
-          <Link href="/" className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-500 text-white shadow-md shadow-purple-500/25 hover:scale-105 transition-transform" aria-label="Regardless home">
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
+          <Link href="/" className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs hover:scale-105 transition-transform" aria-label="Regardless home">
+            <RegardlessMark size={20} className="text-primary-foreground" aria-hidden="true" />
           </Link>
         )}
         <Button

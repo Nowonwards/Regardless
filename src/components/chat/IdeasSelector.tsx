@@ -6,9 +6,9 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
-  Target,
-  Hash,
-  Type,
+  Camera,
+  Pin,
+  Briefcase,
   CheckCircle2,
   FileText,
   Calendar,
@@ -36,15 +36,15 @@ interface IdeasSelectorProps {
 }
 
 const PLATFORM_COLORS: Record<Platform, { bg: string; text: string; border: string }> = {
-  INSTAGRAM: { bg: 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300', text: '', border: 'border-purple-200 dark:border-purple-800' },
-  PINTEREST: { bg: 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300', text: '', border: 'border-red-200 dark:border-red-800' },
-  LINKEDIN: { bg: 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300', text: '', border: 'border-blue-200 dark:border-blue-800' },
+  INSTAGRAM: { bg: 'badge-instagram', text: '', border: 'border-[hsl(var(--instagram))]/20' },
+  PINTEREST: { bg: 'badge-pinterest', text: '', border: 'border-[hsl(var(--pinterest))]/20' },
+  LINKEDIN: { bg: 'badge-linkedin', text: '', border: 'border-[hsl(var(--linkedin))]/20' },
 };
 
 const PLATFORM_ICONS: Record<Platform, React.ReactNode> = {
-  INSTAGRAM: <Target className="h-4 w-4" />,
-  PINTEREST: <Hash className="h-4 w-4" />,
-  LINKEDIN: <Type className="h-4 w-4" />,
+  INSTAGRAM: <Camera className="h-4 w-4" />,
+  PINTEREST: <Pin className="h-4 w-4" />,
+  LINKEDIN: <Briefcase className="h-4 w-4" />,
 };
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -319,12 +319,13 @@ export function IdeasSelector({
                           {batch.sessionTitle ? `${batch.sessionTitle} • ` : ''}
                           Batch generated {batch.formattedDate}
                         </span>
-                        <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal">
+                        <Badge variant="secondary" className="text-[10px] font-mono h-5 px-1.5 font-normal">
                           {batch.ideas.length} idea{batch.ideas.length !== 1 ? 's' : ''}
                         </Badge>
                         {batch.publishedCount > 0 && (
-                          <Badge variant="outline" className="text-[10px] h-5 px-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30 font-medium">
-                            ✓ {batch.publishedCount} Published
+                          <Badge variant="outline" className="text-[10px] font-mono h-5 px-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30 font-medium flex items-center gap-1">
+                            <Check className="h-3 w-3" />
+                            <span>{batch.publishedCount} Published</span>
                           </Badge>
                         )}
                       </div>
@@ -360,7 +361,7 @@ export function IdeasSelector({
                               isPublished
                                 ? 'bg-muted/15 border-dashed border-border/70 opacity-75'
                                 : isScheduled
-                                ? 'bg-purple-500/5 border-purple-500/30'
+                                ? 'bg-primary/5 border-primary/30'
                                 : hasDraft
                                 ? 'bg-blue-500/5 border-blue-500/30'
                                 : isSelected
@@ -421,21 +422,21 @@ export function IdeasSelector({
 
                                     {/* Publication / Draft Status Pill */}
                                     {isPublished && (
-                                      <Badge className="text-[11px] h-5 px-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 gap-1 font-semibold">
+                                      <Badge className="text-[10px] font-mono h-5 px-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 gap-1 font-semibold">
                                         <Check className="h-3 w-3" />
                                         Published
                                       </Badge>
                                     )}
 
                                     {isScheduled && (
-                                      <Badge className="text-[11px] h-5 px-2 bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30 gap-1 font-semibold">
+                                      <Badge className="text-[10px] font-mono h-5 px-2 bg-primary/10 text-primary border-primary/30 gap-1 font-semibold">
                                         <Calendar className="h-3 w-3" />
                                         Scheduled
                                       </Badge>
                                     )}
 
                                     {hasDraft && !isPublished && !isScheduled && (
-                                      <Badge className="text-[11px] h-5 px-2 bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30 gap-1 font-semibold">
+                                      <Badge className="text-[10px] font-mono h-5 px-2 bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30 gap-1 font-semibold">
                                         <FileText className="h-3 w-3" />
                                         Draft Active
                                       </Badge>

@@ -50,28 +50,28 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
 ];
 
 const statusConfig: Record<PostStatus, { label: string; className: string; icon?: string }> = {
-  IDEA: { label: 'Idea', className: 'bg-muted text-muted-foreground border-border' },
-  SELECTED: { label: 'Selected', className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
-  DRAFTED: { label: 'Drafted', className: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' },
-  IN_REVISION: { label: 'In Revision', className: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20' },
-  APPROVED: { label: 'Approved', className: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20' },
-  SCHEDULED: { label: 'Scheduled', className: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' },
-  POSTED: { label: 'Published', className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
-  FAILED: { label: 'Failed', className: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' },
+  IDEA: { label: 'Idea', className: 'badge-idea' },
+  SELECTED: { label: 'Selected', className: 'badge-selected' },
+  DRAFTED: { label: 'Drafted', className: 'badge-drafted' },
+  IN_REVISION: { label: 'In Revision', className: 'badge-in_revision' },
+  APPROVED: { label: 'Approved', className: 'badge-approved' },
+  SCHEDULED: { label: 'Scheduled', className: 'badge-scheduled' },
+  POSTED: { label: 'Published', className: 'badge-posted' },
+  FAILED: { label: 'Failed', className: 'badge-failed' },
 };
 
 const platformBadgeConfig: Record<Platform, { label: string; className: string }> = {
   INSTAGRAM: {
     label: 'Instagram',
-    className: 'bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-orange-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20',
+    className: 'badge-instagram',
   },
   PINTEREST: {
     label: 'Pinterest',
-    className: 'bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20',
+    className: 'badge-pinterest',
   },
   LINKEDIN: {
     label: 'LinkedIn',
-    className: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20',
+    className: 'badge-linkedin',
   },
 };
 
@@ -325,14 +325,14 @@ export function DraftsList({
                       <div className="flex items-center justify-between gap-1.5">
                         <Badge
                           variant="outline"
-                          className={cn('text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full border', platform.className)}
+                          className={cn('text-[10px] font-mono font-semibold tracking-wider uppercase px-2.5 py-0.5 rounded-full border', platform.className)}
                         >
                           {platform.label}
                         </Badge>
                         <div className="flex items-center gap-1.5">
                           <Badge
                             variant="outline"
-                            className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full border', status.className)}
+                            className={cn('text-[10px] font-mono font-medium px-2 py-0.5 rounded-full border', status.className)}
                           >
                             {status.label}
                           </Badge>
@@ -367,9 +367,9 @@ export function DraftsList({
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 opacity-60 group-hover:opacity-40 transition-opacity" />
 
                           {/* Slide Count Overlay Pill */}
-                          <div className="absolute bottom-2 right-2 bg-black/75 backdrop-blur-md border border-white/10 text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
+                          <div className="absolute bottom-2 right-2 bg-black/75 backdrop-blur-md border border-white/10 text-white text-[10px] font-mono font-medium px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
                             <span>{slideCount} slide{slideCount > 1 ? 's' : ''}</span>
-                            {slideCount > 1 && <span className="text-white/60">• Carousel</span>}
+                            {slideCount > 1 && <span className="text-white/60 font-sans">• Carousel</span>}
                           </div>
                         </div>
                       </div>
@@ -388,12 +388,12 @@ export function DraftsList({
                     {/* Card Footer */}
                     <div className="pt-3 flex items-center justify-between text-xs text-muted-foreground border-t border-border/60 mt-1">
                       {post.scheduledAt ? (
-                        <span className="flex items-center gap-1.5 text-[11px] font-medium text-purple-600 dark:text-purple-400">
+                        <span className="flex items-center gap-1.5 text-[11px] font-mono font-medium text-primary">
                           <CalendarIcon className="h-3.5 w-3.5" />
                           {format(new Date(post.scheduledAt), 'MMM d, yyyy')}
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground">
                           <CalendarIcon className="h-3.5 w-3.5" />
                           {format(new Date(post.updatedAt || new Date()), 'MMM d, yyyy')}
                         </span>
@@ -426,7 +426,7 @@ export function DraftsList({
                     <div className="flex items-center gap-3.5 min-w-0">
                       <Badge
                         variant="outline"
-                        className={cn('text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border shrink-0', platform.className)}
+                        className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full border shrink-0', platform.className)}
                       >
                         {platform.label}
                       </Badge>
@@ -441,14 +441,14 @@ export function DraftsList({
                     </div>
 
                     <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
-                      <span className="font-medium text-[11px] bg-muted/50 px-2 py-0.5 rounded-md hidden sm:inline">
+                      <span className="font-mono font-medium text-[11px] bg-muted/50 px-2 py-0.5 rounded-md hidden sm:inline">
                         {slideCount} slide{slideCount > 1 ? 's' : ''}
                       </span>
-                      <Badge className={cn('font-semibold text-[10px] px-2 py-0.5 rounded-full border', status.className)} variant="outline">
+                      <Badge className={cn('font-mono font-medium text-[10px] px-2 py-0.5 rounded-full border', status.className)} variant="outline">
                         {status.label}
                       </Badge>
                       {post.scheduledAt && (
-                        <span className="flex items-center gap-1 hidden md:inline-flex text-[11px] text-purple-600 dark:text-purple-400 font-medium">
+                        <span className="flex items-center gap-1 hidden md:inline-flex text-[11px] font-mono text-primary font-medium">
                           <CalendarIcon className="h-3 w-3" />
                           {format(new Date(post.scheduledAt), 'MMM d, yyyy')}
                         </span>

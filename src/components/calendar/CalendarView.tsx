@@ -7,9 +7,9 @@ import {
   ChevronRight,
   Clock,
   Plus,
-  Target,
-  Hash,
-  Type,
+  Camera,
+  Pin,
+  Briefcase,
   CheckCircle2,
   ExternalLink,
   SlidersHorizontal,
@@ -50,33 +50,33 @@ interface CalendarViewProps {
 const PLATFORM_CONFIG: Record<Platform, { name: string; borderAccent: string; pillClass: string; icon: React.ReactNode }> = {
   INSTAGRAM: {
     name: 'Instagram',
-    borderAccent: 'border-l-purple-500 dark:border-l-purple-400',
-    pillClass: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
-    icon: <Target className="h-3 w-3" />,
+    borderAccent: 'border-l-[hsl(var(--instagram))]',
+    pillClass: 'badge-instagram',
+    icon: <Camera className="h-3 w-3" />,
   },
   PINTEREST: {
     name: 'Pinterest',
-    borderAccent: 'border-l-red-500 dark:border-l-red-400',
-    pillClass: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800',
-    icon: <Hash className="h-3 w-3" />,
+    borderAccent: 'border-l-[hsl(var(--pinterest))]',
+    pillClass: 'badge-pinterest',
+    icon: <Pin className="h-3 w-3" />,
   },
   LINKEDIN: {
     name: 'LinkedIn',
-    borderAccent: 'border-l-blue-500 dark:border-l-blue-400',
-    pillClass: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
-    icon: <Type className="h-3 w-3" />,
+    borderAccent: 'border-l-[hsl(var(--linkedin))]',
+    pillClass: 'badge-linkedin',
+    icon: <Briefcase className="h-3 w-3" />,
   },
 };
 
 const STATUS_BADGES: Record<PostStatus, { label: string; className: string }> = {
-  IDEA: { label: 'Idea', className: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
-  SELECTED: { label: 'Selected', className: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300' },
-  DRAFTED: { label: 'Drafted', className: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' },
-  IN_REVISION: { label: 'In Revision', className: 'bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300' },
-  APPROVED: { label: 'Approved', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' },
-  SCHEDULED: { label: 'Scheduled', className: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300' },
-  POSTED: { label: 'Published', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' },
-  FAILED: { label: 'Failed', className: 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300' },
+  IDEA: { label: 'Idea', className: 'badge-idea' },
+  SELECTED: { label: 'Selected', className: 'badge-selected' },
+  DRAFTED: { label: 'Drafted', className: 'badge-drafted' },
+  IN_REVISION: { label: 'In Revision', className: 'badge-in_revision' },
+  APPROVED: { label: 'Approved', className: 'badge-approved' },
+  SCHEDULED: { label: 'Scheduled', className: 'badge-scheduled' },
+  POSTED: { label: 'Published', className: 'badge-posted' },
+  FAILED: { label: 'Failed', className: 'badge-failed' },
 };
 
 export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewProps) {
@@ -244,10 +244,10 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                       weekend && !today && 'bg-surface/70 text-muted-foreground'
                     )}
                   >
-                    <span className={cn('text-[10px] font-medium uppercase tracking-wider', today ? 'text-primary font-bold' : 'text-muted-foreground')}>
+                    <span className={cn('text-[10px] font-mono font-medium uppercase tracking-wider', today ? 'text-primary font-bold' : 'text-muted-foreground')}>
                       {format(day, 'EEE')}
                     </span>
-                    <span className={cn('text-base font-semibold h-6 w-6 flex items-center justify-center rounded-full', today ? 'bg-primary text-primary-foreground' : 'text-foreground')}>
+                    <span className={cn('text-base font-mono font-semibold h-6 w-6 flex items-center justify-center rounded-full', today ? 'bg-primary text-primary-foreground' : 'text-foreground')}>
                       {format(day, 'd')}
                     </span>
                   </div>
@@ -301,11 +301,11 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                               )}
                             >
                               <div className="flex items-center justify-between gap-1">
-                                <span className="flex items-center gap-1 text-[9px] font-semibold text-muted-foreground">
+                                <span className="flex items-center gap-1 text-[9px] font-mono font-medium text-muted-foreground">
                                   {config.icon}
                                   {postDate && format(new Date(postDate), 'h:mm a')}
                                 </span>
-                                <Badge className={cn('text-[8px] px-1 py-0 h-3.5 font-normal', STATUS_BADGES[post.status].className)} variant="outline">
+                                <Badge className={cn('text-[8px] font-mono font-medium px-1 py-0 h-3.5', STATUS_BADGES[post.status].className)} variant="outline">
                                   {STATUS_BADGES[post.status].label}
                                 </Badge>
                               </div>
@@ -314,7 +314,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                                 {post.title}
                               </p>
 
-                              <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                              <div className="flex items-center gap-1 text-[9px] font-mono text-muted-foreground">
                                 <Layers className="h-3 w-3" />
                                 <span>{post.content?.slides?.length || 1} slides</span>
                               </div>
@@ -346,7 +346,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
             <div className="flex items-center justify-between border-b border-border/70 pb-2.5 mb-3 shrink-0">
               <div>
                 <h3 className="text-base font-bold">{format(currentDate, 'EEEE, MMMM d, yyyy')}</h3>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground font-mono">
                   {(postsByDay.get(currentDate.toISOString().split('T')[0]) || []).length} post(s) scheduled or published
                 </p>
               </div>
@@ -374,14 +374,14 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                   >
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={cn('text-xs font-semibold px-2 py-0.5', config.pillClass)}>
+                        <Badge variant="outline" className={cn('text-xs font-mono font-semibold px-2 py-0.5', config.pillClass)}>
                           {config.icon}
                           <span className="ml-1">{post.platform}</span>
                         </Badge>
-                        <Badge className={cn('text-xs', STATUS_BADGES[post.status].className)} variant="outline">
+                        <Badge className={cn('text-xs font-mono font-medium', STATUS_BADGES[post.status].className)} variant="outline">
                           {STATUS_BADGES[post.status].label}
                         </Badge>
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <span className="text-xs font-mono text-muted-foreground flex items-center gap-1">
                           <Clock className="h-3.5 w-3.5" />
                           {postDate && format(new Date(postDate), 'h:mm a')}
                         </span>
@@ -406,7 +406,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
         {viewType === 'month' && (
           <div className="flex flex-col h-full min-h-0">
             {/* Month Day Names */}
-            <div className="grid grid-cols-7 border-b border-border/70 bg-surface/50 text-center py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0">
+            <div className="grid grid-cols-7 border-b border-border/70 bg-surface/50 text-center py-1.5 text-[10px] font-mono font-semibold text-muted-foreground uppercase tracking-wider shrink-0">
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
                 <div key={day}>{day}</div>
               ))}
@@ -446,14 +446,14 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                       <div className="flex items-center justify-between">
                         <span
                           className={cn(
-                            'text-[11px] font-semibold h-4.5 w-4.5 flex items-center justify-center rounded-full',
+                            'text-[11px] font-mono font-semibold h-4.5 w-4.5 flex items-center justify-center rounded-full',
                             today ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
                           )}
                         >
                           {format(day, 'd')}
                         </span>
                         {dayPosts.length > 0 && (
-                          <span className="text-[9px] text-muted-foreground font-medium">
+                          <span className="text-[9px] font-mono text-muted-foreground font-medium">
                             {dayPosts.length} post{dayPosts.length > 1 ? 's' : ''}
                           </span>
                         )}
@@ -479,7 +479,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                           );
                         })}
                         {dayPosts.length > 2 && (
-                          <span className="text-[8px] text-muted-foreground font-medium block text-center">
+                          <span className="text-[8px] font-mono text-muted-foreground font-medium block text-center">
                             +{dayPosts.length - 2} more
                           </span>
                         )}
@@ -496,7 +496,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
           <div className="flex-1 min-h-0 p-4 overflow-y-auto space-y-3 no-scrollbar">
             <div className="flex items-center justify-between border-b border-border/80 pb-3">
                 <h3 className="text-base font-semibold">Publishing Schedule Queue</h3>
-                <span className="text-xs text-muted-foreground">{agendaPosts.length} total posts</span>
+                <span className="text-xs font-mono text-muted-foreground">{agendaPosts.length} total posts</span>
               </div>
 
               <div className="space-y-2.5">
@@ -515,14 +515,14 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                     >
                       <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={cn('text-xs font-semibold px-2 py-0.5', config.pillClass)}>
+                          <Badge variant="outline" className={cn('text-xs font-mono font-semibold px-2 py-0.5', config.pillClass)}>
                             {config.icon}
                             <span className="ml-1">{post.platform}</span>
                           </Badge>
-                          <Badge className={cn('text-xs', STATUS_BADGES[post.status].className)} variant="outline">
+                          <Badge className={cn('text-xs font-mono font-medium', STATUS_BADGES[post.status].className)} variant="outline">
                             {STATUS_BADGES[post.status].label}
                           </Badge>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1 font-medium">
+                          <span className="text-xs font-mono text-muted-foreground flex items-center gap-1 font-medium">
                             <Clock className="h-3 w-3" />
                             {postDate && format(new Date(postDate), 'MMM d, yyyy • h:mm a')}
                           </span>
