@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Platform {
+  INSTAGRAM
+  PINTEREST
+  LINKEDIN
+}
+
+enum PostStatus {
+  IDEA
+  SELECTED
+  DRAFTED
+  IN_REVISION
+  APPROVED
+  SCHEDULED
+  POSTED
+  FAILED
+}
+
+enum ConnectionStatus {
+  CONNECTED
+  EXPIRED
+  DISCONNECTED
+  PENDING
+  FAILED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  posts              Post[]
+  platformConnections PlatformConnection[]
+  chatSessions       ChatSession[]
+  ideas              Idea[]
+  notifications      Notification[]
+}
+
+model PlatformConnection {
+  id             String            @id @default(cuid())
+  userId         String
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform       Platform
+  composioUserId String?
+  status         ConnectionStatus  @default(PENDING)
+  accessToken    String?
+  refreshToken   String?
+  expiresAt      DateTime?
+  metadata       Json?
+  errorMessage   String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([userId, platform])
+}
+
+model ChatSession {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String?
+  dateRangeStart DateTime?
+  dateRangeEnd   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  messages    ChatMessage[]
+  ideas       Idea[]
+}
+
+model ChatMessage {
+  id            String   @id @default(cuid())
+  sessionId     String
+  session       ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role          String   // 'user' | 'assistant' | 'system'
+  content       String
+  metadata      Json?
+  createdAt     DateTime @default(now())
+}
+
+model Idea {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   String?
+  session     ChatSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  platform    Platform
+  title       String
+  description String
+  content     Json     // Structured idea data (hooks, angles, etc.)
+  status      PostStatus @default(IDEA)
+  selected    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts       Post[]
+}
+
+model Post {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ideaId          String?
+  idea            Idea?       @relation(fields: [ideaId], references: [id], onDelete: SetNull)
+  platform        Platform
+  status          PostStatus  @default(DRAFTED)
+  title           String
+  content         Json        // Full post content: slides, images, caption, hashtags
+  scheduledAt     DateTime?
+  publishedAt     DateTime?
+  errorMessage    String?
+  currentVersion  Int         @default(1)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  versions        PostVersion[]
+  publishAttempts PublishAttempt[]
+}
+
+model PostVersion {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  version   Int
+  content   Json     // Full post content at this version
+  feedback  String?  // User feedback that led to this version
+  createdAt DateTime @default(now())
+
+  @@unique([postId, version])
+}
+
+model PublishAttempt {
+  id          String   @id @default(cuid())
+  postId      String
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  platform    Platform
+  status      String   // 'pending' | 'success' | 'failed'
+  response    Json?
+  error       String?
+  attemptedAt DateTime @default(now())
+  completedAt DateTime?
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String    @default("INFO") // 'POST_PUBLISHED' | 'POST_FAILED' | 'POST_SCHEDULED' | 'INFO'
+  platform  Platform?
+  postId    String?
+  read      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+}

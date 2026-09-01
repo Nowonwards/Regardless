@@ -1,0 +1,296 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --surface: 220 14% 97.5%;
+    --foreground: 221 39% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 221 39% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 221 39% 11%;
+    --primary: 243 75% 59%; /* #4F46E5 Indigo */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 221 39% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%; /* #6B7280 */
+    --accent: 243 100% 97%;
+    --accent-foreground: 243 75% 59%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%; /* #E5E7EB */
+    --border-subtle: 220 13% 91%;
+    --border-strong: 218 11% 84%;
+    --input: 220 13% 91%;
+    --ring: 243 75% 59%;
+    --radius: 0.5rem;
+
+    /* Platform & Category Colors (Light) */
+    --instagram: 300 76% 48%;
+    --instagram-foreground: 0 0% 100%;
+    --instagram-light: 300 80% 96%;
+
+    --pinterest: 0 78% 50%;
+    --pinterest-foreground: 0 0% 100%;
+    --pinterest-light: 0 80% 96%;
+
+    --linkedin: 214 82% 45%;
+    --linkedin-foreground: 0 0% 100%;
+    --linkedin-light: 214 80% 96%;
+  }
+
+  .dark {
+    --background: 220 19% 5.3%; /* #0B0D10 */
+    --surface: 218 16% 9.6%;    /* #14171C */
+    --foreground: 220 14% 96%;   /* #F3F4F6 */
+    --card: 218 17% 12.7%;       /* #1B1F26 */
+    --card-foreground: 220 14% 96%;
+    --popover: 218 17% 12.7%;
+    --popover-foreground: 220 14% 96%;
+    --primary: 239 84% 67%;      /* #6366F1 */
+    --primary-foreground: 220 19% 5.3%;
+    --secondary: 218 16% 14%;
+    --secondary-foreground: 220 14% 96%;
+    --muted: 218 16% 14%;
+    --muted-foreground: 218 11% 65%; /* #9CA3AF */
+    --accent: 239 84% 16%;
+    --accent-foreground: 239 84% 75%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 218 15% 19.4%;    /* #2A2F38 */
+    --border-subtle: 218 15% 19.4%;
+    --border-strong: 218 15% 27%;
+    --input: 218 15% 19.4%;
+    --ring: 239 84% 67%;
+
+    /* Platform & Category Colors (Dark) */
+    --instagram: 300 70% 62%;
+    --instagram-foreground: 0 0% 100%;
+    --instagram-light: 300 70% 18%;
+
+    --pinterest: 0 75% 62%;
+    --pinterest-foreground: 0 0% 100%;
+    --pinterest-light: 0 70% 18%;
+
+    --linkedin: 214 75% 60%;
+    --linkedin-foreground: 0 0% 100%;
+    --linkedin-light: 214 70% 18%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Consistent focus styles */
+*:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* Better focus for interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+[role="link"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[role="tab"]:focus-visible,
+[role="option"]:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* Remove focus ring for mouse users */
+*:focus:not(:focus-visible) {
+  @apply ring-0;
+}
+
+/* Selection */
+::selection {
+  @apply bg-primary/20 text-foreground;
+}
+
+.signal-surface {
+  position: relative;
+  overflow: hidden;
+}
+
+.signal-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, hsl(var(--primary) / 0.12), transparent 34%),
+    repeating-linear-gradient(0deg, transparent 0, transparent 13px, hsl(var(--primary) / 0.055) 14px);
+  opacity: 0.8;
+}
+
+.signal-surface > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.15s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.2s ease-out;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.2s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.15s ease-out;
+}
+
+/* Drag and drop styles */
+.sortable-chosen {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.sortable-ghost {
+  opacity: 0.4;
+  background: hsl(var(--muted));
+}
+
+/* Markdown styles */
+.prose {
+  @apply text-foreground;
+}
+
+.prose h1 { @apply text-2xl font-bold mb-4 mt-6; }
+.prose h2 { @apply text-xl font-semibold mb-3 mt-5; }
+.prose h3 { @apply text-lg font-medium mb-2 mt-4; }
+.prose p { @apply mb-4 leading-relaxed; }
+.prose ul { @apply list-disc list-inside mb-4 space-y-1; }
+.prose ol { @apply list-decimal list-inside mb-4 space-y-1; }
+.prose code { @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono; }
+.prose pre { @apply bg-muted p-4 rounded-lg overflow-x-auto mb-4; }
+.prose pre code { @apply bg-transparent p-0 text-sm; }
+.prose blockquote { @apply border-l-4 border-primary pl-4 italic text-muted-foreground my-4; }
+.prose a { @apply text-primary underline hover:no-underline; }
+.prose img { @apply rounded-lg my-4 max-w-full h-auto; }
+
+/* Platform badge variants */
+.badge-instagram { @apply bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300; }
+.badge-pinterest { @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300; }
+.badge-linkedin { @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300; }
+
+/* Status badge variants */
+.badge-idea { @apply bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300; }
+.badge-selected { @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300; }
+.badge-drafted { @apply bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300; }
+.badge-in_revision { @apply bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300; }
+.badge-approved { @apply bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300; }
+.badge-scheduled { @apply bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300; }
+.badge-posted { @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300; }
+.badge-failed { @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300; }
+
+/* Scrollbar hiding utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  @apply absolute -top-10 left-0 bg-primary text-primary-foreground p-4 z-50 transition-all;
+}
+.skip-link:focus {
+  @apply top-0;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: 0 0% 0%;
+    --ring: 0 0% 0%;
+  }
+  .dark {
+    --border: 0 0% 100%;
+    --ring: 0 0% 100%;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
