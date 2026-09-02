@@ -190,7 +190,56 @@ export const tavilySearchTool = tool(
 );
 
 /**
- * Builds an optimal tech news query based on the user's message
+ * Uses the LLM to intelligently decide whether internet search is needed and generate the single optimal search query
+ */
+export async function determineSearchQueryWithLLM(
+  message: string
+): Promise<{ needed: boolean; query: string }> {
+  try {
+    const { generateCompletion } = await import('@/lib/ollama');
+    const systemPrompt = `You are an expert search query formulation specialist for tech news and social media ideation.
+Analyze the user request and determine:
+1. Is an internet search needed to gather current tech news, product launches, AI model releases, controversies, or technical facts? (Answer false ONLY if the user is merely saying greetings/thanks or asking to edit an existing idea without new facts).
+2. If yes, generate the single best web search query (2 to 5 words) to find factual news, announcements, and details.
+- Strip conversational words (e.g. "let's create a post about", "give me ideas for", "write a carousel on").
+- Extract the core subject and entities (e.g. if the user mentions "fable 5.1", query: "Anthropic Claude Fable 5.1").
+- If the user specifies an AI model or tech product, include the creator company or product name if known.
+
+Respond ONLY with valid JSON in this exact structure:
+{"needed": true, "query": "exact search query"}`;
+
+    const raw = await generateCompletion(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: message },
+      ],
+      { temperature: 0.1, num_predict: 80 }
+    );
+
+    const jsonMatch = raw.match(/\{[\s\S]*?\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (typeof parsed.needed === 'boolean' && typeof parsed.query === 'string') {
+        const cleanQuery = parsed.query.trim().replace(/^["']|["']$/g, '');
+        return {
+          needed: parsed.needed,
+          query: cleanQuery || buildTechNewsSearchQuery(message),
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[Tavily] LLM query formulation failed, falling back to heuristic query:', err);
+  }
+
+  // Fallback to heuristic query
+  return {
+    needed: isSearchQueryNeeded(message),
+    query: buildTechNewsSearchQuery(message),
+  };
+}
+
+/**
+ * Builds an optimal tech news query based on the user's message (Heuristic fallback)
  */
 export function buildTechNewsSearchQuery(message: string): string {
   let clean = message.trim();
@@ -200,8 +249,10 @@ export function buildTechNewsSearchQuery(message: string): string {
 
   // Strip conversational filler prefixes
   clean = clean
+    .replace(/^(let'?s|can you|please|could you|i want to|help me)\s+(create|make|write|generate|give me|propose|brainstorm|draft|post|scan)?\s+/i, '')
+    .replace(/^(a|an|the)?\s*(instagram|linkedin|pinterest|social media)?\s*(post|carousel|pin|ideas?|thread|content)?\s*(about|on|regarding|for|covering|focusing on)\s+/i, '')
     .replace(/^(can you |please |could you )?(generate|give me|propose|brainstorm|create|suggest|come up with|find|scan)\s+(\d+\s+)?(post\s+)?(ideas?\s+)?(on|for|about)?/i, '')
-    .replace(/^(covering|focusing on)\s+/i, '')
+    .replace(/^(covering|focusing on|about|regarding|on)\s+/i, '')
     .trim();
 
   if (!clean || clean.length < 5) {
@@ -220,9 +271,9 @@ export function buildTechNewsSearchQuery(message: string): string {
  * Heuristic to detect if a user prompt in ideation requires current events or live fact-verification
  */
 export function isSearchQueryNeeded(message: string): boolean {
-  // Always true for tech news ideation agent unless the user is explicitly just saying thanks or yes/no
+  // False only for short acknowledgments or pure edits
   const clean = message.trim().toLowerCase();
-  if (['thanks', 'thank you', 'ok', 'okay', 'yes', 'no', 'cool', 'sounds good'].includes(clean)) {
+  if (['thanks', 'thank you', 'ok', 'okay', 'yes', 'no', 'cool', 'sounds good', 'sure'].includes(clean)) {
     return false;
   }
   return true;

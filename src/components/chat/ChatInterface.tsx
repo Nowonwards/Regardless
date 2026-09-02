@@ -124,6 +124,11 @@ export function ChatInterface({
   useEffect(() => {
     if (!sessionId) return;
 
+    setStreamingContent('');
+    setActiveSearchSources([]);
+    setActiveSearchQuery('');
+    setSelectedIdeaIds([]);
+
     const fetchSessionHistory = async () => {
       try {
         const res = await fetch('/api/sessions');

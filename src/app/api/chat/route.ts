@@ -7,8 +7,7 @@ import { createIdeationPrompt, IDEATION_SYSTEM_PROMPT } from '@/lib/agents/promp
 import {
   executeTavilySearch,
   formatSearchResultsForPrompt,
-  isSearchQueryNeeded,
-  buildTechNewsSearchQuery,
+  determineSearchQueryWithLLM,
 } from '@/lib/agents/tools/tavily-search';
 import { Platform } from '@/types';
 
@@ -23,19 +22,17 @@ export async function POST(request: NextRequest) {
     const { message, sessionId, platforms, dateRange, searchNews } = body;
 
     if (!message || !sessionId) {
-      return NextResponse.json({ error: 'Missing required fields: message and sessionId are required' }, { status: 400 });
+      return NextResponse.json({ error: 'Message and sessionId are required' }, { status: 400 });
     }
 
-    const targetPlatforms: Platform[] = Array.isArray(platforms) && platforms.length > 0
-      ? platforms
-      : ['INSTAGRAM'];
+    const targetPlatforms: Platform[] = platforms?.length ? platforms : ['INSTAGRAM'];
 
     const session = await prisma.chatSession.findUnique({
       where: { id: sessionId },
-      include: { messages: { orderBy: { createdAt: 'asc' }, take: 20 } },
+      include: { messages: { orderBy: { createdAt: 'asc' } } },
     });
 
-    if (!session || session.userId !== userSession.user.id) {
+    if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
@@ -44,23 +41,26 @@ export async function POST(request: NextRequest) {
       content: m.content,
     }));
 
-    // Perform live search for tech news for the ideation query if enabled or needed
+    // Perform live search for tech news for the ideation query if enabled
     let searchResultsText: string | undefined = undefined;
     let searchResultData: any = null;
     let searchQueryUsed: string | null = null;
 
-    if (process.env.TAVILY_API_KEY && (searchNews || isSearchQueryNeeded(message))) {
+    if (process.env.TAVILY_API_KEY && searchNews !== false) {
       try {
-        const searchQuery = buildTechNewsSearchQuery(message);
-        searchQueryUsed = searchQuery;
-        const searchResult = await executeTavilySearch(searchQuery, {
-          sessionId,
-          topic: 'news',
-          maxResults: 5,
-        });
-        if (searchResult.results && searchResult.results.length > 0) {
-          searchResultsText = formatSearchResultsForPrompt(searchResult);
-          searchResultData = searchResult;
+        // Use LLM to decide whether search is needed and generate the optimal query
+        const searchDecision = await determineSearchQueryWithLLM(message);
+        if (searchDecision.needed && searchDecision.query) {
+          searchQueryUsed = searchDecision.query;
+          const searchResult = await executeTavilySearch(searchDecision.query, {
+            sessionId,
+            topic: 'news',
+            maxResults: 5,
+          });
+          if (searchResult.results && searchResult.results.length > 0) {
+            searchResultsText = formatSearchResultsForPrompt(searchResult);
+            searchResultData = searchResult;
+          }
         }
       } catch (searchError) {
         console.warn('Tavily search error in chat route (continuing without live search):', searchError);
