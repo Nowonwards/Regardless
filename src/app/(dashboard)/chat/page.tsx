@@ -27,7 +27,7 @@ interface ChatSessionSummary {
 
 export default function ChatPage() {
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
-  const [sessionId, setSessionId] = useState<string>('');
+  const [sessionId, setSessionId] = useState<string>('new');
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [connectedPlatforms, setConnectedPlatforms] = useState<Platform[]>([]);
   const [isLoadingPlatforms, setIsLoadingPlatforms] = useState(true);
@@ -63,15 +63,14 @@ export default function ChatPage() {
         const fetchedSessions: ChatSessionSummary[] = data.sessions || [];
         setSessions(fetchedSessions);
 
-        if (fetchedSessions.length > 0) {
-          const targetId =
-            preferSessionId && fetchedSessions.some((s) => s.id === preferSessionId)
-              ? preferSessionId
-              : fetchedSessions[0].id;
-          setSessionId(targetId);
+        if (preferSessionId === 'new') {
+          setSessionId('new');
+        } else if (preferSessionId && fetchedSessions.some((s) => s.id === preferSessionId)) {
+          setSessionId(preferSessionId);
+        } else if (fetchedSessions.length > 0) {
+          setSessionId(fetchedSessions[0].id);
         } else {
-          // If user has no sessions yet, create one
-          await handleCreateNewChat();
+          setSessionId('new');
         }
       }
     } catch (err) {
@@ -83,30 +82,14 @@ export default function ChatPage() {
     fetchSessions();
   }, []);
 
-  const handleCreateNewChat = async () => {
-    try {
-      const res = await fetch('/api/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dateRangeStart: dateRange?.start,
-          dateRangeEnd: dateRange?.end,
-        }),
-      });
-      const data = await res.json();
-      if (data.session) {
-        const newSession = data.session as ChatSessionSummary;
-        setSessions((prev) => [newSession, ...prev.filter((s) => s.id !== newSession.id)]);
-        setSessionId(newSession.id);
-        setActiveTab('chat');
-      }
-    } catch (error) {
-      console.error('Failed to create new chat session:', error);
-    }
+  const handleCreateNewChat = () => {
+    // Lazy creation: start fresh in-memory session without creating empty DB record
+    setSessionId('new');
+    setActiveTab('chat');
   };
 
   const handleIdeasGenerated = async (newIdeas: IdeaContent[]) => {
-    if (newIdeas.length > 0 && sessionId) {
+    if (newIdeas.length > 0 && sessionId && sessionId !== 'new') {
       try {
         await fetch('/api/ideas', {
           method: 'POST',
@@ -122,9 +105,9 @@ export default function ChatPage() {
     }
   };
 
-  const handleSessionUpdate = () => {
-    // Refresh sessions list to update message count and order
-    fetchSessions(sessionId);
+  const handleSessionUpdate = (_title?: string, newSessionId?: string) => {
+    // Refresh sessions list and stay locked to the current or newly initialized session
+    fetchSessions(newSessionId || sessionId);
   };
 
   const formatSessionTimestamp = (dateStr: string | Date): string => {
@@ -142,6 +125,8 @@ export default function ChatPage() {
       return String(dateStr);
     }
   };
+
+  const currentSession = sessions.find((s) => s.id === sessionId);
 
   return (
     <Tabs
@@ -180,16 +165,46 @@ export default function ChatPage() {
             <div className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
               <Select value={sessionId} onValueChange={(val) => setSessionId(val)}>
-                <SelectTrigger className="h-8 min-w-[190px] max-w-[260px] rounded-none border-border bg-background text-[11px] font-mono">
-                  <SelectValue placeholder="Chat History..." />
+                <SelectTrigger className="h-8 min-w-[220px] max-w-[320px] rounded-none border-border bg-background text-[11px] font-mono">
+                  <div className="flex items-center gap-1.5 truncate">
+                    {sessionId === 'new' || !currentSession ? (
+                      <span className="font-semibold text-primary">New Chat (Draft)</span>
+                    ) : (
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="font-semibold text-foreground truncate">
+                          {currentSession.title || 'Tech News Ideation'}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          • {formatSessionTimestamp(currentSession.updatedAt || currentSession.createdAt)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </SelectTrigger>
-                <SelectContent className="rounded-none border-border bg-card max-h-72">
+                <SelectContent className="rounded-none border-border bg-card max-h-80 w-[340px]">
+                  <SelectItem value="new" className="text-[11px] font-mono cursor-pointer py-2 border-b border-border/50">
+                    <div className="flex items-center justify-between gap-2 w-full text-primary">
+                      <span className="font-bold flex items-center gap-1">
+                        <Plus className="h-3 w-3" />
+                        Start New Chat
+                      </span>
+                      <span className="text-[9px] text-muted-foreground">Unsaved draft</span>
+                    </div>
+                  </SelectItem>
+
                   {sessions.map((s) => (
-                    <SelectItem key={s.id} value={s.id} className="text-[11px] font-mono cursor-pointer">
-                      <div className="flex items-center justify-between gap-3 w-full">
-                        <span>{formatSessionTimestamp(s.createdAt)}</span>
-                        <span className="text-[9px] text-muted-foreground bg-surface px-1 py-0.2 border border-border/80 shrink-0">
-                          {s.messages?.length || 0} msgs
+                    <SelectItem key={s.id} value={s.id} className="text-[11px] font-mono cursor-pointer py-2">
+                      <div className="flex flex-col gap-0.5 w-full text-left">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold text-foreground truncate max-w-[210px]">
+                            {s.title || 'Tech News Ideation'}
+                          </span>
+                          <span className="text-[9px] text-muted-foreground bg-surface px-1.5 py-0.2 border border-border/80 shrink-0">
+                            {s.messages?.filter((m) => m.role === 'user').length || 1} msgs
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatSessionTimestamp(s.updatedAt || s.createdAt)}
                         </span>
                       </div>
                     </SelectItem>

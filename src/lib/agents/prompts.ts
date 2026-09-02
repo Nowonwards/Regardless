@@ -95,6 +95,44 @@ Rules:
 
 Output format: Same as draft generation (complete PostContent object)`;
 
+/**
+ * Summarizes the user's initial prompt into a clean, concise chat title (ChatGPT style)
+ */
+export function formatChatTitle(userMessage: string, searchQuery?: string | null): string {
+  if (searchQuery && searchQuery.trim().length > 3) {
+    const cleaned = searchQuery
+      .replace(/^(latest|today's|recent)\s+/i, '')
+      .replace(/\s+(tech news|news|updates?)$/i, '')
+      .trim();
+    if (cleaned.length >= 3) {
+      return cleaned
+        .split(' ')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ')
+        .slice(0, 40);
+    }
+  }
+
+  let clean = userMessage.trim();
+  clean = clean.replace(/^[^a-zA-Z0-9"'`]+/, '').trim();
+  clean = clean
+    .replace(/^(let'?s|can you|please|could you|i want to|help me)\s+(create|make|write|generate|give me|propose|brainstorm|draft|post|scan)?\s+/i, '')
+    .replace(/^(a|an|the)?\s*(instagram|linkedin|pinterest|social media)?\s*(post|carousel|pin|ideas?|thread|content)?\s*(about|on|regarding|for|covering|focusing on)\s+/i, '')
+    .replace(/^(about|regarding|on|for)\s+/i, '')
+    .trim();
+
+  if (!clean || clean.length < 3) {
+    return 'Tech Post Ideation';
+  }
+
+  return clean
+    .split(' ')
+    .slice(0, 6)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+    .slice(0, 40);
+}
+
 export function createIdeationPrompt(
   userMessage: string,
   conversationHistory: Array<{ role: string; content: string }>,

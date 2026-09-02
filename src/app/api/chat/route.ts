@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { generateStreamCompletion, OllamaMessage } from '@/lib/ollama';
-import { createIdeationPrompt, IDEATION_SYSTEM_PROMPT } from '@/lib/agents/prompts';
+import { createIdeationPrompt, IDEATION_SYSTEM_PROMPT, formatChatTitle } from '@/lib/agents/prompts';
 import {
   executeTavilySearch,
   formatSearchResultsForPrompt,
@@ -21,25 +21,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { message, sessionId, platforms, dateRange, searchNews } = body;
 
-    if (!message || !sessionId) {
-      return NextResponse.json({ error: 'Message and sessionId are required' }, { status: 400 });
+    if (!message) {
+      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
     const targetPlatforms: Platform[] = platforms?.length ? platforms : ['INSTAGRAM'];
-
-    const session = await prisma.chatSession.findUnique({
-      where: { id: sessionId },
-      include: { messages: { orderBy: { createdAt: 'asc' } } },
-    });
-
-    if (!session) {
-      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
-    }
-
-    const conversationHistory: OllamaMessage[] = session.messages.map((m) => ({
-      role: m.role as 'user' | 'assistant' | 'system',
-      content: m.content,
-    }));
 
     // Perform live search for tech news for the ideation query if enabled
     let searchResultsText: string | undefined = undefined;
@@ -53,7 +39,7 @@ export async function POST(request: NextRequest) {
         if (searchDecision.needed && searchDecision.query) {
           searchQueryUsed = searchDecision.query;
           const searchResult = await executeTavilySearch(searchDecision.query, {
-            sessionId,
+            sessionId: sessionId !== 'new' ? sessionId : undefined,
             topic: 'news',
             maxResults: 5,
           });
@@ -66,6 +52,40 @@ export async function POST(request: NextRequest) {
         console.warn('Tavily search error in chat route (continuing without live search):', searchError);
       }
     }
+
+    const calculatedTitle = formatChatTitle(message, searchQueryUsed);
+
+    // Lazy session creation: only create session when user actually communicates!
+    let session = sessionId && sessionId !== 'new'
+      ? await prisma.chatSession.findUnique({
+          where: { id: sessionId },
+          include: { messages: { orderBy: { createdAt: 'asc' } } },
+        })
+      : null;
+
+    if (!session) {
+      session = await prisma.chatSession.create({
+        data: {
+          userId: userSession.user.id,
+          title: calculatedTitle,
+          dateRangeStart: dateRange?.start ? new Date(dateRange.start) : null,
+          dateRangeEnd: dateRange?.end ? new Date(dateRange.end) : null,
+        },
+        include: { messages: true },
+      });
+    } else if (!session.title || session.title.startsWith('Session ')) {
+      // Update generic placeholder title with concise summary of the conversation
+      session = await prisma.chatSession.update({
+        where: { id: session.id },
+        data: { title: calculatedTitle },
+        include: { messages: { orderBy: { createdAt: 'asc' } } },
+      });
+    }
+
+    const conversationHistory: OllamaMessage[] = (session.messages || []).map((m) => ({
+      role: m.role as 'user' | 'assistant' | 'system',
+      content: m.content,
+    }));
 
     const prompt = createIdeationPrompt(
       message,
@@ -81,6 +101,15 @@ export async function POST(request: NextRequest) {
         let fullContent = '';
 
         try {
+          // Emit session info so client knows the assigned session ID & title immediately
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({
+              type: 'session_info',
+              sessionId: session.id,
+              title: session.title,
+            })}\n\n`)
+          );
+
           // Emit search results immediately if live search was executed
           if (searchResultData) {
             controller.enqueue(
@@ -104,7 +133,7 @@ export async function POST(request: NextRequest) {
 
           await prisma.chatMessage.create({
             data: {
-              sessionId,
+              sessionId: session.id,
               role: 'user',
               content: message,
             },
@@ -112,7 +141,7 @@ export async function POST(request: NextRequest) {
 
           await prisma.chatMessage.create({
             data: {
-              sessionId,
+              sessionId: session.id,
               role: 'assistant',
               content: fullContent,
               metadata: searchResultData ? {
@@ -123,7 +152,7 @@ export async function POST(request: NextRequest) {
             },
           });
 
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', done: true, sources: searchResultData?.results })}\n\n`));
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', done: true, sessionId: session.id, title: session.title, sources: searchResultData?.results })}\n\n`));
           controller.close();
         } catch (error) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: error instanceof Error ? error.message : 'Generation failed' })}\n\n`));

@@ -54,7 +54,7 @@ interface ChatInterfaceProps {
   isLoadingPlatforms?: boolean;
   dateRange?: { start: Date; end: Date };
   onIdeasGenerated?: (ideas: IdeaContent[]) => void;
-  onSessionUpdate?: (title: string) => void;
+  onSessionUpdate?: (title: string, newSessionId?: string) => void;
 }
 
 const PLATFORM_CONFIG: Record<Platform, { name: string; icon: React.ReactNode; color: string }> = {
@@ -122,12 +122,22 @@ export function ChatInterface({
 
   // Load session messages from DB
   useEffect(() => {
-    if (!sessionId) return;
-
     setStreamingContent('');
     setActiveSearchSources([]);
     setActiveSearchQuery('');
     setSelectedIdeaIds([]);
+
+    if (!sessionId || sessionId === 'new') {
+      setMessages([
+        {
+          id: 'welcome',
+          role: 'assistant',
+          content:
+            "👋 Welcome to Regardless Ideation Studio. Ask me to brainstorm tech news hooks, propose multi-slide carousels, or explore controversial industry angles for your channels.\n\nLive Tech News Search via Tavily is active to verify current-event facts and breaking announcements.",
+        },
+      ]);
+      return;
+    }
 
     const fetchSessionHistory = async () => {
       try {
@@ -282,7 +292,11 @@ export function ChatInterface({
           for (const line of lines) {
             try {
               const data = JSON.parse(line.slice(6));
-              if (data.type === 'search_result') {
+              if (data.type === 'session_info') {
+                if (data.sessionId && onSessionUpdate) {
+                  onSessionUpdate(data.title || 'Chat', data.sessionId);
+                }
+              } else if (data.type === 'search_result') {
                 latestSources = data.sources || [];
                 latestQuery = data.query || '';
                 latestAnswer = data.answer || '';
@@ -294,6 +308,9 @@ export function ChatInterface({
               } else if (data.done || data.type === 'done') {
                 if (data.sources && latestSources.length === 0) {
                   latestSources = data.sources;
+                }
+                if (data.sessionId && onSessionUpdate) {
+                  onSessionUpdate(data.title || 'Chat', data.sessionId);
                 }
               }
             } catch {
@@ -326,7 +343,7 @@ export function ChatInterface({
         onIdeasGenerated(extractedIdeas);
       }
       if (onSessionUpdate) {
-        onSessionUpdate(`Ideation: ${textToSend.slice(0, 24)}...`);
+        onSessionUpdate(latestQuery || 'Chat');
       }
     } catch (err) {
       console.error('Chat error:', err);
