@@ -20,6 +20,7 @@ import {
   AlertCircle,
   ExternalLink,
   RadioTower,
+  Radio,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -125,6 +126,9 @@ export function NewsIdeationForm({
   const [generatedIdeas, setGeneratedIdeas] = useState<IdeaContent[]>([]);
   const [selectedIdeaIds, setSelectedIdeaIds] = useState<string[]>([]);
   const [isDrafting, setIsDrafting] = useState(false);
+  const [searchSources, setSearchSources] = useState<Array<{ title: string; url: string; content: string; publishedDate?: string }>>([]);
+  const [searchQueryUsed, setSearchQueryUsed] = useState<string>('');
+  const [searchAnswer, setSearchAnswer] = useState<string>('');
 
   const togglePlatform = (platform: Platform) => {
     const isConnected = effectiveConnected.includes(platform);
@@ -194,9 +198,12 @@ export function NewsIdeationForm({
     if (selectedPlatforms.length === 0 || isGenerating) return;
 
     setIsGenerating(true);
-    setGenerationStep('🔍 Searching latest verified tech industry news with Tavily...');
+    setGenerationStep('🔍 Connecting to Tavily Live Search radar...');
     setGeneratedIdeas([]);
     setSelectedIdeaIds([]);
+    setSearchSources([]);
+    setSearchQueryUsed('');
+    setSearchAnswer('');
 
     const topicLabel = TOPIC_PRESETS.find((t) => t.value === newsFocus)?.label || 'All Tech News';
     const messagePrompt = customKeyword.trim()
@@ -204,10 +211,6 @@ export function NewsIdeationForm({
       : `Generate ${ideaCount} tech news post ideas for ${selectedPlatforms.join(', ')} covering ${topicLabel}.`;
 
     try {
-      setTimeout(() => {
-        setGenerationStep('💡 Formulating sarcastic hooks & high-converting angles...');
-      }, 2500);
-
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -237,9 +240,17 @@ export function NewsIdeationForm({
           for (const line of lines) {
             try {
               const data = JSON.parse(line.slice(6));
-              if (data.chunk) {
-                fullContent += data.chunk;
-              } else if (data.done) {
+              if (data.type === 'search_result') {
+                setSearchSources(data.sources || []);
+                setSearchQueryUsed(data.query || '');
+                setSearchAnswer(data.answer || '');
+                setGenerationStep(`💡 Synthesizing hooks from ${data.sources?.length || 5} live articles...`);
+              } else if (data.chunk || data.type === 'chunk') {
+                fullContent += (data.chunk || '');
+              } else if (data.done || data.type === 'done') {
+                if (data.sources && (!searchSources || searchSources.length === 0)) {
+                  setSearchSources(data.sources);
+                }
                 break;
               }
             } catch {
@@ -520,6 +531,70 @@ export function NewsIdeationForm({
           )}
         </CardContent>
       </Card>
+
+      {/* Verified Tavily Search Sources Output Section */}
+      {searchSources.length > 0 && (
+        <Card className="rounded-none border border-primary/50 bg-card" elevation="none">
+          <CardHeader className="p-3 border-b border-border bg-surface flex flex-row items-center justify-between space-y-0">
+            <div className="flex items-center gap-2">
+              <Radio className="h-4 w-4 text-primary animate-pulse" />
+              <CardTitle className="text-xs font-mono font-bold uppercase tracking-wider text-primary">
+                Tavily Live Search Verified
+              </CardTitle>
+            </div>
+            {searchQueryUsed && (
+              <Badge variant="outline" className="text-[10px] font-mono rounded-none border-border bg-background">
+                Query: &quot;{searchQueryUsed}&quot;
+              </Badge>
+            )}
+          </CardHeader>
+          <CardContent className="p-4 space-y-2.5 font-mono text-xs">
+            {searchAnswer && (
+              <div className="p-2.5 bg-surface border border-border/80 text-foreground leading-relaxed">
+                <span className="text-primary font-bold">News Brief: </span>
+                {searchAnswer}
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Verified Articles ({searchSources.length}):
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {searchSources.map((source, idx) => {
+                  let hostname = '';
+                  try {
+                    hostname = new URL(source.url).hostname.replace('www.', '');
+                  } catch {
+                    hostname = 'Source';
+                  }
+                  return (
+                    <a
+                      key={idx}
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2.5 bg-surface border border-border hover:border-primary transition-colors block group"
+                    >
+                      <div className="flex items-start justify-between gap-1.5 mb-1">
+                        <span className="text-[10px] font-mono text-primary font-bold uppercase">{hostname}</span>
+                        <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-primary shrink-0" />
+                      </div>
+                      <p className="font-display font-semibold text-xs text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                        {source.title}
+                      </p>
+                      {source.publishedDate && (
+                        <p className="text-[9px] text-muted-foreground mt-1">
+                          Published: {source.publishedDate}
+                        </p>
+                      )}
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Generated Ideas Output Section */}
       {generatedIdeas.length > 0 && (

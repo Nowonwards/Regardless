@@ -20,6 +20,7 @@ import {
   ExternalLink,
   ChevronRight,
   AlertCircle,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,11 +28,22 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Platform, IdeaContent } from '@/types';
 import { cn } from '@/lib/utils';
 
+export interface TavilySource {
+  title: string;
+  url: string;
+  content: string;
+  publishedDate?: string;
+  score?: number;
+}
+
 interface ChatMessageItem {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
   ideas?: IdeaContent[];
+  searchSources?: TavilySource[];
+  searchQuery?: string;
+  searchAnswer?: string;
   createdAt?: string | Date;
 }
 
@@ -91,6 +103,8 @@ export function ChatInterface({
   const [messages, setMessages] = useState<ChatMessageItem[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
+  const [activeSearchSources, setActiveSearchSources] = useState<TavilySource[]>([]);
+  const [activeSearchQuery, setActiveSearchQuery] = useState<string>('');
 
   // Selected ideas for drafting
   const [selectedIdeaIds, setSelectedIdeaIds] = useState<string[]>([]);
@@ -104,7 +118,7 @@ export function ChatInterface({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, streamingContent]);
+  }, [messages, streamingContent, activeSearchSources]);
 
   // Load session messages from DB
   useEffect(() => {
@@ -119,11 +133,15 @@ export function ChatInterface({
           if (current && current.messages && current.messages.length > 0) {
             const mapped: ChatMessageItem[] = current.messages.map((m: any) => {
               const parsedIdeas = m.role === 'assistant' ? extractIdeasFromContent(m.content) : [];
+              const meta = (m.metadata as any) || {};
               return {
                 id: m.id,
                 role: m.role,
                 content: cleanAssistantContent(m.content),
                 ideas: parsedIdeas,
+                searchSources: meta.searchSources || [],
+                searchQuery: meta.searchQuery,
+                searchAnswer: meta.searchAnswer,
                 createdAt: m.createdAt,
               };
             });
@@ -141,7 +159,7 @@ export function ChatInterface({
           id: 'welcome',
           role: 'assistant',
           content:
-            "👋 Welcome to Regardless Ideation Studio. Ask me to brainstorm tech news hooks, propose multi-slide carousels, or explore controversial industry angles for your channels.\n\nType your topic below or click a starter suggestion.",
+            "👋 Welcome to Regardless Ideation Studio. Ask me to brainstorm tech news hooks, propose multi-slide carousels, or explore controversial industry angles for your channels.\n\nLive Tech News Search via Tavily is active to verify current-event facts and breaking announcements.",
         },
       ]);
     };
@@ -154,7 +172,8 @@ export function ChatInterface({
     if (!text) return [];
     const ideas: IdeaContent[] = [];
 
-    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/;
+    const jsonMatch = text.match(jsonBlockRegex);
     if (jsonMatch && jsonMatch[1]) {
       try {
         const parsed = JSON.parse(jsonMatch[1].trim());
@@ -221,6 +240,12 @@ export function ChatInterface({
     setMessages((prev) => [...prev, userMessage]);
     setIsGenerating(true);
     setStreamingContent('');
+    setActiveSearchSources([]);
+    setActiveSearchQuery('');
+
+    let latestSources: TavilySource[] = [];
+    let latestQuery = '';
+    let latestAnswer = '';
 
     try {
       const response = await fetch('/api/chat', {
@@ -252,9 +277,19 @@ export function ChatInterface({
           for (const line of lines) {
             try {
               const data = JSON.parse(line.slice(6));
-              if (data.chunk) {
-                fullContent += data.chunk;
+              if (data.type === 'search_result') {
+                latestSources = data.sources || [];
+                latestQuery = data.query || '';
+                latestAnswer = data.answer || '';
+                setActiveSearchSources(latestSources);
+                setActiveSearchQuery(latestQuery);
+              } else if (data.chunk || data.type === 'chunk') {
+                fullContent += (data.chunk || '');
                 setStreamingContent(fullContent);
+              } else if (data.done || data.type === 'done') {
+                if (data.sources && latestSources.length === 0) {
+                  latestSources = data.sources;
+                }
               }
             } catch {
               // Ignore parse errors on stream boundary
@@ -271,11 +306,16 @@ export function ChatInterface({
         role: 'assistant',
         content: cleaned,
         ideas: extractedIdeas,
+        searchSources: latestSources,
+        searchQuery: latestQuery,
+        searchAnswer: latestAnswer,
         createdAt: new Date(),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
       setStreamingContent('');
+      setActiveSearchSources([]);
+      setActiveSearchQuery('');
 
       if (extractedIdeas.length > 0 && onIdeasGenerated) {
         onIdeasGenerated(extractedIdeas);
@@ -290,12 +330,14 @@ export function ChatInterface({
         {
           id: `error-${Date.now()}`,
           role: 'assistant',
-          content: 'Sorry, I encountered an error while processing that request. Please try again.',
+          content: 'Sorry, I encountered an error while processing that request. Please check your network or try again.',
         },
       ]);
     } finally {
       setIsGenerating(false);
       setStreamingContent('');
+      setActiveSearchSources([]);
+      setActiveSearchQuery('');
     }
   };
 
@@ -383,7 +425,7 @@ export function ChatInterface({
           )}
         >
           <Radio className={cn('h-3.5 w-3.5', searchNews && 'animate-pulse text-primary')} />
-          <span>Live Tech News Search: {searchNews ? 'ON' : 'OFF'}</span>
+          <span>Live Tech News Search (Tavily): {searchNews ? 'ON' : 'OFF'}</span>
         </button>
       </div>
 
@@ -414,7 +456,7 @@ export function ChatInterface({
               {/* Message Bubble */}
               <div
                 className={cn(
-                  'max-w-[90%] md:max-w-[80%] rounded-none p-4 text-sm leading-relaxed border',
+                  'max-w-[90%] md:max-w-[85%] rounded-none p-4 text-sm leading-relaxed border',
                   isUser
                     ? 'bg-surface border-primary/50 text-foreground'
                     : 'bg-card border-border text-foreground'
@@ -423,6 +465,65 @@ export function ChatInterface({
                 <div className="whitespace-pre-wrap font-sans text-[13px] md:text-sm">
                   {message.content}
                 </div>
+
+                {/* Verified Tavily Live News Sources Display */}
+                {message.searchSources && message.searchSources.length > 0 && (
+                  <div className="mt-3.5 mb-2 p-3 rounded-none border border-primary/40 bg-surface/70 space-y-2.5 font-mono">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/80 pb-2">
+                      <div className="flex items-center gap-1.5 text-xs text-primary font-bold">
+                        <Radio className="h-3.5 w-3.5 text-primary animate-pulse" />
+                        <span>VERIFIED WITH TAVILY LIVE TECH SEARCH</span>
+                      </div>
+                      {message.searchQuery && (
+                        <span className="text-[10px] text-muted-foreground bg-background px-2 py-0.5 border border-border">
+                          Query: &quot;{message.searchQuery}&quot;
+                        </span>
+                      )}
+                    </div>
+
+                    {message.searchAnswer && (
+                      <p className="text-xs text-foreground/90 leading-relaxed bg-background/60 p-2 border border-border/50">
+                        <strong className="text-primary font-bold">News Brief:</strong> {message.searchAnswer}
+                      </p>
+                    )}
+
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Live News Sources Analyzed ({message.searchSources.length}):
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        {message.searchSources.map((source, sIdx) => {
+                          let hostname = '';
+                          try {
+                            hostname = new URL(source.url).hostname.replace('www.', '');
+                          } catch {
+                            hostname = 'Source';
+                          }
+                          return (
+                            <a
+                              key={sIdx}
+                              href={source.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-start justify-between gap-2 p-2 bg-background border border-border hover:border-primary/60 transition-colors text-xs group"
+                            >
+                              <div className="space-y-0.5 min-w-0">
+                                <p className="font-semibold text-foreground group-hover:text-primary transition-colors truncate text-[11px]">
+                                  {source.title}
+                                </p>
+                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                                  <span className="text-primary font-mono">{hostname}</span>
+                                  {source.publishedDate && <span>• {source.publishedDate}</span>}
+                                </div>
+                              </div>
+                              <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-primary shrink-0 mt-0.5" />
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Embedded In-Stream Post Ideas Group */}
                 {message.ideas && message.ideas.length > 0 && (
@@ -573,17 +674,20 @@ export function ChatInterface({
         {isGenerating && streamingContent && (
           <div className="flex flex-col items-start">
             <div className="flex items-center gap-2 mb-1 px-1">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-primary">
-                Regardless AI (Thinking & Generating...)
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                Regardless AI (Grounded with Tavily News)
               </span>
             </div>
-            <div className="max-w-[90%] md:max-w-[80%] rounded-none p-4 text-sm bg-card border border-primary/50 text-foreground">
+            <div className="max-w-[90%] md:max-w-[85%] rounded-none p-4 text-sm bg-card border border-primary/50 text-foreground">
+              {activeSearchSources.length > 0 && (
+                <div className="mb-3 p-2 bg-surface border border-border text-xs font-mono text-muted-foreground flex items-center gap-2">
+                  <Radio className="h-3.5 w-3.5 text-primary animate-pulse" />
+                  <span>Found {activeSearchSources.length} live articles for &quot;{activeSearchQuery}&quot;</span>
+                </div>
+              )}
               <div className="whitespace-pre-wrap font-sans text-sm">
                 {cleanAssistantContent(streamingContent)}
-              </div>
-              <div className="flex items-center gap-2 mt-3 text-xs font-mono text-primary">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                <span>Formulating angles & structuring ideas...</span>
               </div>
             </div>
           </div>
@@ -592,7 +696,11 @@ export function ChatInterface({
         {isGenerating && !streamingContent && (
           <div className="flex items-center gap-2 p-3 rounded-none bg-surface border border-border text-xs font-mono text-muted-foreground w-fit">
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            <span>Connecting to live tech news radar & preparing ideas...</span>
+            <span>
+              {activeSearchQuery
+                ? `Searching Tavily for "${activeSearchQuery}"...`
+                : 'Querying Tavily for verified real-time tech news...'}
+            </span>
           </div>
         )}
 

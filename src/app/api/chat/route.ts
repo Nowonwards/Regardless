@@ -46,9 +46,13 @@ export async function POST(request: NextRequest) {
 
     // Perform live search for tech news for the ideation query if enabled or needed
     let searchResultsText: string | undefined = undefined;
+    let searchResultData: any = null;
+    let searchQueryUsed: string | null = null;
+
     if (process.env.TAVILY_API_KEY && (searchNews || isSearchQueryNeeded(message))) {
       try {
         const searchQuery = buildTechNewsSearchQuery(message);
+        searchQueryUsed = searchQuery;
         const searchResult = await executeTavilySearch(searchQuery, {
           sessionId,
           topic: 'news',
@@ -56,6 +60,7 @@ export async function POST(request: NextRequest) {
         });
         if (searchResult.results && searchResult.results.length > 0) {
           searchResultsText = formatSearchResultsForPrompt(searchResult);
+          searchResultData = searchResult;
         }
       } catch (searchError) {
         console.warn('Tavily search error in chat route (continuing without live search):', searchError);
@@ -76,12 +81,24 @@ export async function POST(request: NextRequest) {
         let fullContent = '';
 
         try {
+          // Emit search results immediately if live search was executed
+          if (searchResultData) {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({
+                type: 'search_result',
+                query: searchQueryUsed,
+                sources: searchResultData.results,
+                answer: searchResultData.answer,
+              })}\n\n`)
+            );
+          }
+
           await generateStreamCompletion(
             prompt,
             { temperature: 0.8 },
             (chunk) => {
               fullContent += chunk;
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ chunk })}\n\n`));
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', chunk })}\n\n`));
             }
           );
 
@@ -98,10 +115,15 @@ export async function POST(request: NextRequest) {
               sessionId,
               role: 'assistant',
               content: fullContent,
+              metadata: searchResultData ? {
+                searchQuery: searchQueryUsed,
+                searchSources: searchResultData.results,
+                searchAnswer: searchResultData.answer,
+              } : undefined,
             },
           });
 
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done', done: true, sources: searchResultData?.results })}\n\n`));
           controller.close();
         } catch (error) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: error instanceof Error ? error.message : 'Generation failed' })}\n\n`));

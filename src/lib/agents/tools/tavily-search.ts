@@ -193,36 +193,27 @@ export const tavilySearchTool = tool(
  * Builds an optimal tech news query based on the user's message
  */
 export function buildTechNewsSearchQuery(message: string): string {
-  const clean = message.trim();
+  let clean = message.trim();
+
+  // Strip emojis and non-alphanumeric symbols from beginning
+  clean = clean.replace(/^[^a-zA-Z0-9"'`]+/, '').trim();
+
+  // Strip conversational filler prefixes
+  clean = clean
+    .replace(/^(can you |please |could you )?(generate|give me|propose|brainstorm|create|suggest|come up with|find|scan)\s+(\d+\s+)?(post\s+)?(ideas?\s+)?(on|for|about)?/i, '')
+    .replace(/^(covering|focusing on)\s+/i, '')
+    .trim();
+
+  if (!clean || clean.length < 5) {
+    return 'latest breaking tech news AI models developer tools this week';
+  }
+
   const lower = clean.toLowerCase();
-
-  // If the user mentions specific topics, focus on those topics
-  const topics = [
-    'ai', 'artificial intelligence', 'llm', 'claude', 'anthropic', 'openai', 'chatgpt',
-    'deepseek', 'meta', 'google', 'gemini', 'gemma', 'nvidia', 'apple', 'microsoft',
-    'python', 'javascript', 'typescript', 'rust', 'react', 'nextjs', 'docker', 'kubernetes',
-    'crypto', 'bitcoin', 'fintech', 'venture capital', 'yc', 'y combinator', 'layoffs',
-    'startup', 'funding', 'developer tools', 'github', 'cursor', 'copilot'
-  ];
-
-  const matched = topics.filter((t) => lower.includes(t));
-  if (matched.length > 0) {
-    return `${matched.slice(0, 3).join(' ')} tech news latest developments`;
+  if (!lower.includes('news') && !lower.includes('latest') && !lower.includes('update') && !lower.includes('today')) {
+    return `${clean} latest tech news`;
   }
 
-  // If query is short or generic, fetch general tech industry headlines
-  if (
-    lower.includes('idea') ||
-    lower.includes('post') ||
-    lower.includes('suggest') ||
-    lower.includes('what happened') ||
-    lower.includes('tech') ||
-    clean.length < 25
-  ) {
-    return 'latest tech industry news product launches AI models developer tools this week';
-  }
-
-  return `${clean} tech news`;
+  return clean;
 }
 
 /**
