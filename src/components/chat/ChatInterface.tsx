@@ -442,11 +442,11 @@ export function ChatInterface({
           className={cn(
             'h-7 px-2.5 rounded-none border text-[11px] font-mono inline-flex items-center gap-1.5 transition-all',
             searchNews
-              ? 'bg-surface border-primary text-primary font-bold'
-              : 'bg-card border-border text-muted-foreground hover:text-foreground'
+              ? 'bg-foreground text-primary border-foreground dark:bg-surface dark:border-primary dark:text-primary font-bold'
+              : 'bg-surface border-border text-muted-foreground hover:text-foreground'
           )}
         >
-          <Radio className={cn('h-3.5 w-3.5', searchNews && 'animate-pulse text-primary')} />
+          <Radio className={cn('h-3.5 w-3.5', searchNews ? 'animate-pulse text-primary' : 'text-muted-foreground')} />
           <span>Live Tech News Search (Tavily): {searchNews ? 'ON' : 'OFF'}</span>
         </button>
       </div>
@@ -490,10 +490,10 @@ export function ChatInterface({
 
                 {/* Verified Tavily Live News Sources Display */}
                 {message.searchSources && message.searchSources.length > 0 && (
-                  <div className="mt-3.5 mb-2 p-3 rounded-none border border-primary/40 bg-surface/70 space-y-2.5 font-mono">
+                  <div className="mt-3.5 mb-2 p-3 rounded-none border border-border dark:border-primary/40 bg-surface/70 space-y-2.5 font-mono">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/80 pb-2">
-                      <div className="flex items-center gap-1.5 text-xs text-primary font-bold">
-                        <Radio className="h-3.5 w-3.5 text-primary animate-pulse" />
+                      <div className="flex items-center gap-1.5 text-xs text-foreground dark:text-primary font-bold">
+                        <Radio className="h-3.5 w-3.5 text-foreground dark:text-primary animate-pulse" />
                         <span>VERIFIED WITH TAVILY LIVE TECH SEARCH</span>
                       </div>
                       {message.searchQuery && (
@@ -505,7 +505,7 @@ export function ChatInterface({
 
                     {message.searchAnswer && (
                       <p className="text-xs text-foreground/90 leading-relaxed bg-background/60 p-2 border border-border/50">
-                        <strong className="text-primary font-bold">News Brief:</strong> {message.searchAnswer}
+                        <strong className="text-foreground dark:text-primary font-bold">News Brief:</strong> {message.searchAnswer}
                       </p>
                     )}
 
@@ -527,18 +527,18 @@ export function ChatInterface({
                               href={source.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-start justify-between gap-2 p-2 bg-background border border-border hover:border-primary/60 transition-colors text-xs group"
+                              className="flex items-start justify-between gap-2 p-2 bg-background border border-border hover:border-foreground dark:hover:border-primary/60 transition-colors text-xs group"
                             >
                               <div className="space-y-0.5 min-w-0">
-                                <p className="font-semibold text-foreground group-hover:text-primary transition-colors truncate text-[11px]">
+                                <p className="font-semibold text-foreground group-hover:text-foreground dark:group-hover:text-primary transition-colors truncate text-[11px]">
                                   {source.title}
                                 </p>
                                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                                  <span className="text-primary font-mono">{hostname}</span>
+                                  <span className="text-foreground/80 dark:text-primary font-mono font-semibold">{hostname}</span>
                                   {source.publishedDate && <span>• {source.publishedDate}</span>}
                                 </div>
                               </div>
-                              <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-primary shrink-0 mt-0.5" />
+                              <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-foreground dark:group-hover:text-primary shrink-0 mt-0.5" />
                             </a>
                           );
                         })}

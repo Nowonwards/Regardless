@@ -163,12 +163,12 @@ export default function ChatPage() {
         {activeTab === 'chat' && (
           <div className="flex items-center gap-2 shrink-0">
             <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+              <Clock className="h-3.5 w-3.5 text-foreground dark:text-primary shrink-0" />
               <Select value={sessionId} onValueChange={(val) => setSessionId(val)}>
                 <SelectTrigger className="h-8 min-w-[220px] max-w-[320px] rounded-none border-border bg-background text-[11px] font-mono">
                   <div className="flex items-center gap-1.5 truncate">
                     {sessionId === 'new' || !currentSession ? (
-                      <span className="font-semibold text-primary">New Chat (Draft)</span>
+                      <span className="font-semibold text-foreground dark:text-primary">New Chat (Draft)</span>
                     ) : (
                       <div className="flex items-center gap-1.5 truncate">
                         <span className="font-semibold text-foreground truncate">
@@ -183,7 +183,7 @@ export default function ChatPage() {
                 </SelectTrigger>
                 <SelectContent className="rounded-none border-border bg-card max-h-80 w-[340px]">
                   <SelectItem value="new" className="text-[11px] font-mono cursor-pointer py-2 border-b border-border/50">
-                    <div className="flex items-center justify-between gap-2 w-full text-primary">
+                    <div className="flex items-center justify-between gap-2 w-full text-foreground dark:text-primary">
                       <span className="font-bold flex items-center gap-1">
                         <Plus className="h-3 w-3" />
                         Start New Chat
@@ -220,7 +220,7 @@ export default function ChatPage() {
               onClick={handleCreateNewChat}
               className="h-8 px-2.5 rounded-none border-border bg-surface hover:border-primary text-[11px] font-mono font-semibold gap-1 shrink-0"
             >
-              <Plus className="h-3.5 w-3.5 text-primary" />
+              <Plus className="h-3.5 w-3.5 text-foreground dark:text-primary" />
               <span>New Chat</span>
             </Button>
           </div>
