@@ -158,7 +158,7 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
         );
       case 'POST_SCHEDULED':
         return (
-          <div className="p-1.5 rounded-none border border-primary bg-surface text-primary shrink-0">
+          <div className="p-1.5 rounded-none border border-border dark:border-primary bg-foreground dark:bg-surface text-primary shrink-0">
             <CalendarIcon className="h-4 w-4" />
           </div>
         );

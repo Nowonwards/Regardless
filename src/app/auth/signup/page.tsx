@@ -64,7 +64,7 @@ export default function SignUpPage() {
         <section className="hidden min-h-[560px] rounded-none border border-border bg-card p-8 lg:flex lg:flex-col lg:justify-between">
           <div>
             <div className="mb-8 inline-flex items-center gap-2 rounded-none border border-border bg-surface px-3 py-1.5 text-xs font-mono text-muted-foreground">
-              <RadioTower className="h-3.5 w-3.5 text-primary" />
+              <RadioTower className="h-3.5 w-3.5 text-foreground dark:text-primary" />
               New publishing desk
             </div>
             <h1 className="max-w-xl font-display text-5xl font-bold leading-[0.95] tracking-tight">

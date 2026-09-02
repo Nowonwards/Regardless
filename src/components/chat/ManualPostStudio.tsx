@@ -287,7 +287,7 @@ export function ManualPostStudio() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
           <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-none border border-border bg-surface text-xs font-mono text-muted-foreground mb-1">
-            <Layers className="h-3.5 w-3.5 text-primary" />
+            <Layers className="h-3.5 w-3.5 text-foreground dark:text-primary" />
             <span>Manual Production Studio</span>
           </div>
           <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">Create Post from Scratch</h2>
@@ -296,7 +296,7 @@ export function ManualPostStudio() {
           </p>
         </div>
 
-        <Badge variant="outline" className="text-xs font-mono h-7 px-3 rounded-none border border-primary text-primary font-bold self-start sm:self-auto">
+        <Badge variant="outline" className="text-xs font-mono h-7 px-3 rounded-none border-border dark:border-primary text-foreground dark:text-primary font-bold self-start sm:self-auto">
           Skip Ideation Flow
         </Badge>
       </div>
@@ -333,12 +333,12 @@ export function ManualPostStudio() {
                   className={cn(
                     'p-3.5 rounded-none border text-left flex items-center justify-between transition-all',
                     isSelected
-                      ? 'bg-surface border-primary ring-1 ring-primary'
-                      : 'bg-card border-border hover:border-primary/60 text-muted-foreground hover:text-foreground'
+                      ? 'bg-surface border-border dark:border-primary ring-1 ring-border dark:ring-primary'
+                      : 'bg-card border-border hover:border-foreground/50 dark:hover:border-primary/60 text-muted-foreground hover:text-foreground'
                   )}
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className={cn('p-2 rounded-none border border-border bg-background', isSelected && 'text-primary border-primary')}>
+                    <div className={cn('p-2 rounded-none border border-border bg-background', isSelected && 'text-foreground dark:text-primary border-foreground dark:border-primary')}>
                       {cfg.icon}
                     </div>
                     <div>
@@ -346,7 +346,7 @@ export function ManualPostStudio() {
                       <p className="text-[10px] font-mono text-muted-foreground">{cfg.formatLabel}</p>
                     </div>
                   </div>
-                  {isSelected && <Check className="h-4 w-4 text-primary" />}
+                  {isSelected && <Check className="h-4 w-4 text-foreground dark:text-primary" />}
                 </button>
               );
             })}
@@ -474,7 +474,7 @@ export function ManualPostStudio() {
                           onClick={() => fileInputRefs.current[slide.id]?.click()}
                         >
                           {uploadingSlideId === slide.id ? (
-                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                            <Loader2 className="h-6 w-6 animate-spin text-foreground dark:text-primary" />
                           ) : (
                             <>
                               <Upload className="h-6 w-6 text-muted-foreground mb-1.5" />
@@ -622,7 +622,7 @@ export function ManualPostStudio() {
               className={cn(
                 'p-3.5 rounded-none border text-left transition-all',
                 publishMode === 'SCHEDULED'
-                  ? 'bg-surface border-primary ring-1 ring-primary'
+                  ? 'bg-surface border-border dark:border-primary ring-1 ring-border dark:ring-primary'
                   : 'bg-card border-border hover:border-border/80 text-muted-foreground'
               )}
             >
@@ -664,7 +664,7 @@ export function ManualPostStudio() {
                   variant="outline"
                   size="sm"
                   onClick={() => applyQuickPreset(1, 9, 0)}
-                  className="h-8 text-xs font-mono rounded-none border-border bg-background hover:border-primary"
+                  className="h-8 text-xs font-mono rounded-none border-border bg-background hover:border-foreground/50 dark:hover:border-primary"
                 >
                   Tomorrow 9:00 AM
                 </Button>
@@ -673,7 +673,7 @@ export function ManualPostStudio() {
                   variant="outline"
                   size="sm"
                   onClick={() => applyQuickPreset(1, 18, 0)}
-                  className="h-8 text-xs font-mono rounded-none border-border bg-background hover:border-primary"
+                  className="h-8 text-xs font-mono rounded-none border-border bg-background hover:border-foreground/50 dark:hover:border-primary"
                 >
                   Tomorrow 6:00 PM
                 </Button>
@@ -682,7 +682,7 @@ export function ManualPostStudio() {
                   variant="outline"
                   size="sm"
                   onClick={() => applyQuickPreset(2, 11, 30)}
-                  className="h-8 text-xs font-mono rounded-none border-border bg-background hover:border-primary"
+                  className="h-8 text-xs font-mono rounded-none border-border bg-background hover:border-foreground/50 dark:hover:border-primary"
                 >
                   In 2 Days (11:30 AM)
                 </Button>
@@ -700,7 +700,7 @@ export function ManualPostStudio() {
 
                 <div className="space-y-4">
                   <Label className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 text-primary" />
+                    <Clock className="h-3.5 w-3.5 text-foreground dark:text-primary" />
                     Select Publishing Time
                   </Label>
 

@@ -312,8 +312,8 @@ export function NewsIdeationForm({
       {/* Studio Header */}
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-none border border-border bg-surface text-primary">
-            <RadioTower className="h-5 w-5 text-primary" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-none border border-border bg-surface text-foreground dark:text-primary">
+            <RadioTower className="h-5 w-5 text-foreground dark:text-primary" />
           </div>
           <div>
             <h2 className="font-display text-xl font-bold tracking-tight">Tech News Ideation Studio</h2>
@@ -328,7 +328,7 @@ export function NewsIdeationForm({
       <Card className="rounded-none border border-border bg-card" elevation="none">
         <CardHeader className="p-4 border-b border-border bg-surface">
           <CardTitle className="text-sm font-mono font-bold uppercase tracking-wider flex items-center gap-2 text-foreground">
-            <Sliders className="h-4 w-4 text-primary" />
+            <Sliders className="h-4 w-4 text-foreground dark:text-primary" />
             Ideation Parameters
           </CardTitle>
           <CardDescription className="text-xs font-mono text-muted-foreground">
@@ -350,7 +350,7 @@ export function NewsIdeationForm({
 
             {isLoadingPlatforms ? (
               <div className="flex items-center gap-2 text-xs text-muted-foreground py-2 font-mono">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <Loader2 className="h-4 w-4 animate-spin text-foreground dark:text-primary" />
                 <span>Checking connected platforms...</span>
               </div>
             ) : visiblePlatforms.length === 0 ? (
@@ -431,7 +431,7 @@ export function NewsIdeationForm({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="news-focus" className="text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <Globe className="h-3.5 w-3.5 text-primary" />
+                <Globe className="h-3.5 w-3.5 text-foreground dark:text-primary" />
                 Industry Focus
               </Label>
               <Select value={newsFocus} onValueChange={setNewsFocus} disabled={isGenerating}>
@@ -450,7 +450,7 @@ export function NewsIdeationForm({
 
             <div className="space-y-2">
               <Label htmlFor="idea-count" className="text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <Layers className="h-3.5 w-3.5 text-primary" />
+                <Layers className="h-3.5 w-3.5 text-foreground dark:text-primary" />
                 Number of Ideas
               </Label>
               <Select value={ideaCount} onValueChange={setIdeaCount} disabled={isGenerating}>
@@ -489,7 +489,7 @@ export function NewsIdeationForm({
           {/* Brand Voice Lock */}
           <div className="flex items-center justify-between gap-3 rounded-none border border-border bg-surface p-3.5 text-xs font-mono">
             <div className="flex items-center gap-2 text-muted-foreground">
-              <TrendingUp className="h-4 w-4 text-primary" />
+              <TrendingUp className="h-4 w-4 text-foreground dark:text-primary" />
               <span>Voice & Tone: <strong className="text-foreground">Sarcastic, Opinionated, No-Filter (Coding & Finance Course)</strong></span>
             </div>
             <Badge variant="outline" className="shrink-0 bg-background text-[10px] rounded-none font-mono font-bold">Enforced</Badge>
@@ -522,8 +522,8 @@ export function NewsIdeationForm({
 
           {/* Progress / Step Feedback */}
           {isGenerating && (
-            <div className="rounded-none border border-primary bg-surface p-4 text-center">
-              <p className="text-xs font-mono font-bold text-primary flex items-center justify-center gap-2">
+            <div className="rounded-none border border-border dark:border-primary bg-surface p-4 text-center">
+              <p className="text-xs font-mono font-bold text-foreground dark:text-primary flex items-center justify-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {generationStep || 'Scanning tech news & generating ideas...'}
               </p>
@@ -534,11 +534,11 @@ export function NewsIdeationForm({
 
       {/* Verified Tavily Search Sources Output Section */}
       {searchSources.length > 0 && (
-        <Card className="rounded-none border border-primary/50 bg-card" elevation="none">
+        <Card className="rounded-none border border-border dark:border-primary/50 bg-card" elevation="none">
           <CardHeader className="p-3 border-b border-border bg-surface flex flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
-              <Radio className="h-4 w-4 text-primary animate-pulse" />
-              <CardTitle className="text-xs font-mono font-bold uppercase tracking-wider text-primary">
+              <Radio className="h-4 w-4 text-foreground dark:text-primary animate-pulse" />
+              <CardTitle className="text-xs font-mono font-bold uppercase tracking-wider text-foreground dark:text-primary">
                 Tavily Live Search Verified
               </CardTitle>
             </div>
@@ -551,7 +551,7 @@ export function NewsIdeationForm({
           <CardContent className="p-4 space-y-2.5 font-mono text-xs">
             {searchAnswer && (
               <div className="p-2.5 bg-surface border border-border/80 text-foreground leading-relaxed">
-                <span className="text-primary font-bold">News Brief: </span>
+                <span className="text-foreground dark:text-primary font-bold">News Brief: </span>
                 {searchAnswer}
               </div>
             )}
@@ -573,11 +573,11 @@ export function NewsIdeationForm({
                       href={source.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2.5 bg-surface border border-border hover:border-primary transition-colors block group"
+                      className="p-2.5 bg-surface border border-border hover:border-foreground dark:hover:border-primary transition-colors block group"
                     >
                       <div className="flex items-start justify-between gap-1.5 mb-1">
-                        <span className="text-[10px] font-mono text-primary font-bold uppercase">{hostname}</span>
-                        <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-primary shrink-0" />
+                        <span className="text-[10px] font-mono text-foreground/80 dark:text-primary font-bold uppercase">{hostname}</span>
+                        <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-foreground dark:group-hover:text-primary shrink-0" />
                       </div>
                       <p className="font-display font-semibold text-xs text-foreground group-hover:text-primary transition-colors line-clamp-2">
                         {source.title}
@@ -602,7 +602,7 @@ export function NewsIdeationForm({
           <CardHeader className="p-4 border-b border-border bg-surface flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle className="text-sm font-mono font-bold uppercase tracking-wider flex items-center gap-2 text-foreground">
-                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <CheckCircle2 className="h-4 w-4 text-foreground dark:text-primary" />
                 Generated Ideas ({generatedIdeas.length})
               </CardTitle>
               <CardDescription className="text-xs font-mono text-muted-foreground">
@@ -655,7 +655,7 @@ export function NewsIdeationForm({
                   className={cn(
                     'p-3.5 rounded-none border transition-all',
                     isSelected
-                      ? 'bg-surface border-primary ring-1 ring-primary'
+                      ? 'bg-surface border-border dark:border-primary ring-1 ring-border dark:ring-primary'
                       : 'bg-background border-border hover:border-border/80'
                   )}
                 >
@@ -688,7 +688,7 @@ export function NewsIdeationForm({
 
                       {idea.hook && (
                         <p className="text-xs font-mono text-muted-foreground">
-                          <span className="text-primary font-bold">Hook:</span> {idea.hook}
+                          <span className="text-foreground dark:text-primary font-bold">Hook:</span> {idea.hook}
                         </p>
                       )}
 
@@ -719,7 +719,7 @@ export function NewsIdeationForm({
         <Card className="rounded-none border border-border bg-card/60" elevation="none">
           <CardHeader className="p-3 border-b border-border bg-surface">
             <CardTitle className="text-xs font-mono font-bold text-muted-foreground flex items-center gap-2 uppercase tracking-wider">
-              <Globe className="h-4 w-4 text-primary" />
+              <Globe className="h-4 w-4 text-foreground dark:text-primary" />
               Live News Context & Strategist Take
             </CardTitle>
           </CardHeader>

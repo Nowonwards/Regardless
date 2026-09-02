@@ -358,7 +358,7 @@ export function HistoryView({
                         className="h-7 text-xs gap-1 rounded-none border border-border font-mono"
                         onClick={() => handleCopyCaption(selectedPost.content.caption)}
                       >
-                        {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+                        {copied ? <Check className="h-3 w-3 text-foreground dark:text-primary" /> : <Copy className="h-3 w-3" />}
                         {copied ? 'Copied' : 'Copy'}
                       </Button>
                     </div>

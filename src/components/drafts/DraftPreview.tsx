@@ -507,7 +507,7 @@ export function DraftPreview({
           {hashtags.map((tag, idx) => (
             <span
               key={idx}
-              className="px-2 py-0.5 text-xs font-mono bg-surface text-primary border border-border rounded-none cursor-pointer hover:border-primary"
+              className="px-2 py-0.5 text-xs font-mono bg-surface text-foreground dark:text-primary border border-border rounded-none cursor-pointer hover:border-foreground dark:hover:border-primary"
               onClick={() => copyToClipboard(tag, `hashtag-${idx}`)}
             >
               {copiedField === `hashtag-${idx}` ? <Check className="inline h-3 w-3 ml-1" /> : tag}
@@ -519,9 +519,9 @@ export function DraftPreview({
       <div className="p-4 border-t flex items-center justify-between text-sm text-muted-foreground">
         <span>{format === 'text' ? 'Text Post' : 'Image Post'}</span>
         <div className="flex gap-4">
-          <button className="flex items-center gap-1 hover:text-primary">Like</button>
-          <button className="flex items-center gap-1 hover:text-primary">Comment</button>
-          <button className="flex items-center gap-1 hover:text-primary">Share</button>
+          <button className="flex items-center gap-1 hover:text-foreground dark:hover:text-primary">Like</button>
+          <button className="flex items-center gap-1 hover:text-foreground dark:hover:text-primary">Comment</button>
+          <button className="flex items-center gap-1 hover:text-foreground dark:hover:text-primary">Share</button>
         </div>
       </div>
     </div>
@@ -557,7 +557,7 @@ export function DraftPreview({
               variant="outline"
               onClick={() => handleGenerateImage(slides[activeSlide]?.id, undefined, false, 'ai')}
               disabled={generatingSlideId !== null}
-              className="text-xs gap-1.5 flex-1 border-primary/30 text-primary hover:bg-primary/10"
+              className="text-xs gap-1.5 flex-1 border-border dark:border-primary/30 text-foreground dark:text-primary hover:bg-muted dark:hover:bg-primary/10"
             >
               {generatingSlideId === slides[activeSlide]?.id ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -779,7 +779,7 @@ export function DraftPreview({
                                 onClick={() => setActiveSlide(idx)}
                                 className={cn(
                                   'text-xs h-7 px-2',
-                                  activeSlide === idx && 'bg-primary/10 text-primary'
+                                  activeSlide === idx && 'bg-foreground text-primary dark:bg-primary/10 dark:text-primary'
                                 )}
                               >
                                 {activeSlide === idx ? 'Viewing' : 'Select'}
@@ -843,7 +843,7 @@ export function DraftPreview({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b">
                   <div>
                     <h3 className="text-sm font-semibold flex items-center gap-1.5">
-                      <MessageSquare className="h-4 w-4 text-primary" />
+                      <MessageSquare className="h-4 w-4 text-foreground dark:text-primary" />
                       Caption & Hashtags
                     </h3>
                     <p className="text-xs text-muted-foreground">
@@ -861,7 +861,7 @@ export function DraftPreview({
                       }}
                       className="gap-1.5 text-xs font-medium h-8"
                     >
-                      <Edit3 className="h-3.5 w-3.5 text-primary" />
+                      <Edit3 className="h-3.5 w-3.5 text-foreground dark:text-primary" />
                       {isEditingCaption ? 'Cancel Edit' : 'Edit Caption'}
                     </Button>
 
@@ -873,12 +873,12 @@ export function DraftPreview({
                         if (isEditingCaption) setIsEditingCaption(false);
                       }}
                       disabled={isRegeneratingCaption}
-                      className="gap-1.5 text-xs font-medium h-8 border-primary/30 text-primary hover:bg-primary/10"
+                      className="gap-1.5 text-xs font-medium h-8 border-border dark:border-primary/30 text-foreground dark:text-primary hover:bg-muted dark:hover:bg-primary/10"
                     >
                       {isRegeneratingCaption ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
-                        <Sparkles className="h-3.5 w-3.5 text-primary" />
+                        <Sparkles className="h-3.5 w-3.5 text-foreground dark:text-primary" />
                       )}
                       Regenerate with AI
                     </Button>
@@ -902,10 +902,10 @@ export function DraftPreview({
 
                 {/* AI Regenerate Prompt Bar */}
                 {showRegenerateCaptionPrompt && (
-                  <div className="rounded-none border border-primary bg-surface p-4 space-y-3 animate-in fade-in duration-150">
+                  <div className="rounded-none border border-border dark:border-primary bg-surface p-4 space-y-3 animate-in fade-in duration-150">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-primary" />
+                        <Sparkles className="h-4 w-4 text-foreground dark:text-primary" />
                         <span className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">AI Caption Copilot</span>
                       </div>
                       <span className="text-[11px] font-mono text-muted-foreground">Add specific guidance or comment</span>
@@ -1120,7 +1120,7 @@ export function DraftPreview({
                               {new Date(version.createdAt).toLocaleString()}
                             </p>
                             {version.feedback && (
-                              <p className="text-xs font-mono text-primary mt-1 bg-surface p-2 rounded-none border border-primary/30">
+                              <p className="text-xs font-mono text-foreground dark:text-primary mt-1 bg-surface p-2 rounded-none border border-border dark:border-primary/30">
                                 Feedback: {version.feedback}
                               </p>
                             )}

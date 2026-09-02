@@ -203,7 +203,7 @@ export function IdeasSelector({
         <Card className="h-full rounded-none border border-border" elevation="none">
           <CardContent className="flex flex-col items-center justify-center h-full p-8 text-center">
             <div className="p-3 bg-surface border border-border rounded-none mb-4" aria-hidden="true">
-              <Sparkles className="h-10 w-10 text-primary" />
+              <Sparkles className="h-10 w-10 text-foreground dark:text-primary" />
             </div>
             <h3 className="font-display text-lg font-bold mb-2">No ideas generated yet</h3>
             <p className="text-muted-foreground text-sm max-w-sm">
@@ -269,7 +269,7 @@ export function IdeasSelector({
 
               {/* Selection Summary & Toggles */}
               <Badge variant="outline" className="text-xs gap-1 font-medium">
-                <CheckCircle2 className="h-3 w-3 text-primary" />
+                <CheckCircle2 className="h-3 w-3 text-foreground dark:text-primary" />
                 {selectedIds.length} selected
               </Badge>
 
@@ -280,7 +280,7 @@ export function IdeasSelector({
               )}
 
               {allAvailableIdeas.length > 0 && selectedIds.length < allAvailableIdeas.length && (
-                <Button variant="ghost" size="sm" onClick={selectAllAvailable} className="h-7 text-xs px-2 text-primary font-medium">
+                <Button variant="ghost" size="sm" onClick={selectAllAvailable} className="h-7 text-xs px-2 text-foreground dark:text-primary font-bold">
                   Select available ({allAvailableIdeas.length})
                 </Button>
               )}
@@ -314,7 +314,7 @@ export function IdeasSelector({
                     {/* Batch Header */}
                     <div className="flex items-center justify-between bg-surface border border-border rounded-none px-3.5 py-2 font-mono">
                       <div className="flex items-center gap-2 text-xs font-mono font-medium">
-                        <Clock className="h-3.5 w-3.5 text-primary" />
+                        <Clock className="h-3.5 w-3.5 text-foreground dark:text-primary" />
                         <span className="font-bold text-foreground">
                           {batch.sessionTitle ? `${batch.sessionTitle} • ` : ''}
                           Batch generated {batch.formattedDate}
@@ -361,12 +361,12 @@ export function IdeasSelector({
                               isPublished
                                 ? 'bg-muted/15 border-dashed border-border opacity-75'
                                 : isScheduled
-                                ? 'bg-surface border-primary text-primary'
+                                ? 'bg-surface border-border dark:border-primary text-foreground dark:text-primary'
                                 : hasDraft
                                 ? 'bg-surface border-border text-foreground'
                                 : isSelected
-                                ? 'border-primary bg-surface ring-1 ring-primary'
-                                : 'border-border bg-card hover:border-primary/60'
+                                ? 'border-border dark:border-primary bg-surface ring-1 ring-border dark:ring-primary'
+                                : 'border-border bg-card hover:border-foreground/50 dark:hover:border-primary/60'
                             )}
                           >
                             <div className="p-3.5">
@@ -429,8 +429,8 @@ export function IdeasSelector({
                                     )}
 
                                     {isScheduled && (
-                                      <Badge className="text-[10px] font-mono h-5 px-2 bg-primary/10 text-primary border-primary/30 gap-1 font-semibold">
-                                        <Calendar className="h-3 w-3" />
+                                      <Badge className="text-[10px] font-mono h-5 px-2 bg-foreground text-primary border-foreground dark:bg-primary/10 dark:text-primary dark:border-primary/30 gap-1 font-semibold">
+                                        <Calendar className="h-3 w-3 text-primary" />
                                         Scheduled
                                       </Badge>
                                     )}
@@ -522,7 +522,7 @@ export function IdeasSelector({
                                   {idea.cta && (
                                     <div>
                                       <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Call to Action</p>
-                                      <p className="text-xs text-primary font-medium">{idea.cta}</p>
+                                      <p className="text-xs text-foreground dark:text-primary font-semibold">{idea.cta}</p>
                                     </div>
                                   )}
                                 </div>

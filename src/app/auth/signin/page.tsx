@@ -51,7 +51,7 @@ function SignInForm() {
       <div className="w-full max-w-4xl grid gap-8 lg:grid-cols-2 items-center">
         <section className="space-y-4">
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-none border border-border bg-card text-xs font-mono text-muted-foreground">
-            <RadioTower className="h-3.5 w-3.5 text-primary" />
+            <RadioTower className="h-3.5 w-3.5 text-foreground dark:text-primary" />
             <span>Autonomous Intelligence Loop</span>
           </div>
           <h1 className="font-display text-4xl font-bold tracking-tight">Regardless</h1>

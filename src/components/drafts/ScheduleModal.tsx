@@ -98,7 +98,7 @@ export function ScheduleModal({
         <div className="flex items-start justify-between gap-4 border-b border-border pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-none border border-border bg-surface text-primary">
+              <div className="p-1.5 rounded-none border border-border bg-surface text-foreground dark:text-primary">
                 <CalendarIcon className="h-4 w-4" />
               </div>
               <h3 className="font-display text-base font-bold text-foreground">Schedule Post</h3>
@@ -122,7 +122,7 @@ export function ScheduleModal({
         {/* Quick Presets */}
         <div className="space-y-2">
           <label className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3 text-primary" />
+            <Sparkles className="h-3 w-3 text-foreground dark:text-primary" />
             Quick Scheduling Presets
           </label>
           <div className="flex flex-wrap gap-2">
@@ -131,7 +131,7 @@ export function ScheduleModal({
               variant="outline"
               size="sm"
               onClick={() => applyQuickPreset(1, 9, 0)}
-              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-primary"
+              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-foreground/50 dark:hover:border-primary"
             >
               Tomorrow 9:00 AM
             </Button>
@@ -140,7 +140,7 @@ export function ScheduleModal({
               variant="outline"
               size="sm"
               onClick={() => applyQuickPreset(1, 18, 0)}
-              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-primary"
+              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-foreground/50 dark:hover:border-primary"
             >
               Tomorrow 6:00 PM
             </Button>
@@ -149,7 +149,7 @@ export function ScheduleModal({
               variant="outline"
               size="sm"
               onClick={() => applyQuickPreset(2, 11, 30)}
-              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-primary"
+              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-foreground/50 dark:hover:border-primary"
             >
               In 2 Days (11:30 AM)
             </Button>
@@ -158,7 +158,7 @@ export function ScheduleModal({
               variant="outline"
               size="sm"
               onClick={() => applyQuickPreset(3, 15, 0)}
-              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-primary"
+              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-foreground/50 dark:hover:border-primary"
             >
               In 3 Days (3:00 PM)
             </Button>
@@ -182,7 +182,7 @@ export function ScheduleModal({
             {/* Time Selectors */}
             <div className="space-y-2.5">
               <label className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5 text-primary" />
+                <Clock className="h-3.5 w-3.5 text-foreground dark:text-primary" />
                 Select Publishing Time
               </label>
 

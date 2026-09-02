@@ -244,7 +244,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                       weekend && !today && 'bg-surface/70 text-muted-foreground'
                     )}
                   >
-                    <span className={cn('text-[10px] font-mono font-medium uppercase tracking-wider', today ? 'text-primary font-bold' : 'text-muted-foreground')}>
+                    <span className={cn('text-[10px] font-mono font-medium uppercase tracking-wider', today ? 'text-foreground dark:text-primary font-bold' : 'text-muted-foreground')}>
                       {format(day, 'EEE')}
                     </span>
                     <span className={cn('text-base font-mono font-semibold h-6 w-6 flex items-center justify-center rounded-none', today ? 'bg-primary text-primary-foreground font-bold' : 'text-foreground')}>
@@ -663,7 +663,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                   <Label className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">Hashtags</Label>
                   <div className="flex flex-wrap gap-1.5">
                     {inspectingPost.content.hashtags.map((tag, idx) => (
-                      <span key={idx} className="text-xs font-mono font-medium text-primary bg-surface border border-primary/40 px-2 py-0.5 rounded-none">
+                      <span key={idx} className="text-xs font-mono font-medium text-foreground dark:text-primary bg-surface border border-border dark:border-primary/40 px-2 py-0.5 rounded-none">
                         {tag.startsWith('#') ? tag : `#${tag}`}
                       </span>
                     ))}

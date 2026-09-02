@@ -621,7 +621,7 @@ export function ChatInterface({
 
                                 {idea.hook && (
                                   <p className="text-xs font-mono text-muted-foreground">
-                                    <span className="text-primary font-bold">Hook:</span> {idea.hook}
+                                    <span className="text-foreground dark:text-primary font-bold">Hook:</span> {idea.hook}
                                   </p>
                                 )}
 
@@ -652,7 +652,7 @@ export function ChatInterface({
                                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                 ) : (
                                   <>
-                                    <Sparkles className="h-3.5 w-3.5 mr-1 text-primary" />
+                                    <Sparkles className="h-3.5 w-3.5 mr-1 text-foreground dark:text-primary" />
                                     Draft
                                   </>
                                 )}
@@ -696,15 +696,15 @@ export function ChatInterface({
         {isGenerating && streamingContent && (
           <div className="flex flex-col items-start">
             <div className="flex items-center gap-2 mb-1 px-1">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-                <Loader2 className="h-3 w-3 animate-spin text-primary" />
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-foreground dark:text-primary flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin text-foreground dark:text-primary" />
                 Regardless AI (Grounded with Tavily News)
               </span>
             </div>
-            <div className="max-w-[90%] md:max-w-[85%] rounded-none p-4 text-sm bg-card border border-primary/50 text-foreground">
+            <div className="max-w-[90%] md:max-w-[85%] rounded-none p-4 text-sm bg-card border border-border dark:border-primary/50 text-foreground">
               {activeSearchSources.length > 0 && (
                 <div className="mb-3 p-2 bg-surface border border-border text-xs font-mono text-muted-foreground flex items-center gap-2">
-                  <Radio className="h-3.5 w-3.5 text-primary animate-pulse" />
+                  <Radio className="h-3.5 w-3.5 text-foreground dark:text-primary animate-pulse" />
                   <span>Found {activeSearchSources.length} live articles for &quot;{activeSearchQuery}&quot;</span>
                 </div>
               )}
@@ -717,7 +717,7 @@ export function ChatInterface({
 
         {isGenerating && !streamingContent && (
           <div className="flex items-center gap-2 p-3 rounded-none bg-surface border border-border text-xs font-mono text-muted-foreground w-fit">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <Loader2 className="h-4 w-4 animate-spin text-foreground dark:text-primary" />
             <span>
               {activeSearchQuery
                 ? `Searching Tavily for "${activeSearchQuery}"...`

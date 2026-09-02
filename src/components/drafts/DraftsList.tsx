@@ -391,7 +391,7 @@ export function DraftsList({
                     {/* Card Footer */}
                     <div className="pt-3 flex items-center justify-between text-xs text-muted-foreground border-t border-border mt-1 font-mono">
                       {post.scheduledAt ? (
-                        <span className="flex items-center gap-1.5 text-primary font-medium text-[11px]">
+                        <span className="flex items-center gap-1.5 text-foreground dark:text-primary font-medium text-[11px]">
                           <CalendarIcon className="h-3 w-3" />
                           {format(new Date(post.scheduledAt), 'MMM d, h:mm a')}
                         </span>
@@ -401,7 +401,7 @@ export function DraftsList({
                           {format(new Date(post.updatedAt || new Date()), 'MMM d, yyyy')}
                         </span>
                       )}
-                      <span className="text-primary font-bold group-hover:underline text-[11px] uppercase tracking-wider">
+                      <span className="text-foreground dark:text-primary font-bold group-hover:underline text-[11px] uppercase tracking-wider">
                         Inspect →
                       </span>
                     </div>
@@ -421,7 +421,7 @@ export function DraftsList({
                 <Card
                   key={post.id}
                   onClick={() => setSelectedPost(post)}
-                  className="cursor-pointer rounded-none border border-border bg-card hover:border-primary transition-all duration-150 group"
+                  className="cursor-pointer rounded-none border border-border bg-card hover:border-foreground/50 dark:hover:border-primary transition-all duration-150 group"
                   elevation="none"
                 >
                   <CardContent className="p-4 flex items-center justify-between gap-4">
@@ -450,7 +450,7 @@ export function DraftsList({
                         {status.label}
                       </Badge>
                       {post.scheduledAt && (
-                        <span className="flex items-center gap-1 hidden md:inline-flex text-[11px] font-mono text-primary font-medium">
+                        <span className="flex items-center gap-1 hidden md:inline-flex text-[11px] font-mono text-foreground dark:text-primary font-medium">
                           <CalendarIcon className="h-3 w-3" />
                           {format(new Date(post.scheduledAt), 'MMM d, yyyy')}
                         </span>

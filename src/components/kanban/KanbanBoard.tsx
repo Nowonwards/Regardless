@@ -512,7 +512,7 @@ export function KanbanBoard({
                   <div className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">Hashtags</div>
                   <div className="flex flex-wrap gap-1.5">
                     {inspectingPost.content.hashtags.map((tag, idx) => (
-                      <span key={idx} className="text-xs font-mono font-medium text-primary bg-surface border border-primary/40 px-2 py-0.5 rounded-none">
+                      <span key={idx} className="text-xs font-mono font-medium text-foreground dark:text-primary bg-surface border border-border dark:border-primary/40 px-2 py-0.5 rounded-none">
                         {tag.startsWith('#') ? tag : `#${tag}`}
                       </span>
                     ))}
