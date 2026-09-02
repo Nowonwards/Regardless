@@ -20,11 +20,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { message, sessionId, platforms, dateRange } = body;
+    const { message, sessionId, platforms, dateRange, searchNews } = body;
 
-    if (!message || !sessionId || !platforms?.length) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!message || !sessionId) {
+      return NextResponse.json({ error: 'Missing required fields: message and sessionId are required' }, { status: 400 });
     }
+
+    const targetPlatforms: Platform[] = Array.isArray(platforms) && platforms.length > 0
+      ? platforms
+      : ['INSTAGRAM'];
 
     const session = await prisma.chatSession.findUnique({
       where: { id: sessionId },
@@ -40,9 +44,9 @@ export async function POST(request: NextRequest) {
       content: m.content,
     }));
 
-    // Perform live search for tech news for the ideation query
+    // Perform live search for tech news for the ideation query if enabled or needed
     let searchResultsText: string | undefined = undefined;
-    if (process.env.TAVILY_API_KEY && isSearchQueryNeeded(message)) {
+    if (process.env.TAVILY_API_KEY && (searchNews || isSearchQueryNeeded(message))) {
       try {
         const searchQuery = buildTechNewsSearchQuery(message);
         const searchResult = await executeTavilySearch(searchQuery, {
@@ -61,7 +65,7 @@ export async function POST(request: NextRequest) {
     const prompt = createIdeationPrompt(
       message,
       conversationHistory,
-      platforms,
+      targetPlatforms,
       dateRange,
       searchResultsText
     );

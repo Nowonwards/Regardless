@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Sparkles,
   Camera,
@@ -10,24 +10,30 @@ import {
   Loader2,
   CheckCircle2,
   Check,
+  Send,
   Globe,
-  Sliders,
-  Cpu,
+  Radio,
+  RefreshCw,
+  Plus,
   Layers,
   ArrowRight,
-  TrendingUp,
-  AlertCircle,
   ExternalLink,
+  ChevronRight,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Platform, IdeaContent } from '@/types';
 import { cn } from '@/lib/utils';
+
+interface ChatMessageItem {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  ideas?: IdeaContent[];
+  createdAt?: string | Date;
+}
 
 interface ChatInterfaceProps {
   sessionId: string;
@@ -35,43 +41,21 @@ interface ChatInterfaceProps {
   connectedPlatforms?: Platform[];
   isLoadingPlatforms?: boolean;
   dateRange?: { start: Date; end: Date };
-  onIdeasGenerated: (ideas: IdeaContent[]) => void;
-  onSessionUpdate: (title: string) => void;
+  onIdeasGenerated?: (ideas: IdeaContent[]) => void;
+  onSessionUpdate?: (title: string) => void;
 }
 
-const PLATFORM_OPTIONS: { id: Platform; label: string; icon: React.ReactNode; color: string; border: string; bg: string }[] = [
-  {
-    id: 'INSTAGRAM',
-    label: 'Instagram',
-    icon: <Camera className="h-4 w-4" />,
-    color: 'text-[hsl(var(--instagram))]',
-    border: 'border-[hsl(var(--instagram))]/30',
-    bg: 'bg-[hsl(var(--instagram-light))]',
-  },
-  {
-    id: 'LINKEDIN',
-    label: 'LinkedIn',
-    icon: <Briefcase className="h-4 w-4" />,
-    color: 'text-[hsl(var(--linkedin))]',
-    border: 'border-[hsl(var(--linkedin))]/30',
-    bg: 'bg-[hsl(var(--linkedin-light))]',
-  },
-  {
-    id: 'PINTEREST',
-    label: 'Pinterest',
-    icon: <Pin className="h-4 w-4" />,
-    color: 'text-[hsl(var(--pinterest))]',
-    border: 'border-[hsl(var(--pinterest))]/30',
-    bg: 'bg-[hsl(var(--pinterest-light))]',
-  },
-];
+const PLATFORM_CONFIG: Record<Platform, { name: string; icon: React.ReactNode; color: string }> = {
+  INSTAGRAM: { name: 'Instagram', icon: <Camera className="h-3 w-3" />, color: 'text-pink-400' },
+  LINKEDIN: { name: 'LinkedIn', icon: <Briefcase className="h-3 w-3" />, color: 'text-blue-400' },
+  PINTEREST: { name: 'Pinterest', icon: <Pin className="h-3 w-3" />, color: 'text-red-400' },
+};
 
-const TOPIC_PRESETS = [
-  { value: 'all', label: '🌐 All Tech Industry News (Product Launches, AI, Deals, Shifts)' },
-  { value: 'ai-models', label: '🤖 AI & LLM Model Releases (Claude, OpenAI, DeepSeek, Gemini, Meta)' },
-  { value: 'dev-tools', label: '🛠️ Developer Tools, Open Source & Frameworks (Next.js, Python, Rust)' },
-  { value: 'startups-deals', label: '💰 Tech Startups, Funding Rounds, Layoffs & VC Moves' },
-  { value: 'big-tech', label: '🏢 Big Tech Drama (Apple, Microsoft, Google, Nvidia, Meta)' },
+const SUGGESTED_PROMPTS = [
+  '⚡ Scan today\'s top AI model releases & controversies',
+  '🔥 3 hot-take carousels about developer salaries vs AI tooling',
+  '🛠️ 4 practical Docker & Kubernetes optimization tips for engineers',
+  '💡 Sarcastic breakdown of Big Tech return-to-office mandates',
 ];
 
 export function ChatInterface({
@@ -83,220 +67,175 @@ export function ChatInterface({
   onIdeasGenerated,
   onSessionUpdate,
 }: ChatInterfaceProps) {
-  const effectiveConnected = connectedPlatforms !== undefined
-    ? connectedPlatforms
-    : initialPlatforms;
+  const router = useRouter();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const visiblePlatforms = PLATFORM_OPTIONS.filter((plat) => effectiveConnected.includes(plat.id));
+  const effectiveConnected = connectedPlatforms !== undefined ? connectedPlatforms : initialPlatforms;
 
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(() => {
-    if (effectiveConnected.length > 0) {
-      return effectiveConnected;
-    }
+    if (effectiveConnected.length > 0) return effectiveConnected;
     return ['INSTAGRAM'];
   });
 
   useEffect(() => {
-    if (connectedPlatforms) {
-      if (connectedPlatforms.length > 0) {
-        setSelectedPlatforms((prev) => {
-          const valid = prev.filter((p) => connectedPlatforms.includes(p));
-          return valid.length > 0 ? valid : [connectedPlatforms[0]];
-        });
-      } else if (!isLoadingPlatforms) {
-        setSelectedPlatforms([]);
+    if (connectedPlatforms && connectedPlatforms.length > 0) {
+      setSelectedPlatforms((prev) => {
+        const valid = prev.filter((p) => connectedPlatforms.includes(p));
+        return valid.length > 0 ? valid : [connectedPlatforms[0]];
+      });
+    }
+  }, [connectedPlatforms]);
+
+  const [searchNews, setSearchNews] = useState(true);
+  const [inputMessage, setInputMessage] = useState('');
+  const [messages, setMessages] = useState<ChatMessageItem[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [streamingContent, setStreamingContent] = useState('');
+
+  // Selected ideas for drafting
+  const [selectedIdeaIds, setSelectedIdeaIds] = useState<string[]>([]);
+  const [draftingIdeaIds, setDraftingIdeaIds] = useState<Record<string, boolean>>({});
+  const [isDraftingBatch, setIsDraftingBatch] = useState(false);
+
+  // Auto-scroll to bottom of chat
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, streamingContent]);
+
+  // Load session messages from DB
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const fetchSessionHistory = async () => {
+      try {
+        const res = await fetch('/api/sessions');
+        if (res.ok) {
+          const data = await res.json();
+          const current = (data.sessions || []).find((s: any) => s.id === sessionId);
+          if (current && current.messages && current.messages.length > 0) {
+            const mapped: ChatMessageItem[] = current.messages.map((m: any) => {
+              const parsedIdeas = m.role === 'assistant' ? extractIdeasFromContent(m.content) : [];
+              return {
+                id: m.id,
+                role: m.role,
+                content: cleanAssistantContent(m.content),
+                ideas: parsedIdeas,
+                createdAt: m.createdAt,
+              };
+            });
+            setMessages(mapped);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch session history:', err);
+      }
+
+      // Initial default welcome message if empty
+      setMessages([
+        {
+          id: 'welcome',
+          role: 'assistant',
+          content:
+            "👋 Welcome to Regardless Ideation Studio. Ask me to brainstorm tech news hooks, propose multi-slide carousels, or explore controversial industry angles for your channels.\n\nType your topic below or click a starter suggestion.",
+        },
+      ]);
+    };
+
+    fetchSessionHistory();
+  }, [sessionId]);
+
+  // Helper to extract ideas JSON from assistant response
+  const extractIdeasFromContent = (text: string): IdeaContent[] => {
+    if (!text) return [];
+    const ideas: IdeaContent[] = [];
+
+    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        const parsed = JSON.parse(jsonMatch[1].trim());
+        const list = Array.isArray(parsed) ? parsed : [parsed];
+        for (const item of list) {
+          if (item && (item.title || item.name)) {
+            ideas.push({
+              id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
+              title: item.title || item.name || 'Untitled Idea',
+              description: item.description || item.concept || item.hook || '',
+              platform: (item.platform || selectedPlatforms[0] || 'INSTAGRAM').toUpperCase() as Platform,
+              hook: item.hook || item.title,
+              angle: item.angle || '',
+              keyPoints: Array.isArray(item.keyPoints) ? item.keyPoints : [],
+              suggestedFormat: item.suggestedFormat || 'carousel',
+              hashtags: Array.isArray(item.hashtags) ? item.hashtags : ['#tech'],
+              cta: item.cta,
+            });
+          }
+        }
+      } catch {
+        // Fallback to empty if json block is malformed
       }
     }
-  }, [connectedPlatforms, isLoadingPlatforms]);
+    return ideas;
+  };
 
-  const [newsFocus, setNewsFocus] = useState<string>('all');
-  const [customKeyword, setCustomKeyword] = useState<string>('');
-  const [ideaCount, setIdeaCount] = useState<string>('4');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationStep, setGenerationStep] = useState<string>('');
-  const [lastSummary, setLastSummary] = useState<string | null>(null);
+  // Helper to strip raw JSON block from displayed conversational text
+  const cleanAssistantContent = (text: string): string => {
+    return text.replace(/```(?:json)?\s*\[[\s\S]*?\]\s*```/g, '').trim();
+  };
 
-  const togglePlatform = (platform: Platform) => {
-    const isConnected = effectiveConnected.includes(platform);
-    if (!isConnected) return;
-
+  const togglePlatform = (p: Platform) => {
     setSelectedPlatforms((prev) => {
-      if (prev.includes(platform)) {
-        if (prev.length === 1) return prev; // Keep at least one platform selected
-        return prev.filter((p) => p !== platform);
+      if (prev.includes(p)) {
+        if (prev.length === 1) return prev;
+        return prev.filter((item) => item !== p);
       } else {
-        return [...prev, platform];
+        return [...prev, p];
       }
     });
   };
 
-  const extractIdeasFromResponse = (content: string): IdeaContent[] => {
-    if (!content) return [];
-    const parsedIdeas: IdeaContent[] = [];
-
-    // 1. Try finding JSON code block (```json [...] ``` or ``` [...])
-    const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
-    let match;
-    while ((match = jsonBlockRegex.exec(content)) !== null) {
-      try {
-        const potentialJson = match[1].trim();
-        if (potentialJson.startsWith('[') || potentialJson.startsWith('{')) {
-          const parsed = JSON.parse(potentialJson);
-          const list = Array.isArray(parsed) ? parsed : [parsed];
-          for (const item of list) {
-            if (item && (item.title || item.name)) {
-              const platformUpper = (item.platform || selectedPlatforms[0] || 'INSTAGRAM').toUpperCase();
-              const validPlatform: Platform = selectedPlatforms.includes(platformUpper as Platform)
-                ? (platformUpper as Platform)
-                : (selectedPlatforms[0] || 'INSTAGRAM');
-
-              parsedIdeas.push({
-                id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
-                title: item.title || item.name || 'Untitled Idea',
-                description: item.description || item.concept || item.content?.hook || item.hook || '',
-                platform: validPlatform,
-                hook: item.hook || item.content?.hook || item.description || '',
-                angle: item.angle || item.content?.angle || '',
-                keyPoints: Array.isArray(item.keyPoints)
-                  ? item.keyPoints
-                  : Array.isArray(item.content?.keyPoints)
-                  ? item.content.keyPoints
-                  : [],
-                suggestedFormat: item.suggestedFormat || item.content?.suggestedFormat || (validPlatform === 'PINTEREST' ? 'pin' : 'carousel'),
-                hashtags: Array.isArray(item.hashtags)
-                  ? item.hashtags
-                  : Array.isArray(item.content?.hashtags)
-                  ? item.content.hashtags
-                  : ['#tech', '#programming'],
-                cta: item.cta || item.content?.cta,
-              });
-            }
-          }
-        }
-      } catch {
-        // Fallback continues
-      }
-    }
-
-    if (parsedIdeas.length > 0) return parsedIdeas;
-
-    // 2. Try parsing raw JSON array in text
-    const rawArrayMatch = content.match(/\[\s*\{[\s\S]*\}\s*\]/);
-    if (rawArrayMatch) {
-      try {
-        const parsed = JSON.parse(rawArrayMatch[0]);
-        if (Array.isArray(parsed)) {
-          for (const item of parsed) {
-            if (item && item.title) {
-              const platformUpper = (item.platform || selectedPlatforms[0] || 'INSTAGRAM').toUpperCase();
-              const validPlatform: Platform = ['INSTAGRAM', 'PINTEREST', 'LINKEDIN'].includes(platformUpper)
-                ? (platformUpper as Platform)
-                : 'INSTAGRAM';
-
-              parsedIdeas.push({
-                id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
-                title: item.title,
-                description: item.description || item.hook || '',
-                platform: validPlatform,
-                hook: item.hook || item.content?.hook || item.description || '',
-                angle: item.angle || item.content?.angle || '',
-                keyPoints: Array.isArray(item.keyPoints) ? item.keyPoints : [],
-                suggestedFormat: item.suggestedFormat || 'carousel',
-                hashtags: Array.isArray(item.hashtags) ? item.hashtags : ['#tech'],
-                cta: item.cta,
-              });
-            }
-          }
-        }
-      } catch {
-        // Fallback
-      }
-    }
-
-    if (parsedIdeas.length > 0) return parsedIdeas;
-
-    // 3. Fallback: Parse markdown numbered list items
-    const markdownLines = content.split('\n');
-    let currentIdea: Partial<IdeaContent> | null = null;
-
-    for (const line of markdownLines) {
-      const titleMatch = line.match(/(?:###|\*\*|\d+\.)\s*(?:Idea\s*\d*[:.-]?\s*)?([^\n*#]+)/i);
-      if (titleMatch && (line.toLowerCase().includes('idea') || /^\s*\d+\./.test(line))) {
-        if (currentIdea && currentIdea.title) {
-          parsedIdeas.push({
-            id: `idea-${crypto.randomUUID().slice(0, 8)}`,
-            title: currentIdea.title,
-            description: currentIdea.description || currentIdea.hook || '',
-            platform: currentIdea.platform || selectedPlatforms[0] || 'INSTAGRAM',
-            hook: currentIdea.hook || currentIdea.title,
-            angle: currentIdea.angle || '',
-            keyPoints: currentIdea.keyPoints || [],
-            suggestedFormat: currentIdea.suggestedFormat || 'carousel',
-            hashtags: currentIdea.hashtags || ['#tech'],
-            cta: currentIdea.cta,
-          });
-        }
-        currentIdea = {
-          title: titleMatch[1].trim(),
-          platform: selectedPlatforms[0] || 'INSTAGRAM',
-          keyPoints: [],
-        };
-      } else if (currentIdea) {
-        if (line.toLowerCase().includes('hook:')) {
-          currentIdea.hook = line.split(/hook:/i)[1]?.trim() || '';
-        } else if (line.toLowerCase().includes('angle:')) {
-          currentIdea.angle = line.split(/angle:/i)[1]?.trim() || '';
-        } else if (line.toLowerCase().includes('description:')) {
-          currentIdea.description = line.split(/description:/i)[1]?.trim() || '';
-        }
-      }
-    }
-    if (currentIdea && currentIdea.title) {
-      parsedIdeas.push({
-        id: `idea-${crypto.randomUUID().slice(0, 8)}`,
-        title: currentIdea.title,
-        description: currentIdea.description || currentIdea.hook || '',
-        platform: currentIdea.platform || selectedPlatforms[0] || 'INSTAGRAM',
-        hook: currentIdea.hook || currentIdea.title,
-        angle: currentIdea.angle || '',
-        keyPoints: currentIdea.keyPoints || [],
-        suggestedFormat: currentIdea.suggestedFormat || 'carousel',
-        hashtags: currentIdea.hashtags || ['#tech'],
-        cta: currentIdea.cta,
-      });
-    }
-
-    return parsedIdeas;
+  const toggleIdeaSelection = (id: string) => {
+    setSelectedIdeaIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
   };
 
-  const handleGenerate = async () => {
-    if (selectedPlatforms.length === 0 || isGenerating) return;
+  // Send conversational prompt
+  const handleSendMessage = async (customPrompt?: string) => {
+    const textToSend = (customPrompt || inputMessage).trim();
+    if (!textToSend || isGenerating) return;
 
+    setInputMessage('');
+
+    const userMessage: ChatMessageItem = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: textToSend,
+      createdAt: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
     setIsGenerating(true);
-    setGenerationStep('🔍 Searching latest verified tech industry news with Tavily...');
-
-    const topicLabel = TOPIC_PRESETS.find((t) => t.value === newsFocus)?.label || 'All Tech News';
-    const messagePrompt = customKeyword.trim()
-      ? `Generate ${ideaCount} tech news post ideas focusing on "${customKeyword.trim()}" for ${selectedPlatforms.join(', ')}.`
-      : `Generate ${ideaCount} tech news post ideas for ${selectedPlatforms.join(', ')} covering ${topicLabel}.`;
+    setStreamingContent('');
 
     try {
-      setTimeout(() => {
-        setGenerationStep('💡 Formulating sarcastic hooks & high-converting angles...');
-      }, 2500);
-
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: messagePrompt,
+          message: textToSend,
           sessionId,
           platforms: selectedPlatforms,
           dateRange,
+          searchNews,
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to generate ideas');
+      if (!response.ok) throw new Error('Failed to generate response');
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -308,280 +247,409 @@ export function ChatInterface({
           if (done) break;
 
           const chunk = decoder.decode(value);
-          const lines = chunk.split('\n').filter((line) => line.startsWith('data: '));
+          const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
 
           for (const line of lines) {
             try {
               const data = JSON.parse(line.slice(6));
               if (data.chunk) {
                 fullContent += data.chunk;
-              } else if (data.done) {
-                break;
+                setStreamingContent(fullContent);
               }
             } catch {
-              // Ignore
+              // Ignore parse errors on stream boundary
             }
           }
         }
       }
 
-      const extractedIdeas = extractIdeasFromResponse(fullContent);
-      setLastSummary(fullContent.replace(/```(?:json)?\s*\[[\s\S]*?\]\s*```/g, '').trim());
+      const extractedIdeas = extractIdeasFromContent(fullContent);
+      const cleaned = cleanAssistantContent(fullContent);
 
-      if (extractedIdeas.length > 0) {
+      const assistantMessage: ChatMessageItem = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: cleaned,
+        ideas: extractedIdeas,
+        createdAt: new Date(),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+      setStreamingContent('');
+
+      if (extractedIdeas.length > 0 && onIdeasGenerated) {
         onIdeasGenerated(extractedIdeas);
-        onSessionUpdate(`Tech Ideation: ${customKeyword || topicLabel.slice(0, 30)}`);
       }
-    } catch (error) {
-      console.error('Ideation generation failed:', error);
+      if (onSessionUpdate) {
+        onSessionUpdate(`Ideation: ${textToSend.slice(0, 24)}...`);
+      }
+    } catch (err) {
+      console.error('Chat error:', err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `error-${Date.now()}`,
+          role: 'assistant',
+          content: 'Sorry, I encountered an error while processing that request. Please try again.',
+        },
+      ]);
     } finally {
       setIsGenerating(false);
-      setGenerationStep('');
+      setStreamingContent('');
+    }
+  };
+
+  // Generate drafts for selected ideas
+  const handleGenerateDrafts = async (specificIdea?: IdeaContent) => {
+    const allIdeas = messages.flatMap((m) => m.ideas || []);
+    const targetIdeas = specificIdea
+      ? [specificIdea]
+      : allIdeas.filter((i) => selectedIdeaIds.includes(i.id));
+
+    if (targetIdeas.length === 0) return;
+
+    if (specificIdea) {
+      setDraftingIdeaIds((prev) => ({ ...prev, [specificIdea.id]: true }));
+    } else {
+      setIsDraftingBatch(true);
+    }
+
+    try {
+      const res = await fetch('/api/drafts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          ideaTitles: targetIdeas.map((i) => i.title),
+          ideas: targetIdeas,
+        }),
+      });
+
+      if (res.ok) {
+        router.push('/drafts');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        console.error('Draft generation failed:', data);
+      }
+    } catch (err) {
+      console.error('Draft generation error:', err);
+    } finally {
+      setIsDraftingBatch(false);
+      if (specificIdea) {
+        setDraftingIdeaIds((prev) => ({ ...prev, [specificIdea.id]: false }));
+      }
     }
   };
 
   return (
-    <div className="h-full overflow-auto p-4 sm:p-6 max-w-4xl mx-auto space-y-5">
-      {/* Studio Header */}
-      <div className="space-y-1">
+    <div className="flex flex-col h-full w-full bg-background overflow-hidden relative">
+      {/* Top Controls Bar */}
+      <div className="border-b border-border bg-surface px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-none border border-border bg-surface text-primary">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight">Tech News Ideation Studio</h2>
-            <p className="text-sm text-muted-foreground">
-              Select your target platforms and tech focus to generate data-backed post ideas.
-            </p>
-          </div>
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground mr-1">
+            Target Channels:
+          </span>
+          {(['INSTAGRAM', 'LINKEDIN', 'PINTEREST'] as Platform[]).map((p) => {
+            const isSelected = selectedPlatforms.includes(p);
+            const cfg = PLATFORM_CONFIG[p];
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => togglePlatform(p)}
+                className={cn(
+                  'h-7 px-2.5 rounded-none border text-[11px] font-mono font-semibold inline-flex items-center gap-1.5 transition-all',
+                  isSelected
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/50'
+                )}
+              >
+                {cfg.icon}
+                <span>{cfg.name}</span>
+                {isSelected && <Check className="h-3 w-3" />}
+              </button>
+            );
+          })}
         </div>
+
+        <button
+          type="button"
+          onClick={() => setSearchNews((prev) => !prev)}
+          className={cn(
+            'h-7 px-2.5 rounded-none border text-[11px] font-mono inline-flex items-center gap-1.5 transition-all',
+            searchNews
+              ? 'bg-surface border-primary text-primary font-bold'
+              : 'bg-card border-border text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <Radio className={cn('h-3.5 w-3.5', searchNews && 'animate-pulse text-primary')} />
+          <span>Live Tech News Search: {searchNews ? 'ON' : 'OFF'}</span>
+        </button>
       </div>
 
-      {/* Configuration Card */}
-      <Card className="rounded-none border border-border bg-card" elevation="none">
-        <CardHeader className="pb-4">
-          <CardTitle className="font-display text-base font-bold flex items-center gap-2">
-            <Sliders className="h-4 w-4 text-primary" />
-            Ideation Parameters
-          </CardTitle>
-          <CardDescription className="text-xs font-mono">
-            Choose the platforms and news topics you want to cover this week.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          {/* Platform Selector Boxes */}
-          <div className="space-y-2.5">
-            <Label className="text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-between">
-              <span>Target Platforms (Click to toggle)</span>
-              <span className="text-xs font-mono text-muted-foreground font-normal">
-                {selectedPlatforms.length} platform(s) selected
-              </span>
-            </Label>
-
-            {effectiveConnected.length === 0 && !isLoadingPlatforms && (
-              <div className="rounded-none border border-amber-500 bg-surface p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-mono text-amber-500">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-amber-500" />
-                  <span>No social accounts connected yet. Connect your accounts in Settings to generate and publish posts.</span>
-                </div>
-                <Link href="/settings">
-                  <Button size="sm" variant="outline" className="h-7 text-xs font-mono rounded-none shrink-0 border-amber-500 hover:bg-surface gap-1">
-                    Connect in Settings
-                    <ExternalLink className="h-3 w-3" />
-                  </Button>
-                </Link>
+      {/* Messages Stream */}
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+        {messages.map((message) => {
+          const isUser = message.role === 'user';
+          return (
+            <div
+              key={message.id}
+              className={cn(
+                'flex flex-col',
+                isUser ? 'items-end' : 'items-start'
+              )}
+            >
+              {/* Message Header */}
+              <div className="flex items-center gap-2 mb-1 px-1">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                  {isUser ? 'You' : 'Regardless AI'}
+                </span>
+                {message.createdAt && (
+                  <span className="text-[10px] font-mono text-muted-foreground/60">
+                    {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
               </div>
-            )}
 
-            {/* Platform Selector Grid - ONLY show connected platforms */}
-            {visiblePlatforms.length > 0 ? (
-              <div className={cn(
-                'grid gap-3',
-                visiblePlatforms.length === 1 ? 'grid-cols-1 max-w-sm' : visiblePlatforms.length === 2 ? 'grid-cols-1 sm:grid-cols-2 max-w-xl' : 'grid-cols-1 sm:grid-cols-3'
-              )}>
-                {visiblePlatforms.map((plat) => {
-                  const isSelected = selectedPlatforms.includes(plat.id);
+              {/* Message Bubble */}
+              <div
+                className={cn(
+                  'max-w-[90%] md:max-w-[80%] rounded-none p-4 text-sm leading-relaxed border',
+                  isUser
+                    ? 'bg-surface border-primary/50 text-foreground'
+                    : 'bg-card border-border text-foreground'
+                )}
+              >
+                <div className="whitespace-pre-wrap font-sans text-[13px] md:text-sm">
+                  {message.content}
+                </div>
 
-                  return (
-                    <div
-                      key={plat.id}
-                      onClick={() => togglePlatform(plat.id)}
-                      className={cn(
-                        'p-3.5 rounded-none border text-left transition-all relative overflow-hidden flex flex-col justify-between h-28 cursor-pointer',
-                        isSelected
-                          ? 'bg-surface border-primary ring-1 ring-primary'
-                          : 'bg-card border-border hover:border-primary/60'
-                      )}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <div className={cn('p-1.5 rounded-none border border-border bg-background', plat.color)}>
-                          {plat.icon}
-                        </div>
+                {/* Embedded In-Stream Post Ideas Group */}
+                {message.ideas && message.ideas.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-border space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Badge className="badge-idea font-mono text-[10px]">
+                          {message.ideas.length} IDEAS PROPOSED
+                        </Badge>
+                        <span className="text-xs font-mono text-muted-foreground">
+                          Select to generate complete drafts
+                        </span>
+                      </div>
 
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-mono text-emerald-400 bg-surface px-1.5 py-0.5 rounded-none border border-emerald-500/40">
-                            Connected
-                          </span>
+                      {/* Select all in this message */}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const idsInMessage = message.ideas!.map((i) => i.id);
+                          const allSelected = idsInMessage.every((id) => selectedIdeaIds.includes(id));
+                          if (allSelected) {
+                            setSelectedIdeaIds((prev) => prev.filter((id) => !idsInMessage.includes(id)));
+                          } else {
+                            setSelectedIdeaIds((prev) => Array.from(new Set([...prev, ...idsInMessage])));
+                          }
+                        }}
+                        className="h-6 px-2 text-[10px] font-mono rounded-none border border-border"
+                      >
+                        {message.ideas.every((i) => selectedIdeaIds.includes(i.id))
+                          ? 'Deselect All'
+                          : 'Select All in Batch'}
+                      </Button>
+                    </div>
+
+                    {/* Idea Cards List */}
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {message.ideas.map((idea) => {
+                        const isSelected = selectedIdeaIds.includes(idea.id);
+                        const isDrafting = draftingIdeaIds[idea.id];
+
+                        return (
                           <div
+                            key={idea.id}
                             className={cn(
-                              'h-5 w-5 rounded-none flex items-center justify-center transition-colors',
-                              isSelected ? 'bg-primary text-primary-foreground border border-primary' : 'border border-border'
+                              'p-3.5 rounded-none border transition-all',
+                              isSelected
+                                ? 'bg-surface border-primary ring-1 ring-primary'
+                                : 'bg-background border-border hover:border-border/80'
                             )}
                           >
-                            {isSelected && <Check className="h-3.5 w-3.5" />}
+                            <div className="flex items-start gap-3">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => toggleIdeaSelection(idea.id)}
+                                className="mt-1 rounded-none border-border"
+                              />
+
+                              <div className="flex-1 space-y-1.5 min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Badge variant="outline" className="text-[10px] font-mono rounded-none border-border">
+                                    {idea.platform}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-[10px] font-mono rounded-none border-border bg-surface">
+                                    {idea.suggestedFormat}
+                                  </Badge>
+                                </div>
+
+                                <h4 className="font-display font-bold text-sm text-foreground">
+                                  {idea.title}
+                                </h4>
+
+                                {idea.hook && (
+                                  <p className="text-xs font-mono text-muted-foreground">
+                                    <span className="text-primary font-bold">Hook:</span> {idea.hook}
+                                  </p>
+                                )}
+
+                                {idea.angle && (
+                                  <p className="text-xs font-mono text-muted-foreground/80">
+                                    <span className="text-foreground font-semibold">Angle:</span> {idea.angle}
+                                  </p>
+                                )}
+
+                                {idea.keyPoints && idea.keyPoints.length > 0 && (
+                                  <ul className="text-[11px] font-mono text-muted-foreground list-disc list-inside pt-1 space-y-0.5">
+                                    {idea.keyPoints.map((pt, idx) => (
+                                      <li key={idx} className="truncate">{pt}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={isDrafting}
+                                onClick={() => handleGenerateDrafts(idea)}
+                                className="h-8 text-[11px] font-mono rounded-none border-border bg-surface hover:border-primary shrink-0 self-start"
+                              >
+                                {isDrafting ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <>
+                                    <Sparkles className="h-3.5 w-3.5 mr-1 text-primary" />
+                                    Draft
+                                  </>
+                                )}
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <p className="font-display font-bold text-sm">{plat.label}</p>
-                        <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
-                          {plat.id === 'INSTAGRAM' ? 'Carousels & Reels' : plat.id === 'LINKEDIN' ? 'Thought Leadership' : 'Infographic Pins'}
-                        </p>
-                      </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+
+                    {/* Batch Draft Button */}
+                    <div className="flex items-center justify-end pt-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={isDraftingBatch || selectedIdeaIds.length === 0}
+                        onClick={() => handleGenerateDrafts()}
+                        className="h-9 px-4 rounded-none font-mono text-xs font-bold bg-primary text-primary-foreground border border-primary hover:opacity-90"
+                      >
+                        {isDraftingBatch ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                            Generating Drafts...
+                          </>
+                        ) : (
+                          <>
+                            Create Drafts ({selectedIdeaIds.length} selected)
+                            <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
-            ) : null}
-
-            {visiblePlatforms.length > 0 && visiblePlatforms.length < PLATFORM_OPTIONS.length && (
-              <div className="pt-1">
-                <Link
-                  href="/settings"
-                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <span>+ Connect more social platforms in Settings</span>
-                  <ExternalLink className="h-3 w-3" />
-                </Link>
-              </div>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* News Focus & Category Select Boxes */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="news-focus" className="text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <Globe className="h-3.5 w-3.5 text-primary" />
-                Industry Focus
-              </Label>
-              <Select value={newsFocus} onValueChange={setNewsFocus} disabled={isGenerating}>
-                <SelectTrigger id="news-focus" className="h-10 text-xs font-mono rounded-none border-border">
-                  <SelectValue placeholder="Select topic focus" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TOPIC_PRESETS.map((t) => (
-                    <SelectItem key={t.value} value={t.value} className="text-xs font-mono">
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
+          );
+        })}
 
-            <div className="space-y-2">
-              <Label htmlFor="idea-count" className="text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <Layers className="h-3.5 w-3.5 text-primary" />
-                Number of Ideas
-              </Label>
-              <Select value={ideaCount} onValueChange={setIdeaCount} disabled={isGenerating}>
-                <SelectTrigger id="idea-count" className="h-10 text-xs font-mono rounded-none border-border">
-                  <SelectValue placeholder="Select count" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3" className="font-mono text-xs">3 Post Ideas</SelectItem>
-                  <SelectItem value="4" className="font-mono text-xs">4 Post Ideas (Recommended)</SelectItem>
-                  <SelectItem value="5" className="font-mono text-xs">5 Post Ideas</SelectItem>
-                  <SelectItem value="6" className="font-mono text-xs">6 Post Ideas</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Optional Custom Topic / Keyword */}
-          <div className="space-y-2">
-            <Label htmlFor="custom-topic" className="text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Cpu className="h-3.5 w-3.5 text-muted-foreground" />
-                Specific Tech Topic or Keyword (Optional)
+        {/* Live Streaming Message Bubble */}
+        {isGenerating && streamingContent && (
+          <div className="flex flex-col items-start">
+            <div className="flex items-center gap-2 mb-1 px-1">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-primary">
+                Regardless AI (Thinking & Generating...)
               </span>
-              <span className="text-[11px] font-mono text-muted-foreground font-normal">Leave blank for top tech headlines</span>
-            </Label>
-            <Input
-              id="custom-topic"
-              value={customKeyword}
-              onChange={(e) => setCustomKeyword(e.target.value)}
-              placeholder="e.g. Claude 3.7 Sonnet, Devin AI, Python 3.13, Nvidia earnings, YC W25 startups..."
-              className="h-10 text-xs font-mono rounded-none border-border"
-              disabled={isGenerating}
-            />
-          </div>
-
-          {/* Brand Voice Lock */}
-          <div className="flex items-center justify-between gap-3 rounded-none border border-border bg-surface p-3.5 text-xs font-mono">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              <span>Voice & Tone: <strong className="text-foreground">Sarcastic, Opinionated, No-Filter (Coding & Finance Course)</strong></span>
             </div>
-            <Badge variant="outline" className="shrink-0 bg-background text-[10px] rounded-none font-mono font-bold">Enforced</Badge>
+            <div className="max-w-[90%] md:max-w-[80%] rounded-none p-4 text-sm bg-card border border-primary/50 text-foreground">
+              <div className="whitespace-pre-wrap font-sans text-sm">
+                {cleanAssistantContent(streamingContent)}
+              </div>
+              <div className="flex items-center gap-2 mt-3 text-xs font-mono text-primary">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <span>Formulating angles & structuring ideas...</span>
+              </div>
+            </div>
           </div>
+        )}
 
-          {/* Generate Button */}
+        {isGenerating && !streamingContent && (
+          <div className="flex items-center gap-2 p-3 rounded-none bg-surface border border-border text-xs font-mono text-muted-foreground w-fit">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span>Connecting to live tech news radar & preparing ideas...</span>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Suggested Prompt Chips */}
+      <div className="px-4 py-2 border-t border-border bg-surface/50 overflow-x-auto flex items-center gap-2 shrink-0">
+        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider shrink-0">
+          Try:
+        </span>
+        {SUGGESTED_PROMPTS.map((prompt, idx) => (
+          <button
+            key={idx}
+            type="button"
+            disabled={isGenerating}
+            onClick={() => handleSendMessage(prompt)}
+            className="text-[11px] font-mono px-2.5 py-1 rounded-none border border-border bg-card hover:border-primary text-muted-foreground hover:text-foreground whitespace-nowrap transition-colors"
+          >
+            {prompt}
+          </button>
+        ))}
+      </div>
+
+      {/* Pinned Input Form */}
+      <div className="p-4 border-t border-border bg-card shrink-0">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSendMessage();
+          }}
+          className="flex items-center gap-2"
+        >
+          <input
+            type="text"
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            disabled={isGenerating}
+            placeholder="Ask for ideas, paste a tech news URL, or say 'regenerate idea 2 with a punchier hook'..."
+            className="flex-1 h-11 px-3 text-xs font-mono bg-surface border border-border rounded-none text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-primary focus:outline-none"
+          />
           <Button
-            onClick={handleGenerate}
-            disabled={isGenerating || selectedPlatforms.length === 0}
-            size="lg"
-            className="w-full h-11 text-xs font-mono font-bold uppercase tracking-wider gap-2 rounded-none bg-primary text-primary-foreground border border-primary hover:opacity-90 transition-all disabled:opacity-50 disabled:pointer-events-none"
+            type="submit"
+            disabled={isGenerating || !inputMessage.trim()}
+            className="h-11 px-5 rounded-none font-mono text-xs font-bold bg-primary text-primary-foreground border border-primary hover:opacity-90 shrink-0"
           >
             {isGenerating ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span>Generating Tech Ideas...</span>
-              </>
-            ) : selectedPlatforms.length === 0 ? (
-              <>
-                <AlertCircle className="h-5 w-5" />
-                <span>Connect a Platform in Settings to Generate Ideas</span>
-              </>
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
-                <Sparkles className="h-5 w-5" />
-                <span>Generate {ideaCount} Tech Post Ideas ({selectedPlatforms.join(', ')})</span>
+                <Send className="h-4 w-4 mr-1.5" />
+                Send
               </>
             )}
           </Button>
-
-          {/* Progress / Step Feedback */}
-          {isGenerating && (
-            <div className="rounded-none border border-primary bg-surface p-4 text-center">
-              <p className="text-xs font-mono font-bold text-primary flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {generationStep || 'Scanning tech news & generating ideas...'}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* News Summary Card if available */}
-      {lastSummary && !isGenerating && (
-        <Card className="border-border bg-card/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-              <Globe className="h-4 w-4 text-primary" />
-              Live News Context & Strategist Take
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs leading-relaxed whitespace-pre-wrap text-muted-foreground">
-              {lastSummary}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        </form>
+      </div>
     </div>
   );
 }

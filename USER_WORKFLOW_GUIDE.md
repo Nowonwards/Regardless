@@ -11,17 +11,23 @@ This document provides a comprehensive, page-by-page walkthrough of the user jou
 ```mermaid
 graph TD
     A[1. Authentication & Onboarding] --> B[2. Connect Social Platforms in Settings]
-    B --> C[3. Ideation Studio / Chat]
-    C -->|Tavily Live Tech News + AI Strategist| D[4. Review & Select Post Ideas]
-    D -->|Batch Draft Generation| E[5. Drafts Gallery & Editor]
-    E -->|Interactive Instagram Mockup / Slide Editor| F{Review Actions}
+    B --> C[3. Content Studio / Chat]
+    C -->|Mode A: Conversational AI Chat| D[In-Stream Post Ideas with Checkboxes]
+    D -->|Create Drafts Button| E[5. Drafts Gallery & Slide Editor]
+    D -->|Saved Globally| D2[4. Global Post Ideas /ideas]
+    D2 -->|Batch Generate| E
+    E -->|Interactive Post Mockup / Slide Editor| F{Review Actions}
     F -->|Request Changes| G[AI Revision Loop]
     G --> E
     F -->|Approve & Date| H[Schedule in Calendar]
     F -->|Direct Publish| I[Composio + Sharp JPEG Pipeline]
+    C -->|Mode B: Manual Post Studio| M[Create Custom Post with Uploaded Images & Captions]
+    M -->|Save to Approved| N[Kanban: Approved Column]
+    M -->|Schedule Date & Time| H
+    M -->|Publish Live Now| I
     H -->|Automated Cron Trigger| I
     I --> J[Live Instagram / LinkedIn / Pinterest Post]
-    J --> K[6. History Archive & Calendar View]
+    J --> K[6. History Archive, Kanban & Calendar View]
 ```
 
 ---
@@ -68,26 +74,33 @@ Link your creator and business social media accounts so Regardless can publish p
 
 ---
 
-### 3. Ideation Studio & Live News Search
+### 3. Content Studio & Conversational Ideation
 * **Route**: `/chat`
 
 #### User Goal
-Generate viral, data-backed tech post ideas grounded in breaking real-time industry news and customized to your specific brand tone.
+Brainstorm post ideas conversationally with an opinionated AI strategist or directly create, design, and schedule custom posts from scratch.
 
-#### Key Features
-* **Live News Ingestion**: Integrates **Tavily AI Search** to fetch real-time tech news (AI model drops, funding rounds, big tech drama, open-source releases).
-* **Multi-Platform Targeting**: Choose whether ideas should be targeted for Instagram carousels, LinkedIn thought leadership, or Pinterest infographics.
-* **Brand Voice Enforcement**: Applies Regardless's signature **opinionated, analytical, no-filter** perspective.
-* **Topic Presets & Custom Keywords**: Select general tech topics or input specific keywords (e.g., *"Claude 3.7 Sonnet"*, *"Nvidia inference chips"*).
+#### Studio Modes
 
-#### User Journey & Interactions
-1. In the **Ideation Studio**, click to toggle your target platforms (**Instagram**, **LinkedIn**, **Pinterest**).
-2. Choose an **Industry Focus** from the dropdown (or leave on *"All Tech Industry News"*).
-3. *(Optional)* Type a specific tech keyword or breaking event in the **Custom Topic** input.
-4. Select the number of post concepts to generate (3 to 6 ideas).
-5. Click **"Generate Tech Post Ideas"**.
-6. The system executes a live web search, summarizes context, and drafts comprehensive post concepts (with Hook, Angle, Key Points, Format, and CTA).
-7. You are automatically guided to the **Post Ideas** review screen.
+##### Mode A: AI Chat & Ideation
+* **Conversational AI Partner**: Free-form chat where you can brainstorm, refine angles, or iterate on concepts (e.g., *"Give me 3 controversial takes on AI coding agents"*, *"I didn't like idea 2, regenerate it with a focus on cost"*).
+* **Live News Search Toggle**: Enables or disables **Tavily AI Search** to ground ideas in breaking, real-time tech news.
+* **Target Channels**: Toggle Instagram, LinkedIn, and Pinterest pills right above the chat.
+* **In-Stream Interactive Idea Cards**: When ideas are generated, they render seamlessly inside the conversation stream with checkboxes for every idea and a **"Create Drafts (N selected)"** button, as well as single-click **"Draft"** buttons on individual cards.
+* **Continuous Conversation**: Creating drafts or generating ideas does not disrupt or navigate away from the chat thread. All generated ideas are also automatically preserved in the global `/ideas` page.
+
+##### Mode B: Manual Post Studio ("Create by Myself")
+* **Direct Content Creation**: Build complete social posts from scratch without needing to go through the AI ideation/drafting pipeline.
+* **Platform Selection**: Target Instagram, LinkedIn, or Pinterest.
+* **Visual Slide & Media Manager**:
+  - Add and reorder slides for carousel decks or single visual posts.
+  - Upload custom image files (PNG, JPG, WebP) with instant visual previews and replacement controls.
+  - Set custom headlines and body copy per slide.
+* **Caption & Hashtag Engine**: Full post caption editor and interactive hashtag tag manager.
+* **Direct Publishing & Kanban Routing**:
+  - **Save to Approved**: Instantly saves the post with status `APPROVED`. It immediately shows up in the **Kanban Board** under the **Approved** column, ready for queueing.
+  - **Schedule Date & Time**: Pick a specific day and time using the embedded calendar and clock selector. Sets status to `SCHEDULED`, routing to the **Scheduled** column in Kanban and publishing automatically when due.
+  - **Publish Immediately**: Pushes the post directly live to your connected social channels via Composio.
 
 ---
 
@@ -95,7 +108,7 @@ Generate viral, data-backed tech post ideas grounded in breaking real-time indus
 * **Route**: `/ideas`
 
 #### User Goal
-Review generated ideas, inspect their structural hooks and angles, and batch-select concepts to convert into full slide decks and drafts.
+Review all previously generated ideas across all sessions, inspect their structural hooks and angles, and batch-select concepts to convert into full slide decks and drafts.
 
 #### Key Features
 * Interactive card selector with expandable hooks and talking points.
