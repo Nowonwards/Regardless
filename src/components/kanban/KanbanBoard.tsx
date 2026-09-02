@@ -112,15 +112,15 @@ function KanbanCard({ post, onClick }: KanbanCardProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group relative bg-card border border-border/70 rounded-lg p-3 shadow-xs hover:shadow-md hover:border-primary/40 transition-all duration-150 cursor-grab active:cursor-grabbing text-left space-y-2',
-        isDragging && 'shadow-xl scale-102 ring-2 ring-primary/40 z-50'
+        'group relative bg-card border border-border rounded-none p-3 hover:border-primary transition-all duration-150 cursor-grab active:cursor-grabbing text-left space-y-2',
+        isDragging && 'scale-102 ring-1 ring-primary z-50'
       )}
       {...attributes}
       {...listeners}
       onClick={() => onClick(post)}
     >
       <div className="flex items-start justify-between gap-1.5">
-        <h4 className="font-semibold text-xs text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+        <h4 className="font-display font-bold text-xs text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
           {post.title}
         </h4>
         <button
@@ -129,7 +129,7 @@ function KanbanCard({ post, onClick }: KanbanCardProps) {
             e.stopPropagation();
             onClick(post);
           }}
-          className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-all shrink-0"
+          className="opacity-0 group-hover:opacity-100 p-1 rounded-none text-muted-foreground hover:text-foreground hover:bg-surface transition-all shrink-0"
           aria-label="Inspect card"
         >
           <MoreHorizontal className="h-3.5 w-3.5" />
@@ -137,12 +137,12 @@ function KanbanCard({ post, onClick }: KanbanCardProps) {
       </div>
 
       <div className="flex items-center flex-wrap gap-1.5">
-        <Badge variant="outline" className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0 h-4.5 flex items-center gap-1', PLATFORM_CONFIG[post.platform].pill)}>
+        <Badge variant="outline" className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0 h-4.5 flex items-center gap-1 rounded-none border', PLATFORM_CONFIG[post.platform].pill)}>
           {PLATFORM_CONFIG[post.platform].icon}
           {PLATFORM_CONFIG[post.platform].name}
         </Badge>
 
-        <div className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground bg-surface px-1.5 py-0.5 rounded border border-border/50">
+        <div className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground bg-surface px-1.5 py-0.5 rounded-none border border-border">
           <Layers className="h-3 w-3" />
           <span>{post.content?.slides?.length || 1}</span>
         </div>
@@ -151,10 +151,10 @@ function KanbanCard({ post, onClick }: KanbanCardProps) {
           <Badge
             variant="outline"
             className={cn(
-              'text-[10px] font-mono font-medium px-1.5 py-0 h-4.5 flex items-center gap-1',
+              'text-[10px] font-mono font-medium px-1.5 py-0 h-4.5 flex items-center gap-1 rounded-none border',
               isOverdue
-                ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
-                : 'bg-surface text-muted-foreground border-border/60'
+                ? 'bg-destructive/10 text-destructive border-destructive'
+                : 'bg-surface text-muted-foreground border-border'
             )}
           >
             <Clock className="h-2.5 w-2.5" />
@@ -164,7 +164,7 @@ function KanbanCard({ post, onClick }: KanbanCardProps) {
       </div>
 
       {post.status === 'FAILED' && post.errorMessage && (
-        <p className="text-[10px] text-rose-600 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 p-1.5 rounded border border-rose-200 dark:border-rose-900 line-clamp-2">
+        <p className="text-[10px] font-mono text-destructive bg-surface p-1.5 rounded-none border border-destructive line-clamp-2">
           {post.errorMessage}
         </p>
       )}
@@ -183,13 +183,13 @@ function KanbanColumnComponent({ column, onPostClick, onCreatePost }: KanbanColu
   const statusConfig = STATUS_CONFIG[column.id as PostStatus];
 
   return (
-    <div className="flex flex-col min-w-[280px] max-w-[280px] rounded-xl border border-border/70 bg-surface/50 overflow-hidden shadow-xs">
+    <div className="flex flex-col min-w-[280px] max-w-[280px] rounded-none border border-border bg-surface overflow-hidden">
       {/* Column Header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/70 px-3.5 py-2.5 bg-surface/90 backdrop-blur-md">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border px-3.5 py-2.5 bg-surface">
         <div className="flex items-center gap-2">
-          <span className={cn('h-2 w-2 rounded-full', statusConfig.dot)} />
-          <h3 className="font-semibold text-xs text-foreground">{statusConfig.title}</h3>
-          <span className="text-[11px] font-mono text-muted-foreground bg-card px-1.5 py-0.5 rounded border border-border/60">
+          <span className={cn('h-2 w-2 rounded-none', statusConfig.dot)} />
+          <h3 className="font-display font-bold text-xs text-foreground uppercase tracking-wider">{statusConfig.title}</h3>
+          <span className="text-[11px] font-mono text-muted-foreground bg-card px-1.5 py-0.5 rounded-none border border-border">
             {column.posts.length}
           </span>
         </div>
@@ -199,7 +199,7 @@ function KanbanColumnComponent({ column, onPostClick, onCreatePost }: KanbanColu
             variant="ghost"
             size="icon"
             onClick={() => onCreatePost(column.id as PostStatus)}
-            className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
+            className="h-6 w-6 rounded-none border border-border text-muted-foreground hover:text-foreground"
             aria-label={`Add card to ${statusConfig.title}`}
           >
             <Plus className="h-3.5 w-3.5" />
@@ -215,7 +215,7 @@ function KanbanColumnComponent({ column, onPostClick, onCreatePost }: KanbanColu
         >
           <div className="space-y-2 min-h-[160px]">
             {column.posts.length === 0 ? (
-              <div className="h-24 border border-dashed border-border/60 rounded-lg flex flex-col items-center justify-center text-muted-foreground/60 text-[11px]">
+              <div className="h-24 border border-dashed border-border rounded-none flex flex-col items-center justify-center text-muted-foreground text-[11px] font-mono">
                 <span>Empty stage</span>
               </div>
             ) : (
@@ -295,9 +295,9 @@ export function KanbanBoard({
     <TooltipProvider>
       <div className="h-full flex flex-col space-y-3">
         {/* Top Filter & Action Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-3 bg-surface/30 p-3 rounded-xl border">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-border pb-3 bg-surface p-3 rounded-none">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold tracking-tight">Kanban Board</h2>
+            <h2 className="font-display text-base font-bold tracking-tight">Kanban Board</h2>
             <Badge variant="outline" className="text-xs font-mono">
               {filteredPosts.length} posts
             </Badge>
@@ -310,24 +310,24 @@ export function KanbanBoard({
                 placeholder="Filter posts..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 w-full pl-8 sm:w-56 text-xs rounded-lg"
+                className="h-8 w-full pl-8 sm:w-56 text-xs rounded-none font-mono border-border"
               />
             </div>
 
             <Select value={platformFilter} onValueChange={(val) => setPlatformFilter(val as Platform | 'all')}>
-              <SelectTrigger className="w-[130px] h-8 text-xs rounded-lg">
+              <SelectTrigger className="w-[130px] h-8 text-xs font-mono rounded-none border-border">
                 <SelectValue placeholder="All Platforms" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="text-xs">All Platforms</SelectItem>
-                <SelectItem value="INSTAGRAM" className="text-xs">Instagram</SelectItem>
-                <SelectItem value="PINTEREST" className="text-xs">Pinterest</SelectItem>
-                <SelectItem value="LINKEDIN" className="text-xs">LinkedIn</SelectItem>
+                <SelectItem value="all" className="text-xs font-mono">All Platforms</SelectItem>
+                <SelectItem value="INSTAGRAM" className="text-xs font-mono">Instagram</SelectItem>
+                <SelectItem value="PINTEREST" className="text-xs font-mono">Pinterest</SelectItem>
+                <SelectItem value="LINKEDIN" className="text-xs font-mono">LinkedIn</SelectItem>
               </SelectContent>
             </Select>
 
             {onCreatePost && (
-              <Button onClick={() => onCreatePost('DRAFTED')} size="sm" className="h-8 text-xs font-medium gap-1 rounded-lg">
+              <Button onClick={() => onCreatePost('DRAFTED')} size="sm" className="h-8 text-xs font-mono font-bold gap-1 rounded-none bg-primary text-primary-foreground border border-primary hover:opacity-90">
                 <Plus className="h-3.5 w-3.5" />
                 Add Post
               </Button>
@@ -348,10 +348,10 @@ export function KanbanBoard({
                 const activePost = posts.find((p) => p.id === activeId);
                 if (!activePost) return null;
                 return (
-                  <div className="w-[280px] bg-card border border-primary/50 rounded-lg p-3 shadow-2xl scale-102">
-                    <h4 className="font-semibold text-xs truncate">{activePost.title}</h4>
+                  <div className="w-[280px] bg-card border border-primary rounded-none p-3 scale-102">
+                    <h4 className="font-display font-bold text-xs truncate">{activePost.title}</h4>
                     <div className="mt-1.5 flex items-center gap-1.5">
-                      <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0 h-4.5', PLATFORM_CONFIG[activePost.platform].pill)}>
+                      <Badge variant="outline" className={cn('text-[10px] font-mono px-1.5 py-0 h-4.5 rounded-none border', PLATFORM_CONFIG[activePost.platform].pill)}>
                         {PLATFORM_CONFIG[activePost.platform].icon}
                         <span className="ml-1">{activePost.platform}</span>
                       </Badge>
@@ -414,7 +414,7 @@ export function KanbanBoard({
                     setInspectingPost(null);
                     onPostClick(post);
                   }}
-                  className="gap-1.5 rounded-lg text-xs"
+                  className="gap-1.5 rounded-none border border-border text-xs font-mono"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   Open Full Studio
@@ -428,12 +428,12 @@ export function KanbanBoard({
                       setInspectingPost({ ...inspectingPost, status: newStatus as PostStatus });
                     }}
                   >
-                    <SelectTrigger className="h-8 text-xs rounded-lg w-[140px]">
+                    <SelectTrigger className="h-8 text-xs font-mono rounded-none border-border w-[140px]">
                       <SelectValue placeholder="Move Stage" />
                     </SelectTrigger>
                     <SelectContent>
                       {KANBAN_STATUSES.map((status) => (
-                        <SelectItem key={status} value={status} className="text-xs">
+                        <SelectItem key={status} value={status} className="text-xs font-mono">
                           {STATUS_CONFIG[status].title}
                         </SelectItem>
                       ))}
@@ -447,7 +447,7 @@ export function KanbanBoard({
                       setInspectingPost(null);
                       onPostClick(post);
                     }}
-                    className="gap-1.5 rounded-lg text-xs bg-primary text-primary-foreground font-semibold"
+                    className="gap-1.5 rounded-none text-xs bg-primary text-primary-foreground font-mono font-bold border border-primary hover:opacity-90"
                   >
                     {inspectingPost.status === 'POSTED' ? (
                       <>
@@ -469,18 +469,18 @@ export function KanbanBoard({
           {inspectingPost && (
             <div className="space-y-5">
               <div>
-                <h3 className="text-lg font-bold text-foreground leading-snug">{inspectingPost.title}</h3>
+                <h3 className="font-display text-lg font-bold text-foreground leading-snug">{inspectingPost.title}</h3>
               </div>
 
               {/* Carousel Slides */}
               {inspectingPost.content?.slides && inspectingPost.content.slides.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <div className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
                     Carousel Slides ({inspectingPost.content.slides.length})
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     {inspectingPost.content.slides.map((s, idx) => (
-                      <div key={idx} className="relative aspect-[4/5] rounded-lg overflow-hidden border border-border bg-muted/30">
+                      <div key={idx} className="relative aspect-[4/5] rounded-none overflow-hidden border border-border bg-surface">
                         {s.imageUrl ? (
                           <img src={s.imageUrl} alt={s.headline || `Slide ${idx + 1}`} className="w-full h-full object-cover" />
                         ) : (
@@ -489,7 +489,7 @@ export function KanbanBoard({
                             <span className="text-muted-foreground">{idx + 1}</span>
                           </div>
                         )}
-                        <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] font-medium px-1 rounded">
+                        <span className="absolute bottom-1 right-1 bg-black/90 text-white text-[9px] font-mono px-1 rounded-none border border-white/20">
                           {idx + 1}/{inspectingPost.content.slides.length}
                         </span>
                       </div>
@@ -500,8 +500,8 @@ export function KanbanBoard({
 
               {/* Caption */}
               <div className="space-y-2">
-                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Post Caption</div>
-                <div className="p-3.5 rounded-xl border border-border/80 bg-surface/50 text-xs leading-relaxed whitespace-pre-wrap text-foreground/90 font-mono">
+                <div className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">Post Caption</div>
+                <div className="p-3.5 rounded-none border border-border bg-surface text-xs leading-relaxed whitespace-pre-wrap text-foreground font-mono">
                   {inspectingPost.content?.caption || 'No caption text'}
                 </div>
               </div>
@@ -509,10 +509,10 @@ export function KanbanBoard({
               {/* Hashtags */}
               {inspectingPost.content?.hashtags && inspectingPost.content.hashtags.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Hashtags</div>
+                  <div className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">Hashtags</div>
                   <div className="flex flex-wrap gap-1.5">
                     {inspectingPost.content.hashtags.map((tag, idx) => (
-                      <span key={idx} className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                      <span key={idx} className="text-xs font-mono font-medium text-primary bg-surface border border-primary/40 px-2 py-0.5 rounded-none">
                         {tag.startsWith('#') ? tag : `#${tag}`}
                       </span>
                     ))}

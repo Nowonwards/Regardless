@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Filter, Search, Plus, LayoutGrid, List, X, Calendar as CalendarIcon, ChevronRight } from 'lucide-react';
+import { Filter, Search, Plus, LayoutGrid, List, X, Calendar as CalendarIcon, ChevronRight, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -229,20 +229,26 @@ export function DraftsList({
             </SelectContent>
           </Select>
 
-          <div className="flex items-center rounded-md bg-muted p-0.5">
+          <div className="flex items-center rounded-none border border-border bg-surface p-0.5">
             <Button
-              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              variant="ghost"
               size="sm"
-              className="h-8 px-2.5"
+              className={cn(
+                'h-8 px-2.5 rounded-none font-mono text-xs font-semibold',
+                viewMode === 'grid' ? 'bg-primary text-primary-foreground border border-primary' : 'text-muted-foreground hover:text-foreground'
+              )}
               onClick={() => setViewMode('grid')}
               aria-label="Grid view"
             >
               <LayoutGrid className="h-4 w-4" />
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              variant="ghost"
               size="sm"
-              className="h-8 px-2.5"
+              className={cn(
+                'h-8 px-2.5 rounded-none font-mono text-xs font-semibold',
+                viewMode === 'list' ? 'bg-primary text-primary-foreground border border-primary' : 'text-muted-foreground hover:text-foreground'
+              )}
               onClick={() => setViewMode('list')}
               aria-label="List view"
             >
@@ -277,14 +283,14 @@ export function DraftsList({
 
       <div className="flex-1 overflow-auto">
         {filteredPosts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground border rounded-xl bg-card/50">
-            <Filter className="h-10 w-10 mb-3 opacity-30" />
-            <h3 className="text-lg font-semibold mb-1">
+          <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground border border-border rounded-none bg-card">
+            <Filter className="h-10 w-10 mb-3 text-muted-foreground" />
+            <h3 className="font-display text-lg font-bold mb-1 text-foreground">
               {searchQuery || statusFilter !== 'all' || platformFilter !== 'all'
                 ? 'No drafts match your filters'
                 : 'No drafts yet'}
             </h3>
-            <p className="text-sm text-muted-foreground max-w-sm mb-4">
+            <p className="text-xs font-mono text-muted-foreground max-w-sm mb-4">
               {searchQuery || statusFilter !== 'all' || platformFilter !== 'all'
                 ? 'Try adjusting your filters or search terms.'
                 : 'Generate drafts from your ideation sessions to get started.'}
@@ -316,8 +322,8 @@ export function DraftsList({
                 <Card
                   key={post.id}
                   onClick={() => setSelectedPost(post)}
-                  className="cursor-pointer overflow-hidden rounded-2xl border border-border/70 bg-card hover:border-primary/50 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group flex flex-col justify-between"
-                  elevation="low"
+                  className="cursor-pointer overflow-hidden rounded-none border border-border bg-card hover:border-primary transition-all duration-150 group flex flex-col justify-between"
+                  elevation="none"
                 >
                   <CardContent className="p-4 space-y-3.5 flex-1 flex flex-col justify-between">
                     <div className="space-y-3">
@@ -325,19 +331,19 @@ export function DraftsList({
                       <div className="flex items-center justify-between gap-1.5">
                         <Badge
                           variant="outline"
-                          className={cn('text-[10px] font-mono font-semibold tracking-wider uppercase px-2.5 py-0.5 rounded-full border', platform.className)}
+                          className={cn('text-[10px] font-mono font-semibold tracking-wider uppercase px-2.5 py-0.5 rounded-none border', platform.className)}
                         >
                           {platform.label}
                         </Badge>
                         <div className="flex items-center gap-1.5">
                           <Badge
                             variant="outline"
-                            className={cn('text-[10px] font-mono font-medium px-2 py-0.5 rounded-full border', status.className)}
+                            className={cn('text-[10px] font-mono font-medium px-2 py-0.5 rounded-none border', status.className)}
                           >
                             {status.label}
                           </Badge>
                           {post.currentVersion > 1 && (
-                            <span className="text-[10px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-md">
+                            <span className="text-[10px] font-mono text-muted-foreground bg-surface border border-border px-1.5 py-0.5 rounded-none">
                               v{post.currentVersion}
                             </span>
                           )}
@@ -347,35 +353,32 @@ export function DraftsList({
                       {/* Slide Thumbnail with Multi-Slide Carousel Stack Effect */}
                       <div className="relative pt-1 pb-1 px-1">
                         {slideCount > 1 && (
-                          <div className="absolute inset-x-3 bottom-0 h-4 bg-muted-foreground/15 rounded-xl border border-border/40 -z-0 transform translate-y-1 scale-[0.96]" />
+                          <div className="absolute inset-x-3 bottom-0 h-4 bg-surface rounded-none border border-border -z-0 transform translate-y-1 scale-[0.98]" />
                         )}
-                        <div className="relative z-10 w-full aspect-[4/3] rounded-xl overflow-hidden bg-zinc-950 border border-border/70 shadow-sm group-hover:shadow-md transition-shadow">
+                        <div className="relative z-10 w-full aspect-[4/3] rounded-none overflow-hidden bg-zinc-950 border border-border">
                           {firstSlide?.imageUrl ? (
                             <img
                               src={firstSlide.imageUrl}
                               alt={firstSlide.headline || post.title}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                               loading="lazy"
                             />
                           ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center text-zinc-400 bg-gradient-to-br from-zinc-900 to-zinc-950">
+                            <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center text-zinc-400 bg-surface">
                               <span className="text-xs font-semibold text-zinc-200 line-clamp-2">{post.title}</span>
                             </div>
                           )}
 
-                          {/* Gradient Vignette */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 opacity-60 group-hover:opacity-40 transition-opacity" />
-
                           {/* Slide Count Overlay Pill */}
-                          <div className="absolute bottom-2 right-2 bg-black/75 backdrop-blur-md border border-white/10 text-white text-[10px] font-mono font-medium px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
+                          <div className="absolute bottom-2 right-2 bg-black/90 border border-white/20 text-white text-[10px] font-mono font-medium px-2 py-0.5 rounded-none flex items-center gap-1">
                             <span>{slideCount} slide{slideCount > 1 ? 's' : ''}</span>
-                            {slideCount > 1 && <span className="text-white/60 font-sans">• Carousel</span>}
+                            {slideCount > 1 && <span className="text-white/60 font-mono">• Carousel</span>}
                           </div>
                         </div>
                       </div>
 
                       {/* Post Title */}
-                      <h3 className="font-semibold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
+                      <h3 className="font-display font-bold text-base text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
                         {post.title}
                       </h3>
 
@@ -386,21 +389,20 @@ export function DraftsList({
                     </div>
 
                     {/* Card Footer */}
-                    <div className="pt-3 flex items-center justify-between text-xs text-muted-foreground border-t border-border/60 mt-1">
+                    <div className="pt-3 flex items-center justify-between text-xs text-muted-foreground border-t border-border mt-1 font-mono">
                       {post.scheduledAt ? (
-                        <span className="flex items-center gap-1.5 text-[11px] font-mono font-medium text-primary">
-                          <CalendarIcon className="h-3.5 w-3.5" />
-                          {format(new Date(post.scheduledAt), 'MMM d, yyyy')}
+                        <span className="flex items-center gap-1.5 text-primary font-medium text-[11px]">
+                          <CalendarIcon className="h-3 w-3" />
+                          {format(new Date(post.scheduledAt), 'MMM d, h:mm a')}
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground">
-                          <CalendarIcon className="h-3.5 w-3.5" />
+                        <span className="flex items-center gap-1 text-[11px]">
+                          <Clock className="h-3 w-3" />
                           {format(new Date(post.updatedAt || new Date()), 'MMM d, yyyy')}
                         </span>
                       )}
-
-                      <span className="text-[11px] font-semibold text-primary group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                        Open Editor →
+                      <span className="text-primary font-bold group-hover:underline text-[11px] uppercase tracking-wider">
+                        Inspect →
                       </span>
                     </div>
                   </CardContent>
@@ -419,19 +421,19 @@ export function DraftsList({
                 <Card
                   key={post.id}
                   onClick={() => setSelectedPost(post)}
-                  className="cursor-pointer rounded-xl border border-border/70 bg-card hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
-                  elevation="low"
+                  className="cursor-pointer rounded-none border border-border bg-card hover:border-primary transition-all duration-150 group"
+                  elevation="none"
                 >
                   <CardContent className="p-4 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3.5 min-w-0">
                       <Badge
                         variant="outline"
-                        className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full border shrink-0', platform.className)}
+                        className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-none border shrink-0', platform.className)}
                       >
                         {platform.label}
                       </Badge>
                       <div className="min-w-0">
-                        <h3 className="font-semibold text-sm truncate text-foreground group-hover:text-primary transition-colors">
+                        <h3 className="font-display font-bold text-sm truncate text-foreground group-hover:text-primary transition-colors">
                           {post.title}
                         </h3>
                         <p className="text-xs text-muted-foreground truncate max-w-xl">
@@ -441,10 +443,10 @@ export function DraftsList({
                     </div>
 
                     <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
-                      <span className="font-mono font-medium text-[11px] bg-muted/50 px-2 py-0.5 rounded-md hidden sm:inline">
+                      <span className="font-mono font-medium text-[11px] bg-surface border border-border px-2 py-0.5 rounded-none hidden sm:inline">
                         {slideCount} slide{slideCount > 1 ? 's' : ''}
                       </span>
-                      <Badge className={cn('font-mono font-medium text-[10px] px-2 py-0.5 rounded-full border', status.className)} variant="outline">
+                      <Badge className={cn('font-mono font-medium text-[10px] px-2 py-0.5 rounded-none border', status.className)} variant="outline">
                         {status.label}
                       </Badge>
                       {post.scheduledAt && (

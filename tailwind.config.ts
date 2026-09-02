@@ -46,6 +46,8 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        approved: 'hsl(var(--approved))',
+        posted: 'hsl(var(--posted))',
         platform: {
           instagram: {
             DEFAULT: 'hsl(var(--instagram))',
@@ -65,9 +67,27 @@ const config: Config = {
         },
       },
       borderRadius: {
+        none: '0px',
+        DEFAULT: 'var(--radius)',
+        sm: 'var(--radius)',
+        md: 'var(--radius)',
         lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        xl: 'var(--radius)',
+        '2xl': 'var(--radius)',
+        '3xl': 'var(--radius)',
+        full: '9999px',
+      },
+      boxShadow: {
+        none: 'none',
+        DEFAULT: 'none',
+        xs: 'none',
+        '2xs': 'none',
+        sm: 'none',
+        md: 'none',
+        lg: 'none',
+        xl: 'none',
+        '2xl': 'none',
+        inner: 'none',
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],

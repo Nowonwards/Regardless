@@ -47,10 +47,10 @@ function SignInForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background signal-surface">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-4xl grid gap-8 lg:grid-cols-2 items-center">
         <section className="space-y-4">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border bg-card/60 text-xs font-medium text-muted-foreground">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-none border border-border bg-card text-xs font-mono text-muted-foreground">
             <RadioTower className="h-3.5 w-3.5 text-primary" />
             <span>Autonomous Intelligence Loop</span>
           </div>
@@ -60,32 +60,32 @@ function SignInForm() {
           </p>
           <div className="pt-2 space-y-2 text-xs text-muted-foreground font-mono">
             {['Idea Discovery', 'Slide Generation', 'Autonomous Queue'].map((item, index) => (
-              <div key={item} className="flex items-center justify-between border-b border-border/60 pb-1.5">
+              <div key={item} className="flex items-center justify-between border-b border-border pb-1.5">
                 <span>{item}</span>
-                <span className="text-primary">{String(index + 1).padStart(2, '0')}</span>
+                <span className="text-primary font-bold">{String(index + 1).padStart(2, '0')}</span>
               </div>
             ))}
           </div>
         </section>
 
-        <Card className="w-full border border-border/70 rounded-2xl shadow-xl bg-card/90 backdrop-blur-md" elevation="low">
+        <Card className="w-full border border-border rounded-none bg-card" elevation="none">
         <CardHeader>
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20">
-            <RegardlessMark size={26} className="text-primary-foreground" />
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-none bg-primary text-primary-foreground border border-primary">
+            <RegardlessMark size={26} strokeColor="#0B0B0C" />
           </div>
           <CardTitle className="font-display text-2xl font-bold">Sign in to Regardless</CardTitle>
-          <CardDescription>Open your AI content & publishing workspace.</CardDescription>
+          <CardDescription className="text-xs font-mono">Open your AI content & publishing workspace.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 p-3.5 text-xs font-medium text-red-700 dark:text-red-300" role="alert">
+              <div className="rounded-none border border-destructive bg-surface p-3.5 text-xs font-mono text-destructive" role="alert">
                 {error}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-semibold">Email Address</Label>
+              <Label htmlFor="email" className="text-xs font-mono font-semibold">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -94,12 +94,12 @@ function SignInForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                className="h-10 text-sm rounded-xl"
+                className="h-10 text-sm rounded-none border-border"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-xs font-semibold">Password</Label>
+              <Label htmlFor="password" className="text-xs font-mono font-semibold">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -108,22 +108,22 @@ function SignInForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="h-10 text-sm rounded-xl"
+                className="h-10 text-sm rounded-none border-border"
               />
             </div>
 
             <Button
               type="submit"
-              className="w-full h-10.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md shadow-primary/20 transition-all"
+              className="w-full h-10.5 rounded-none bg-primary text-primary-foreground font-mono font-bold uppercase tracking-wider hover:opacity-90 border border-primary transition-all"
               disabled={loading}
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-muted-foreground">
+          <div className="mt-6 text-center text-xs font-mono text-muted-foreground">
             Don&apos;t have an account?{' '}
-            <Link href="/auth/signup" className="text-primary hover:underline font-semibold">
+            <Link href="/auth/signup" className="text-primary hover:underline font-bold">
               Sign Up
             </Link>
           </div>

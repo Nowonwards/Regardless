@@ -200,13 +200,13 @@ export function IdeasSelector({
   if (ideas.length === 0) {
     return (
       <TooltipProvider>
-        <Card className="h-full" elevation="low">
+        <Card className="h-full rounded-none border border-border" elevation="none">
           <CardContent className="flex flex-col items-center justify-center h-full p-8 text-center">
-            <div className="p-3 bg-primary/10 rounded-full mb-4" aria-hidden="true">
-              <Sparkles className="h-12 w-12 text-primary" />
+            <div className="p-3 bg-surface border border-border rounded-none mb-4" aria-hidden="true">
+              <Sparkles className="h-10 w-10 text-primary" />
             </div>
-            <h3 className="text-lg font-medium mb-2">No ideas generated yet</h3>
-            <p className="text-muted-foreground max-w-sm">
+            <h3 className="font-display text-lg font-bold mb-2">No ideas generated yet</h3>
+            <p className="text-muted-foreground text-sm max-w-sm">
               Start an ideation session in the chat to brainstorm data-driven post ideas.
             </p>
           </CardContent>
@@ -217,26 +217,26 @@ export function IdeasSelector({
 
   return (
     <TooltipProvider>
-      <Card className="h-full flex flex-col overflow-hidden" elevation="low">
+      <Card className="h-full flex flex-col overflow-hidden rounded-none border border-border" elevation="none">
         {/* Header with Global Actions & Filter */}
-        <CardHeader className="border-b p-4 pb-3" padding="none">
+        <CardHeader className="border-b border-border p-4 pb-3" padding="none">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <CardTitle className="text-base font-semibold">Post Ideas Backlog</CardTitle>
-              <Badge variant="outline" className="text-xs">
+              <CardTitle className="font-display text-base font-bold">Post Ideas Backlog</CardTitle>
+              <Badge variant="outline" className="text-[10px] font-mono">
                 {batches.length} Batch{batches.length !== 1 ? 'es' : ''} ({ideas.length} ideas)
               </Badge>
             </div>
 
             <div className="flex items-center flex-wrap gap-2">
               {/* Filter Pills */}
-              <div className="flex items-center bg-muted/60 p-0.5 rounded-lg text-xs">
+              <div className="flex items-center bg-surface border border-border p-0.5 rounded-none text-xs">
                 <button
                   type="button"
                   onClick={() => setFilterMode('ALL')}
                   className={cn(
-                    'px-2.5 py-1 rounded-md transition-colors font-medium',
-                    filterMode === 'ALL' ? 'bg-background shadow-xs text-foreground' : 'text-muted-foreground hover:text-foreground'
+                    'px-2.5 py-1 rounded-none transition-colors font-mono text-xs font-semibold',
+                    filterMode === 'ALL' ? 'bg-primary text-primary-foreground border border-primary' : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
                   All ({ideas.length})
@@ -245,8 +245,8 @@ export function IdeasSelector({
                   type="button"
                   onClick={() => setFilterMode('AVAILABLE')}
                   className={cn(
-                    'px-2.5 py-1 rounded-md transition-colors font-medium',
-                    filterMode === 'AVAILABLE' ? 'bg-background shadow-xs text-foreground' : 'text-muted-foreground hover:text-foreground'
+                    'px-2.5 py-1 rounded-none transition-colors font-mono text-xs font-semibold',
+                    filterMode === 'AVAILABLE' ? 'bg-primary text-primary-foreground border border-primary' : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
                   Available ({allAvailableIdeas.length})
@@ -256,8 +256,8 @@ export function IdeasSelector({
                     type="button"
                     onClick={() => setFilterMode('PUBLISHED')}
                     className={cn(
-                      'px-2.5 py-1 rounded-md transition-colors font-medium',
-                      filterMode === 'PUBLISHED' ? 'bg-background shadow-xs text-foreground' : 'text-muted-foreground hover:text-foreground'
+                      'px-2.5 py-1 rounded-none transition-colors font-mono text-xs font-semibold',
+                      filterMode === 'PUBLISHED' ? 'bg-primary text-primary-foreground border border-primary' : 'text-muted-foreground hover:text-foreground'
                     )}
                   >
                     Published ({publishedTotal})
@@ -312,14 +312,14 @@ export function IdeasSelector({
                 return (
                   <div key={batch.id} className="space-y-3">
                     {/* Batch Header */}
-                    <div className="flex items-center justify-between bg-muted/30 border rounded-xl px-3.5 py-2">
-                      <div className="flex items-center gap-2 text-xs font-medium">
+                    <div className="flex items-center justify-between bg-surface border border-border rounded-none px-3.5 py-2 font-mono">
+                      <div className="flex items-center gap-2 text-xs font-mono font-medium">
                         <Clock className="h-3.5 w-3.5 text-primary" />
-                        <span className="font-semibold text-foreground">
+                        <span className="font-bold text-foreground">
                           {batch.sessionTitle ? `${batch.sessionTitle} • ` : ''}
                           Batch generated {batch.formattedDate}
                         </span>
-                        <Badge variant="secondary" className="text-[10px] font-mono h-5 px-1.5 font-normal">
+                        <Badge variant="secondary" className="text-[10px] font-mono h-5 px-1.5 font-bold rounded-none border">
                           {batch.ideas.length} idea{batch.ideas.length !== 1 ? 's' : ''}
                         </Badge>
                         {batch.publishedCount > 0 && (
@@ -357,16 +357,16 @@ export function IdeasSelector({
                           <div
                             key={idea.id}
                             className={cn(
-                              'border rounded-xl overflow-hidden transition-all duration-200',
+                              'border rounded-none overflow-hidden transition-all duration-150',
                               isPublished
-                                ? 'bg-muted/15 border-dashed border-border/70 opacity-75'
+                                ? 'bg-muted/15 border-dashed border-border opacity-75'
                                 : isScheduled
-                                ? 'bg-primary/5 border-primary/30'
+                                ? 'bg-surface border-primary text-primary'
                                 : hasDraft
-                                ? 'bg-blue-500/5 border-blue-500/30'
+                                ? 'bg-surface border-border text-foreground'
                                 : isSelected
-                                ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs'
-                                : 'border-border bg-card hover:border-border-strong'
+                                ? 'border-primary bg-surface ring-1 ring-primary'
+                                : 'border-border bg-card hover:border-primary/60'
                             )}
                           >
                             <div className="p-3.5">
@@ -541,9 +541,9 @@ export function IdeasSelector({
 
         {/* Footer Generator Bar */}
         <Separator />
-        <CardContent className="p-4 bg-muted/10">
+        <CardContent className="p-4 bg-surface">
           <Button
-            className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md shadow-primary/20 transition-all disabled:opacity-50"
+            className="w-full h-11 bg-primary text-primary-foreground font-mono font-bold uppercase tracking-wider hover:opacity-90 border border-primary rounded-none transition-all disabled:opacity-50"
             size="lg"
             onClick={onGenerate}
             disabled={selectedIds.length === 0 || isGenerating}

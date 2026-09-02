@@ -6,23 +6,23 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:opacity-50',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-none text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md active:bg-primary active:shadow-sm',
-        destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-md active:bg-destructive active:shadow-sm',
-        outline: 'border border-input bg-background/90 hover:bg-accent hover:text-accent-foreground active:bg-accent',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary',
-        ghost: 'hover:bg-accent hover:text-accent-foreground active:bg-accent',
+        default: 'bg-primary text-primary-foreground font-bold hover:opacity-90 active:bg-primary border border-primary',
+        destructive: 'bg-destructive text-destructive-foreground font-bold hover:opacity-90 active:bg-destructive border border-destructive',
+        outline: 'border border-border bg-transparent hover:bg-surface hover:text-foreground active:bg-surface',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-surface border border-border',
+        ghost: 'hover:bg-surface hover:text-foreground active:bg-surface',
         link: 'text-primary underline-offset-4 hover:underline',
-        platform: 'bg-platform-instagram text-platform-instagram-foreground shadow-sm hover:bg-platform-instagram/90 hover:shadow-md active:bg-platform-instagram active:shadow-sm',
+        platform: 'bg-surface text-foreground border border-border hover:bg-muted',
       },
       size: {
         default: 'h-10 px-4 py-2 gap-2',
-        sm: 'h-9 rounded-md px-3 gap-1.5',
-        lg: 'h-11 rounded-md px-8 gap-2',
-        xl: 'h-12 rounded-md px-10 gap-2',
+        sm: 'h-9 px-3 gap-1.5',
+        lg: 'h-11 px-8 gap-2',
+        xl: 'h-12 px-10 gap-2',
         icon: 'h-10 w-10',
       },
     },

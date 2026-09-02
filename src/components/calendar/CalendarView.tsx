@@ -152,16 +152,16 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
             variant="outline"
             size="sm"
             onClick={() => setCurrentDate(new Date())}
-            className="h-7 text-xs rounded-lg font-medium px-2.5"
+            className="h-7 text-xs rounded-none font-mono font-medium px-2.5 border border-border"
           >
             Today
           </Button>
 
-          <div className="flex items-center rounded-lg border border-border/80 bg-card p-0.5 shadow-2xs">
+          <div className="flex items-center rounded-none border border-border bg-card p-0.5">
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 rounded-md"
+              className="h-6 w-6 rounded-none"
               onClick={() => navigate('prev')}
               aria-label="Previous period"
             >
@@ -170,7 +170,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 rounded-md"
+              className="h-6 w-6 rounded-none"
               onClick={() => navigate('next')}
               aria-label="Next period"
             >
@@ -182,7 +182,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-muted/60 transition-colors text-xs sm:text-sm font-bold text-foreground"
+                className="flex items-center gap-1.5 px-2 py-1 rounded-none hover:bg-surface transition-colors text-xs sm:text-sm font-bold text-foreground font-display"
               >
                 <span>
                   {viewType === 'day'
@@ -196,7 +196,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                 <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 rounded-none border border-border" align="start">
               <Calendar
                 mode="single"
                 selected={currentDate}
@@ -207,16 +207,16 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
         </div>
 
         {/* View Switcher Segmented Control */}
-        <div className="flex items-center rounded-lg border border-border/80 bg-muted/60 p-0.5">
+        <div className="flex items-center rounded-none border border-border bg-surface p-0.5">
           {(['month', 'week', 'day', 'agenda'] as CalendarViewType[]).map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => setViewType(v)}
               className={cn(
-                'px-2.5 py-0.5 text-xs font-medium rounded-md transition-all capitalize',
+                'px-2.5 py-0.5 text-xs font-mono font-medium rounded-none transition-all capitalize',
                 viewType === v
-                  ? 'bg-card text-foreground shadow-xs font-semibold'
+                  ? 'bg-primary text-primary-foreground font-bold border border-primary'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -227,7 +227,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
       </div>
 
       {/* Calendar Surface Grid */}
-      <div className="flex-1 min-h-0 rounded-xl border border-border/80 bg-card overflow-hidden flex flex-col shadow-xs">
+      <div className="flex-1 min-h-0 rounded-none border border-border bg-card overflow-hidden flex flex-col">
         {viewType === 'week' && (
           <div className="flex flex-col h-full min-h-0">
             {/* Day Header Row */}
@@ -247,7 +247,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                     <span className={cn('text-[10px] font-mono font-medium uppercase tracking-wider', today ? 'text-primary font-bold' : 'text-muted-foreground')}>
                       {format(day, 'EEE')}
                     </span>
-                    <span className={cn('text-base font-mono font-semibold h-6 w-6 flex items-center justify-center rounded-full', today ? 'bg-primary text-primary-foreground' : 'text-foreground')}>
+                    <span className={cn('text-base font-mono font-semibold h-6 w-6 flex items-center justify-center rounded-none', today ? 'bg-primary text-primary-foreground font-bold' : 'text-foreground')}>
                       {format(day, 'd')}
                     </span>
                   </div>
@@ -269,7 +269,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                     key={day.toISOString()}
                     className={cn(
                       'h-full p-1.5 space-y-1.5 flex flex-col overflow-y-auto no-scrollbar',
-                      today && 'bg-primary/[0.02]',
+                      today && 'bg-surface/80',
                       weekend && !today && 'bg-surface/30',
                       isPast && !today && 'bg-muted/[0.12]'
                     )}
@@ -279,10 +279,10 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                         <button
                           type="button"
                           onClick={() => onCreatePost(day)}
-                          className="w-full h-16 border border-dashed border-border/60 hover:border-primary/40 rounded-lg flex flex-col items-center justify-center text-muted-foreground/60 hover:text-primary hover:bg-primary/[0.03] transition-all group"
+                          className="w-full h-16 border border-dashed border-border hover:border-primary rounded-none flex flex-col items-center justify-center text-muted-foreground/60 hover:text-primary transition-all group"
                         >
                           <Plus className="h-3.5 w-3.5 mb-0.5 group-hover:scale-110 transition-transform" />
-                          <span className="text-[10px] font-medium">Add post</span>
+                          <span className="text-[10px] font-mono">Add post</span>
                         </button>
                       ) : null
                     ) : (
@@ -296,7 +296,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                               key={post.id}
                               onClick={() => setInspectingPost(post)}
                               className={cn(
-                                'p-2 rounded-lg border border-border/70 bg-card hover:border-primary/40 hover:shadow-xs cursor-pointer transition-all border-l-[3px] text-left group space-y-1',
+                                'p-2 rounded-none border border-border bg-card hover:border-primary cursor-pointer transition-all border-l-[3px] text-left group space-y-1',
                                 config.borderAccent
                               )}
                             >
@@ -326,7 +326,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                           <button
                             type="button"
                             onClick={() => onCreatePost(day)}
-                            className="w-full py-1 border border-dashed border-border/50 hover:border-primary/40 rounded-md flex items-center justify-center text-muted-foreground/50 hover:text-primary hover:bg-primary/[0.03] text-[9px] font-medium gap-1 transition-colors"
+                            className="w-full py-1 border border-dashed border-border hover:border-primary rounded-none flex items-center justify-center text-muted-foreground hover:text-primary text-[9px] font-mono gap-1 transition-colors"
                           >
                             <Plus className="h-3 w-3" />
                             <span>Add post</span>
@@ -351,7 +351,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                 </p>
               </div>
               {!isPastDate(currentDate) && (
-                <Button size="sm" onClick={() => onCreatePost(currentDate)} className="gap-1 rounded-lg h-7 text-xs">
+                <Button size="sm" onClick={() => onCreatePost(currentDate)} className="gap-1 rounded-none border border-primary bg-primary text-primary-foreground font-bold h-7 text-xs font-mono">
                   <Plus className="h-3.5 w-3.5" />
                   Create Post
                 </Button>
@@ -368,17 +368,17 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                     key={post.id}
                     onClick={() => setInspectingPost(post)}
                     className={cn(
-                      'p-3.5 rounded-xl border border-border/70 bg-card hover:border-primary/50 hover:shadow-xs cursor-pointer transition-all border-l-4 flex items-center justify-between gap-4',
+                      'p-3.5 rounded-none border border-border bg-card hover:border-primary cursor-pointer transition-all border-l-4 flex items-center justify-between gap-4',
                       config.borderAccent
                     )}
                   >
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={cn('text-xs font-mono font-semibold px-2 py-0.5', config.pillClass)}>
+                        <Badge variant="outline" className={cn('text-xs font-mono font-semibold px-2 py-0.5 rounded-none border', config.pillClass)}>
                           {config.icon}
                           <span className="ml-1">{post.platform}</span>
                         </Badge>
-                        <Badge className={cn('text-xs font-mono font-medium', STATUS_BADGES[post.status].className)} variant="outline">
+                        <Badge className={cn('text-xs font-mono font-medium rounded-none border', STATUS_BADGES[post.status].className)} variant="outline">
                           {STATUS_BADGES[post.status].label}
                         </Badge>
                         <span className="text-xs font-mono text-muted-foreground flex items-center gap-1">
@@ -386,13 +386,13 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                           {postDate && format(new Date(postDate), 'h:mm a')}
                         </span>
                       </div>
-                      <h4 className="font-semibold text-sm truncate">{post.title}</h4>
+                      <h4 className="font-display font-bold text-sm truncate">{post.title}</h4>
                       <p className="text-xs text-muted-foreground truncate max-w-xl">
                         {post.content?.caption || 'No caption'}
                       </p>
                     </div>
 
-                    <Button variant="ghost" size="sm" className="shrink-0 text-xs gap-1">
+                    <Button variant="ghost" size="sm" className="shrink-0 text-xs gap-1 rounded-none">
                       Inspect
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -406,14 +406,14 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
         {viewType === 'month' && (
           <div className="flex flex-col h-full min-h-0">
             {/* Month Day Names */}
-            <div className="grid grid-cols-7 border-b border-border/70 bg-surface/50 text-center py-1.5 text-[10px] font-mono font-semibold text-muted-foreground uppercase tracking-wider shrink-0">
+            <div className="grid grid-cols-7 border-b border-border bg-surface text-center py-1.5 text-[10px] font-mono font-semibold text-muted-foreground uppercase tracking-wider shrink-0">
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
                 <div key={day}>{day}</div>
               ))}
             </div>
 
             {/* Month Grid */}
-            <div className="flex-1 min-h-0 grid grid-cols-7 divide-x divide-y divide-border-subtle overflow-y-auto no-scrollbar">
+            <div className="flex-1 min-h-0 grid grid-cols-7 divide-x divide-y divide-border overflow-y-auto no-scrollbar">
               {(() => {
                 const start = startOfMonth(currentDate);
                 const end = endOfMonth(currentDate);
@@ -436,7 +436,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                       className={cn(
                         'min-h-[64px] p-1 flex flex-col justify-between transition-colors',
                         !isCurrentMonth && 'bg-surface/40 opacity-40',
-                        today && 'bg-primary/[0.03]',
+                        today && 'bg-surface/80',
                         isPast && !today && 'bg-muted/[0.12]'
                       )}
                       onClick={() => {
@@ -446,8 +446,8 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                       <div className="flex items-center justify-between">
                         <span
                           className={cn(
-                            'text-[11px] font-mono font-semibold h-4.5 w-4.5 flex items-center justify-center rounded-full',
-                            today ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
+                            'text-[11px] font-mono font-semibold h-4.5 w-4.5 flex items-center justify-center rounded-none',
+                            today ? 'bg-primary text-primary-foreground font-bold' : 'text-muted-foreground'
                           )}
                         >
                           {format(day, 'd')}
@@ -470,7 +470,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                                 setInspectingPost(post);
                               }}
                               className={cn(
-                                'px-1 py-0.5 rounded text-[9px] font-medium truncate cursor-pointer hover:shadow-xs border border-border/60 bg-card border-l-[2px]',
+                                'px-1 py-0.5 rounded-none text-[9px] font-mono font-medium truncate cursor-pointer hover:border-primary border border-border bg-card border-l-[2px]',
                                 config.borderAccent
                               )}
                             >
@@ -509,17 +509,17 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                       key={post.id}
                       onClick={() => setInspectingPost(post)}
                       className={cn(
-                        'p-3.5 rounded-xl border border-border/70 bg-card hover:border-primary/40 hover:shadow-sm cursor-pointer transition-all border-l-4 flex items-center justify-between gap-4',
+                        'p-3.5 rounded-none border border-border bg-card hover:border-primary cursor-pointer transition-all border-l-4 flex items-center justify-between gap-4',
                         config.borderAccent
                       )}
                     >
                       <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={cn('text-xs font-mono font-semibold px-2 py-0.5', config.pillClass)}>
+                          <Badge variant="outline" className={cn('text-xs font-mono font-semibold px-2 py-0.5 rounded-none border', config.pillClass)}>
                             {config.icon}
                             <span className="ml-1">{post.platform}</span>
                           </Badge>
-                          <Badge className={cn('text-xs font-mono font-medium', STATUS_BADGES[post.status].className)} variant="outline">
+                          <Badge className={cn('text-xs font-mono font-medium rounded-none border', STATUS_BADGES[post.status].className)} variant="outline">
                             {STATUS_BADGES[post.status].label}
                           </Badge>
                           <span className="text-xs font-mono text-muted-foreground flex items-center gap-1 font-medium">
@@ -527,13 +527,13 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                             {postDate && format(new Date(postDate), 'MMM d, yyyy • h:mm a')}
                           </span>
                         </div>
-                        <h4 className="font-semibold text-sm truncate">{post.title}</h4>
+                        <h4 className="font-display font-bold text-sm truncate">{post.title}</h4>
                         <p className="text-xs text-muted-foreground truncate max-w-2xl">
                           {post.content?.caption || 'No caption'}
                         </p>
                       </div>
 
-                      <Button variant="outline" size="sm" className="shrink-0 text-xs gap-1 rounded-lg">
+                      <Button variant="outline" size="sm" className="shrink-0 text-xs gap-1 rounded-none border border-border">
                         Inspect
                         <ChevronRight className="h-4 w-4" />
                       </Button>
@@ -552,11 +552,11 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
           title={
             inspectingPost ? (
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className={cn('text-xs font-semibold', PLATFORM_CONFIG[inspectingPost.platform].pillClass)}>
+                <Badge variant="outline" className={cn('text-xs font-semibold rounded-none border', PLATFORM_CONFIG[inspectingPost.platform].pillClass)}>
                   {PLATFORM_CONFIG[inspectingPost.platform].icon}
                   <span className="ml-1">{inspectingPost.platform}</span>
                 </Badge>
-                <Badge className={cn('text-xs', STATUS_BADGES[inspectingPost.status].className)} variant="outline">
+                <Badge className={cn('text-xs rounded-none border', STATUS_BADGES[inspectingPost.status].className)} variant="outline">
                   {STATUS_BADGES[inspectingPost.status].label}
                 </Badge>
               </div>
@@ -564,7 +564,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
           }
           description={
             inspectingPost && (
-              <span>
+              <span className="font-mono text-xs">
                 {inspectingPost.publishedAt
                   ? `Published on ${format(new Date(inspectingPost.publishedAt), 'MMM d, yyyy • h:mm a')}`
                   : inspectingPost.scheduledAt
@@ -584,7 +584,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                     setInspectingPost(null);
                     onPostClick(post);
                   }}
-                  className="gap-1.5 rounded-lg text-xs"
+                  className="gap-1.5 rounded-none border border-border text-xs font-mono"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   Open Full Studio
@@ -598,7 +598,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                       setInspectingPost(null);
                       onPostClick(post);
                     }}
-                    className="gap-1.5 rounded-lg text-xs bg-primary text-primary-foreground font-semibold"
+                    className="gap-1.5 rounded-none text-xs bg-primary text-primary-foreground font-mono font-bold border border-primary hover:opacity-90"
                   >
                     {inspectingPost.status === 'POSTED' ? (
                       <>
@@ -620,18 +620,18 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
           {inspectingPost && (
             <div className="space-y-5">
               <div>
-                <h3 className="text-lg font-bold text-foreground leading-snug">{inspectingPost.title}</h3>
+                <h3 className="font-display text-lg font-bold text-foreground leading-snug">{inspectingPost.title}</h3>
               </div>
 
               {/* Slide Carousel Preview */}
               {inspectingPost.content?.slides && inspectingPost.content.slides.length > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <Label className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
                     Carousel Slides ({inspectingPost.content.slides.length})
                   </Label>
                   <div className="grid grid-cols-3 gap-2">
                     {inspectingPost.content.slides.map((s, idx) => (
-                      <div key={idx} className="relative aspect-[4/5] rounded-lg overflow-hidden border border-border bg-muted/30">
+                      <div key={idx} className="relative aspect-[4/5] rounded-none overflow-hidden border border-border bg-surface">
                         {s.imageUrl ? (
                           <img src={s.imageUrl} alt={s.headline || `Slide ${idx + 1}`} className="w-full h-full object-cover" />
                         ) : (
@@ -640,7 +640,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                             <span className="text-muted-foreground">{idx + 1}</span>
                           </div>
                         )}
-                        <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] font-medium px-1 rounded">
+                        <span className="absolute bottom-1 right-1 bg-black/90 text-white text-[9px] font-mono px-1 rounded-none border border-white/20">
                           {idx + 1}/{inspectingPost.content.slides.length}
                         </span>
                       </div>
@@ -651,8 +651,8 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
 
               {/* Caption Preview */}
               <div className="space-y-2">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Post Caption</Label>
-                <div className="p-3.5 rounded-xl border border-border/80 bg-surface/50 text-xs leading-relaxed whitespace-pre-wrap text-foreground/90 font-mono">
+                <Label className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">Post Caption</Label>
+                <div className="p-3.5 rounded-none border border-border bg-surface text-xs leading-relaxed whitespace-pre-wrap text-foreground font-mono">
                   {inspectingPost.content?.caption || 'No caption text'}
                 </div>
               </div>
@@ -660,10 +660,10 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
               {/* Hashtags */}
               {inspectingPost.content?.hashtags && inspectingPost.content.hashtags.length > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Hashtags</Label>
+                  <Label className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">Hashtags</Label>
                   <div className="flex flex-wrap gap-1.5">
                     {inspectingPost.content.hashtags.map((tag, idx) => (
-                      <span key={idx} className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                      <span key={idx} className="text-xs font-mono font-medium text-primary bg-surface border border-primary/40 px-2 py-0.5 rounded-none">
                         {tag.startsWith('#') ? tag : `#${tag}`}
                       </span>
                     ))}

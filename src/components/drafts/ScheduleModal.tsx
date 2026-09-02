@@ -93,27 +93,27 @@ export function ScheduleModal({
       <div className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity" onClick={onClose} />
 
       {/* Modal Container */}
-      <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-border/80 bg-card p-6 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative z-10 w-full max-w-2xl rounded-none border border-border bg-card p-6 space-y-6 animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 border-b border-border/60 pb-4">
+        <div className="flex items-start justify-between gap-4 border-b border-border pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+              <div className="p-1.5 rounded-none border border-border bg-surface text-primary">
                 <CalendarIcon className="h-4 w-4" />
               </div>
-              <h3 className="text-base font-semibold text-foreground">Schedule Post</h3>
-              <Badge variant="outline" className="text-xs font-semibold uppercase tracking-wider">
+              <h3 className="font-display text-base font-bold text-foreground">Schedule Post</h3>
+              <Badge variant="outline" className="text-xs font-mono font-bold uppercase tracking-wider rounded-none border">
                 {platform}
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground line-clamp-1">{postTitle}</p>
+            <p className="text-xs font-mono text-muted-foreground line-clamp-1">{postTitle}</p>
           </div>
 
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 rounded-none border border-border text-muted-foreground hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -121,7 +121,7 @@ export function ScheduleModal({
 
         {/* Quick Presets */}
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+          <label className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
             <Sparkles className="h-3 w-3 text-primary" />
             Quick Scheduling Presets
           </label>
@@ -131,7 +131,7 @@ export function ScheduleModal({
               variant="outline"
               size="sm"
               onClick={() => applyQuickPreset(1, 9, 0)}
-              className="h-8 text-xs rounded-xl font-medium border-border/80 hover:border-primary/40 hover:bg-primary/5"
+              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-primary"
             >
               Tomorrow 9:00 AM
             </Button>
@@ -140,7 +140,7 @@ export function ScheduleModal({
               variant="outline"
               size="sm"
               onClick={() => applyQuickPreset(1, 18, 0)}
-              className="h-8 text-xs rounded-xl font-medium border-border/80 hover:border-primary/40 hover:bg-primary/5"
+              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-primary"
             >
               Tomorrow 6:00 PM
             </Button>
@@ -149,7 +149,7 @@ export function ScheduleModal({
               variant="outline"
               size="sm"
               onClick={() => applyQuickPreset(2, 11, 30)}
-              className="h-8 text-xs rounded-xl font-medium border-border/80 hover:border-primary/40 hover:bg-primary/5"
+              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-primary"
             >
               In 2 Days (11:30 AM)
             </Button>
@@ -158,7 +158,7 @@ export function ScheduleModal({
               variant="outline"
               size="sm"
               onClick={() => applyQuickPreset(3, 15, 0)}
-              className="h-8 text-xs rounded-xl font-medium border-border/80 hover:border-primary/40 hover:bg-primary/5"
+              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-primary"
             >
               In 3 Days (3:00 PM)
             </Button>
@@ -168,7 +168,7 @@ export function ScheduleModal({
         {/* Date & Time Picker Layout */}
         <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 items-start">
           {/* Calendar Day Picker */}
-          <div className="rounded-2xl border border-border/80 bg-surface/40 p-1 flex justify-center shadow-xs">
+          <div className="rounded-none border border-border bg-surface p-1 flex justify-center">
             <Calendar
               mode="single"
               selected={selectedDay}
@@ -181,7 +181,7 @@ export function ScheduleModal({
           <div className="space-y-5">
             {/* Time Selectors */}
             <div className="space-y-2.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <label className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5 text-primary" />
                 Select Publishing Time
               </label>
@@ -192,7 +192,7 @@ export function ScheduleModal({
                   <select
                     value={selectedHour}
                     onChange={(e) => setSelectedHour(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-border bg-background text-sm font-semibold text-foreground focus:ring-2 focus:ring-primary focus:outline-none transition-shadow"
+                    className="w-full h-10 px-3 rounded-none border border-border bg-background text-xs font-mono font-semibold text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
                   >
                     {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((h) => (
                       <option key={h} value={h}>
@@ -209,7 +209,7 @@ export function ScheduleModal({
                   <select
                     value={selectedMinute}
                     onChange={(e) => setSelectedMinute(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-border bg-background text-sm font-semibold text-foreground focus:ring-2 focus:ring-primary focus:outline-none transition-shadow"
+                    className="w-full h-10 px-3 rounded-none border border-border bg-background text-xs font-mono font-semibold text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
                   >
                     {['00', '15', '30', '45'].map((m) => (
                       <option key={m} value={m}>
@@ -220,14 +220,14 @@ export function ScheduleModal({
                 </div>
 
                 {/* AM / PM Segmented Switch */}
-                <div className="flex rounded-xl border border-border bg-muted/40 p-1 h-10">
+                <div className="flex rounded-none border border-border bg-surface p-1 h-10">
                   <button
                     type="button"
                     onClick={() => setSelectedPeriod('AM')}
                     className={cn(
-                      'px-3 py-1 text-xs font-bold rounded-lg transition-all',
+                      'px-3 py-1 text-xs font-mono font-bold rounded-none transition-all',
                       selectedPeriod === 'AM'
-                        ? 'bg-background text-foreground shadow-xs'
+                        ? 'bg-primary text-primary-foreground border border-primary'
                         : 'text-muted-foreground hover:text-foreground'
                     )}
                   >
@@ -237,9 +237,9 @@ export function ScheduleModal({
                     type="button"
                     onClick={() => setSelectedPeriod('PM')}
                     className={cn(
-                      'px-3 py-1 text-xs font-bold rounded-lg transition-all',
+                      'px-3 py-1 text-xs font-mono font-bold rounded-none transition-all',
                       selectedPeriod === 'PM'
-                        ? 'bg-background text-foreground shadow-xs'
+                        ? 'bg-primary text-primary-foreground border border-primary'
                         : 'text-muted-foreground hover:text-foreground'
                     )}
                   >
@@ -260,10 +260,10 @@ export function ScheduleModal({
                       setSelectedPeriod(t.period);
                     }}
                     className={cn(
-                      'text-[10px] font-medium px-2 py-0.5 rounded-md border transition-colors',
+                      'text-[10px] font-mono px-2 py-0.5 rounded-none border transition-colors',
                       selectedHour === t.hour && selectedMinute === t.minute && selectedPeriod === t.period
-                        ? 'bg-primary text-primary-foreground border-primary font-semibold'
-                        : 'bg-muted/30 border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                        ? 'bg-primary text-primary-foreground border-primary font-bold'
+                        : 'bg-surface border-border text-muted-foreground hover:text-foreground hover:border-primary'
                     )}
                   >
                     {t.label}
@@ -275,29 +275,29 @@ export function ScheduleModal({
             {/* Scheduled Output Confirmation Card */}
             <div
               className={cn(
-                'p-4 rounded-xl border text-xs leading-relaxed space-y-1.5 transition-colors',
+                'p-4 rounded-none border text-xs leading-relaxed space-y-1.5 transition-colors font-mono',
                 isTargetInPast
-                  ? 'bg-destructive/10 border-destructive/30 text-destructive'
-                  : 'bg-primary/5 border-primary/20 text-foreground'
+                  ? 'bg-surface border-destructive text-destructive'
+                  : 'bg-surface border-border text-foreground'
               )}
             >
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">
+                <span className="font-mono font-bold text-muted-foreground uppercase text-[10px] tracking-wider">
                   Target Auto-Publish Date
                 </span>
                 {!isTargetInPast && (
-                  <Badge variant="outline" className="text-[10px] h-5 bg-primary/10 border-primary/30 text-primary font-semibold gap-1">
+                  <Badge variant="outline" className="text-[10px] font-mono h-5 bg-primary text-primary-foreground border-primary font-bold rounded-none gap-1">
                     <Check className="h-2.5 w-2.5" /> Ready
                   </Badge>
                 )}
               </div>
 
-              <p className="font-semibold text-sm text-foreground">
+              <p className="font-display font-bold text-sm text-foreground">
                 {format(targetDate, 'EEEE, MMMM d, yyyy • h:mm a')}
               </p>
 
               {isTargetInPast && (
-                <div className="flex items-center gap-1.5 text-xs text-destructive font-medium pt-1">
+                <div className="flex items-center gap-1.5 text-xs text-destructive font-mono pt-1">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                   <span>The selected time is in the past. Please select a future time.</span>
                 </div>
@@ -307,20 +307,20 @@ export function ScheduleModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-border/60">
-          <p className="text-xs text-muted-foreground">
+        <div className="flex items-center justify-between pt-4 border-t border-border">
+          <p className="text-xs font-mono text-muted-foreground">
             The background worker will automatically publish this post at the exact time.
           </p>
 
           <div className="flex items-center gap-2 shrink-0">
-            <Button variant="ghost" size="sm" onClick={onClose} className="rounded-xl text-xs h-9 px-4">
+            <Button variant="ghost" size="sm" onClick={onClose} className="rounded-none border border-border text-xs font-mono h-9 px-4">
               Cancel
             </Button>
             <Button
               size="sm"
               onClick={handleConfirm}
               disabled={isTargetInPast}
-              className="rounded-xl text-xs font-semibold gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 h-9 px-5 disabled:opacity-50"
+              className="rounded-none text-xs font-mono font-bold uppercase tracking-wider gap-1.5 bg-primary hover:opacity-90 text-primary-foreground border border-primary h-9 px-5 disabled:opacity-50"
             >
               <Check className="h-3.5 w-3.5" />
               Confirm Schedule

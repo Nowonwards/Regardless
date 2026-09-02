@@ -92,10 +92,10 @@ export function HistoryView({
   return (
     <div className="h-full flex flex-col space-y-4">
       {/* Search and Filters Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-xl bg-card">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-border rounded-none bg-card">
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold">Published Posts</h2>
-          <Badge variant="outline" className="text-sm">
+          <h2 className="font-display text-xl font-bold">Published Posts</h2>
+          <Badge variant="outline" className="text-xs font-mono">
             {posts.length} total
           </Badge>
         </div>
@@ -107,14 +107,14 @@ export function HistoryView({
               placeholder="Search published posts..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-60 h-9 text-sm"
+              className="pl-9 w-60 h-9 text-xs font-mono rounded-none border-border"
             />
           </div>
 
           <select
             value={platformFilter}
             onChange={(e) => setPlatformFilter(e.target.value as Platform | 'all')}
-            className="border rounded-md px-3 py-1.5 text-sm bg-background text-foreground h-9"
+            className="border border-border rounded-none px-3 py-1.5 text-xs font-mono bg-background text-foreground h-9"
           >
             <option value="all">All Platforms</option>
             <option value="INSTAGRAM">Instagram</option>
@@ -122,20 +122,26 @@ export function HistoryView({
             <option value="LINKEDIN">LinkedIn</option>
           </select>
 
-          <div className="flex items-center bg-muted rounded-md p-0.5">
+          <div className="flex items-center bg-surface border border-border rounded-none p-0.5">
             <Button
-              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
               size="sm"
-              className="h-8 px-2.5"
+              className={cn(
+                'h-8 px-2.5 rounded-none font-mono text-xs font-semibold',
+                viewMode === 'grid' ? 'bg-primary text-primary-foreground border border-primary' : 'text-muted-foreground'
+              )}
               onClick={() => setViewMode('grid')}
               aria-label="Grid view"
             >
               Grid
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
               size="sm"
-              className="h-8 px-2.5"
+              className={cn(
+                'h-8 px-2.5 rounded-none font-mono text-xs font-semibold',
+                viewMode === 'list' ? 'bg-primary text-primary-foreground border border-primary' : 'text-muted-foreground'
+              )}
               onClick={() => setViewMode('list')}
               aria-label="List view"
             >
@@ -148,10 +154,10 @@ export function HistoryView({
       {/* Posts Content */}
       <div className="flex-1 overflow-auto">
         {filteredPosts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground border rounded-xl bg-card/50">
-            <Calendar className="h-12 w-12 mb-3 opacity-30" />
-            <h3 className="text-lg font-semibold mb-1">No published posts found</h3>
-            <p className="text-sm max-w-sm">
+          <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground border border-border rounded-none bg-card">
+            <Calendar className="h-10 w-10 mb-3 text-muted-foreground" />
+            <h3 className="font-display text-lg font-bold mb-1 text-foreground">No published posts found</h3>
+            <p className="text-xs font-mono max-w-sm">
               {searchQuery || platformFilter !== 'all'
                 ? 'Try adjusting your search filters'
                 : 'Posts you publish to Instagram, LinkedIn, or Pinterest will appear here.'}
@@ -166,7 +172,8 @@ export function HistoryView({
                   setSelectedPost(post);
                   setActiveSlide(0);
                 }}
-                className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50 group overflow-hidden"
+                className="cursor-pointer transition-all duration-150 hover:border-primary group overflow-hidden rounded-none border border-border bg-card"
+                elevation="none"
               >
                 <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
                   <Badge variant="outline" className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider gap-1', PLATFORM_COLORS[post.platform]?.badge)}>
@@ -203,17 +210,18 @@ export function HistoryView({
                   setSelectedPost(post);
                   setActiveSlide(0);
                 }}
-                className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+                className="cursor-pointer transition-all duration-150 rounded-none border border-border hover:border-primary bg-card"
+                elevation="none"
               >
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <Badge variant="outline" className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider gap-1 shrink-0', PLATFORM_COLORS[post.platform]?.badge)}>
+                    <Badge variant="outline" className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider gap-1 shrink-0 rounded-none border', PLATFORM_COLORS[post.platform]?.badge)}>
                       {PLATFORM_ICONS[post.platform]}
                       {post.platform}
                     </Badge>
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-sm truncate">{post.title}</h3>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <h3 className="font-display font-bold text-sm truncate">{post.title}</h3>
+                      <p className="text-xs font-mono text-muted-foreground truncate">
                         {post.content?.caption || 'No caption'}
                       </p>
                     </div>
@@ -255,19 +263,19 @@ export function HistoryView({
           onClick={() => setSelectedPost(null)}
         >
           <div
-            className="w-full max-w-2xl max-h-[90vh] bg-background border shadow-2xl rounded-2xl overflow-hidden flex flex-col"
+            className="w-full max-w-2xl max-h-[90vh] bg-background border border-border rounded-none overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-4 border-b flex items-center justify-between">
+            <div className="p-4 border-b border-border flex items-center justify-between bg-surface">
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className={cn('text-xs gap-1', PLATFORM_COLORS[selectedPost.platform]?.badge)}>
+                <Badge variant="secondary" className={cn('text-xs gap-1 rounded-none border', PLATFORM_COLORS[selectedPost.platform]?.badge)}>
                   {PLATFORM_ICONS[selectedPost.platform]}
                   {selectedPost.platform}
                 </Badge>
-                <h3 className="font-bold text-base truncate">{selectedPost.title}</h3>
+                <h3 className="font-display font-bold text-base truncate">{selectedPost.title}</h3>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedPost(null)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none border border-border" onClick={() => setSelectedPost(null)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -278,7 +286,7 @@ export function HistoryView({
                 {/* Slides / Media Preview */}
                 {selectedPost.content?.slides && selectedPost.content.slides.length > 0 && (
                   <div className="space-y-3">
-                    <div className="relative aspect-square max-w-sm mx-auto bg-muted rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
+                    <div className="relative aspect-square max-w-sm mx-auto bg-surface rounded-none overflow-hidden border border-border flex items-center justify-center">
                       {selectedPost.content.slides[activeSlide]?.imageUrl ? (
                         <Image
                           src={selectedPost.content.slides[activeSlide].imageUrl!}
@@ -300,7 +308,7 @@ export function HistoryView({
                           <Button
                             variant="secondary"
                             size="icon"
-                            className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full shadow-md opacity-80 hover:opacity-100"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-none border border-border bg-black/80 text-white hover:bg-black"
                             onClick={() =>
                               setActiveSlide((prev) => (prev === 0 ? selectedPost.content.slides.length - 1 : prev - 1))
                             }
@@ -310,7 +318,7 @@ export function HistoryView({
                           <Button
                             variant="secondary"
                             size="icon"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full shadow-md opacity-80 hover:opacity-100"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-none border border-border bg-black/80 text-white hover:bg-black"
                             onClick={() =>
                               setActiveSlide((prev) => (prev === selectedPost.content.slides.length - 1 ? 0 : prev + 1))
                             }
@@ -329,7 +337,7 @@ export function HistoryView({
                             key={idx}
                             onClick={() => setActiveSlide(idx)}
                             className={cn(
-                              'h-2 rounded-full transition-all',
+                              'h-1.5 rounded-none transition-all',
                               idx === activeSlide ? 'w-6 bg-primary' : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50'
                             )}
                           />
@@ -343,18 +351,18 @@ export function HistoryView({
                 {selectedPost.content?.caption && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Caption</h4>
+                      <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">Caption</h4>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 text-xs gap-1"
+                        className="h-7 text-xs gap-1 rounded-none border border-border font-mono"
                         onClick={() => handleCopyCaption(selectedPost.content.caption)}
                       >
-                        {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                        {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
                         {copied ? 'Copied' : 'Copy'}
                       </Button>
                     </div>
-                    <div className="p-3.5 bg-muted/40 rounded-xl text-sm leading-relaxed whitespace-pre-wrap border">
+                    <div className="p-3.5 bg-surface rounded-none text-xs font-mono leading-relaxed whitespace-pre-wrap border border-border">
                       {selectedPost.content.caption}
                     </div>
                   </div>
@@ -363,10 +371,10 @@ export function HistoryView({
                 {/* Hashtags Section */}
                 {selectedPost.content?.hashtags && selectedPost.content.hashtags.length > 0 && (
                   <div className="space-y-2">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Hashtags</h4>
+                    <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">Hashtags</h4>
                     <div className="flex flex-wrap gap-1.5">
                       {selectedPost.content.hashtags.map((tag, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-xs font-normal">
+                        <Badge key={idx} variant="secondary" className="text-xs font-mono rounded-none border">
                           {tag.startsWith('#') ? tag : `#${tag}`}
                         </Badge>
                       ))}
@@ -375,10 +383,10 @@ export function HistoryView({
                 )}
 
                 {/* Publishing Info */}
-                <div className="p-4 bg-muted/20 border rounded-xl text-xs space-y-1.5">
+                <div className="p-4 bg-surface border border-border rounded-none text-xs space-y-1.5 font-mono">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Status</span>
-                    <Badge className={cn('font-normal text-xs', STATUS_COLORS[selectedPost.status])} variant="outline">
+                    <Badge className="badge-posted">
                       {selectedPost.status}
                     </Badge>
                   </div>

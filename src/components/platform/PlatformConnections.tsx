@@ -112,19 +112,19 @@ export function PlatformConnections({
             <Card
               key={platform}
               className={cn(
-                'relative rounded-xl border border-border/60 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5',
-                status === 'CONNECTED' ? 'border-green-500/40 bg-gradient-to-b from-green-500/[0.03] to-transparent shadow-xs' : 'bg-card'
+                'relative rounded-none border border-border transition-all duration-150',
+                status === 'CONNECTED' ? 'border-primary bg-surface' : 'bg-card'
               )}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={cn('p-2.5 rounded-xl shadow-xs', config.bg)}>
+                    <div className={cn('p-2.5 rounded-none border border-border bg-background')}>
                       <Icon className={cn('h-5 w-5', config.color)} />
                     </div>
                     <div>
-                      <CardTitle className="text-base font-semibold">{config.name}</CardTitle>
-                      <CardDescription className="text-xs font-medium">
+                      <CardTitle className="font-display text-base font-bold">{config.name}</CardTitle>
+                      <CardDescription className="text-xs font-mono text-muted-foreground">
                         {status === 'CONNECTED'
                           ? ((connection?.metadata as Record<string, unknown>)?.username
                               ? `@${String((connection?.metadata as Record<string, unknown>)?.username)}`
@@ -139,8 +139,8 @@ export function PlatformConnections({
                     <Badge
                       variant="outline"
                       className={cn(
-                        'text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1.5',
-                        status === 'CONNECTED' ? 'border-green-500/30 bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300' : statusConfig.color
+                        'text-[10px] font-mono font-medium px-2 py-0.5 rounded-none border flex items-center gap-1.5',
+                        status === 'CONNECTED' ? 'badge-posted' : statusConfig.color
                       )}
                     >
                       {statusConfig.icon}
@@ -240,14 +240,14 @@ export function PlatformConnections({
                 </div>
 
                 {status === 'EXPIRED' && (
-                  <div className="p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
+                  <div className="p-2 bg-surface border border-yellow-500 rounded-none text-xs font-mono text-yellow-500">
                     <AlertCircle className="h-3 w-3 inline mr-1" />
                     Token expired. Reconnect to continue publishing.
                   </div>
                 )}
 
                 {status === 'FAILED' && connection?.errorMessage && (
-                  <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-800">
+                  <div className="p-2 bg-surface border border-destructive rounded-none text-xs font-mono text-destructive">
                     <AlertCircle className="h-3 w-3 inline mr-1" />
                     {connection.errorMessage}
                   </div>

@@ -74,9 +74,9 @@ export function SlideOver({
             widthClasses[width]
           )}
         >
-          <div className="flex h-full flex-col overflow-y-auto border-l border-border bg-card shadow-2xl">
+          <div className="flex h-full flex-col overflow-y-auto border-l border-border bg-card">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-border/80 px-6 py-4 bg-surface/50">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4 bg-surface">
               <div className="space-y-1 min-w-0 pr-4">
                 {typeof title === 'string' ? (
                   <h2 className="text-base font-semibold text-foreground truncate">{title}</h2>
@@ -91,7 +91,7 @@ export function SlideOver({
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
-                className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground shrink-0"
+                className="h-8 w-8 rounded-none border border-border text-muted-foreground hover:text-foreground shrink-0"
                 aria-label="Close panel"
               >
                 <X className="h-4 w-4" />
@@ -105,7 +105,7 @@ export function SlideOver({
 
             {/* Footer */}
             {footer && (
-              <div className="border-t border-border/80 px-6 py-3.5 bg-surface/50 flex items-center justify-end gap-2">
+              <div className="border-t border-border px-6 py-3.5 bg-surface flex items-center justify-end gap-2">
                 {footer}
               </div>
             )}

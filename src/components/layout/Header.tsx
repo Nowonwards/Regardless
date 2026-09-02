@@ -146,25 +146,25 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
     switch (type) {
       case 'POST_PUBLISHED':
         return (
-          <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+          <div className="p-1.5 rounded-none border border-border bg-surface text-emerald-400 shrink-0">
             <Rocket className="h-4 w-4" />
           </div>
         );
       case 'POST_FAILED':
         return (
-          <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 shrink-0">
+          <div className="p-1.5 rounded-none border border-destructive bg-surface text-destructive shrink-0">
             <AlertTriangle className="h-4 w-4" />
           </div>
         );
       case 'POST_SCHEDULED':
         return (
-          <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
+          <div className="p-1.5 rounded-none border border-primary bg-surface text-primary shrink-0">
             <CalendarIcon className="h-4 w-4" />
           </div>
         );
       default:
         return (
-          <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+          <div className="p-1.5 rounded-none border border-border bg-surface text-foreground shrink-0">
             <Info className="h-4 w-4" />
           </div>
         );
@@ -174,7 +174,7 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
   return (
     <header
       className={cn(
-        'fixed top-0 right-0 z-30 h-16 bg-background/80 backdrop-blur-xl border-b border-border/60 transition-all duration-200 left-0',
+        'fixed top-0 right-0 z-30 h-16 bg-background border-b border-border transition-all duration-200 left-0',
         sidebarCollapsed ? 'lg:left-16' : 'lg:left-64'
       )}
     >
@@ -184,7 +184,7 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
             variant="ghost"
             size="icon"
             onClick={onMenuClick}
-            className="lg:hidden rounded-xl"
+            className="lg:hidden rounded-none border border-border"
             aria-label="Open navigation menu"
           >
             <Menu className="h-5 w-5" aria-hidden="true" />
@@ -194,12 +194,12 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="flex h-9.5 w-72 items-center gap-2.5 rounded-xl border border-border/60 bg-muted/30 pl-10 text-xs font-medium text-muted-foreground transition-all hover:border-primary/40 hover:bg-muted/60 hover:text-foreground hover:shadow-xs"
+              className="flex h-9.5 w-72 items-center gap-2.5 rounded-none border border-border bg-surface pl-10 text-xs font-mono text-muted-foreground transition-all hover:border-primary hover:text-foreground"
               aria-label="Search (press / to focus)"
             >
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <span>Search drafts, ideas, posts...</span>
-              <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground/70 bg-background/80 border border-border/60 rounded-md ml-auto mr-2.5 shadow-2xs">
+              <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground bg-background border border-border rounded-none ml-auto mr-2.5">
                 <span className="text-[11px]">⌘</span>
                 <span>K</span>
               </kbd>
@@ -207,7 +207,7 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
           </div>
 
           {searchOpen && (
-            <div className="absolute left-3 right-3 top-full z-50 mt-2 rounded-md border bg-popover p-2 shadow-lg sm:left-4 sm:right-auto sm:w-96 animate-in slide-in-from-top-2 duration-150">
+            <div className="absolute left-3 right-3 top-full z-50 mt-1 rounded-none border border-border bg-card p-2 sm:left-4 sm:right-auto sm:w-96 animate-in slide-in-from-top-2 duration-150">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
@@ -231,9 +231,9 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <div className="pt-2 border-t mt-2">
-                <p className="px-2 text-xs text-muted-foreground">
-                  Press <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded">Esc</kbd> to exit
+              <div className="pt-2 border-t border-border mt-2">
+                <p className="px-2 text-xs font-mono text-muted-foreground">
+                  Press <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-surface border border-border rounded-none">Esc</kbd> to exit
                 </p>
               </div>
             </div>
@@ -247,23 +247,23 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative rounded-xl hover:bg-muted/60 transition-colors"
+                className="relative rounded-none border border-border hover:bg-surface transition-colors"
                 aria-label="View notifications"
               >
-                <Bell className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" aria-hidden="true" />
+                <Bell className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" aria-hidden="true" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-xs animate-in zoom-in-50 duration-200">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-none bg-primary text-[10px] font-mono font-bold text-primary-foreground border border-primary">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-88 sm:w-96 p-0 rounded-2xl shadow-xl border-border/80" align="end">
-              <div className="p-3.5 border-b border-border/60 flex items-center justify-between">
+            <PopoverContent className="w-88 sm:w-96 p-0 rounded-none border border-border bg-card" align="end">
+              <div className="p-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm">Notifications</span>
                   {unreadCount > 0 && (
-                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-semibold bg-primary/10 text-primary">
+                    <Badge variant="default" className="text-[10px] h-5 px-1.5 font-mono font-bold">
                       {unreadCount} new
                     </Badge>
                   )}
@@ -284,7 +284,7 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
               <ScrollArea className="max-h-[380px] divide-y divide-border/40">
                 {notifications.length === 0 ? (
                   <div className="p-8 text-center space-y-2">
-                    <div className="mx-auto w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                    <div className="mx-auto w-10 h-10 rounded-none border border-border bg-surface flex items-center justify-center text-muted-foreground">
                       <Bell className="h-5 w-5" />
                     </div>
                     <p className="text-xs font-semibold text-foreground">No notifications yet</p>
@@ -293,14 +293,14 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
                     </p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-border/40">
+                  <div className="divide-y divide-border">
                     {notifications.map((item) => (
                       <div
                         key={item.id}
                         onClick={() => handleNotificationClick(item)}
                         className={cn(
-                          'p-3.5 flex items-start gap-3 transition-colors cursor-pointer hover:bg-muted/40 relative group',
-                          !item.read && 'bg-primary/5 dark:bg-primary/10'
+                          'p-3.5 flex items-start gap-3 transition-colors cursor-pointer hover:bg-surface relative group',
+                          !item.read && 'bg-surface/60'
                         )}
                       >
                         {getNotificationIcon(item.type)}
@@ -330,12 +330,12 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
 
                         {!item.read && (
                           <div className="flex flex-col items-center justify-center gap-1 shrink-0 self-center">
-                            <span className="h-2 w-2 rounded-full bg-primary" />
+                            <span className="h-2 w-2 rounded-none bg-primary" />
                             <button
                               type="button"
                               onClick={(e) => handleMarkAsRead(item.id, e)}
                               title="Mark as read"
-                              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity p-0.5 rounded"
+                              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity p-0.5 rounded-none"
                             >
                               <Check className="h-3 w-3" />
                             </button>
@@ -354,18 +354,18 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative h-9 w-9 rounded-full ring-2 ring-transparent hover:ring-primary/20 transition-all"
+                className="relative h-9 w-9 rounded-none border border-border hover:border-primary transition-colors p-0"
                 aria-label={user?.name || 'User menu'}
               >
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src={user?.image || ''} alt={user?.name || ''} />
-                  <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                <Avatar className="h-full w-full rounded-none">
+                  <AvatarImage src={user?.image || ''} alt={user?.name || ''} className="rounded-none" />
+                  <AvatarFallback className="rounded-none bg-primary text-primary-foreground font-mono font-bold">
                     {user?.name?.[0]?.toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent className="w-56 rounded-none border border-border" align="end" forceMount>
               <div className="px-3 py-2 border-b">
                 <p className="font-semibold text-sm truncate">{user?.name || 'User'}</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.email || 'user@regardless.app'}</p>

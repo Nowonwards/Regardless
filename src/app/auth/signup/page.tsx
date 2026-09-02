@@ -61,13 +61,13 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-background px-4 py-8 text-foreground">
       <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-5xl items-center gap-6 lg:grid-cols-[1fr_420px]">
-        <section className="signal-surface hidden min-h-[560px] rounded-lg border bg-card p-8 shadow-sm lg:flex lg:flex-col lg:justify-between">
+        <section className="hidden min-h-[560px] rounded-none border border-border bg-card p-8 lg:flex lg:flex-col lg:justify-between">
           <div>
-            <div className="mb-8 inline-flex items-center gap-2 rounded-md border bg-background/80 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+            <div className="mb-8 inline-flex items-center gap-2 rounded-none border border-border bg-surface px-3 py-1.5 text-xs font-mono text-muted-foreground">
               <RadioTower className="h-3.5 w-3.5 text-primary" />
               New publishing desk
             </div>
-            <h1 className="max-w-xl font-display text-5xl font-semibold leading-[0.95] tracking-tight">
+            <h1 className="max-w-xl font-display text-5xl font-bold leading-[0.95] tracking-tight">
               Build a content pipeline with less tab switching.
             </h1>
             <p className="mt-5 max-w-md text-sm leading-6 text-muted-foreground">
@@ -77,32 +77,32 @@ export default function SignUpPage() {
 
           <div className="grid gap-2 font-mono text-xs text-muted-foreground">
             {['Create workspace', 'Generate ideas', 'Approve drafts', 'Publish schedule'].map((item, index) => (
-              <div key={item} className="flex items-center justify-between rounded-md border bg-background/75 px-3 py-2">
+              <div key={item} className="flex items-center justify-between rounded-none border border-border bg-surface px-3 py-2">
                 <span>{item}</span>
-                <span className="text-primary">{String(index + 1).padStart(2, '0')}</span>
+                <span className="text-primary font-bold">{String(index + 1).padStart(2, '0')}</span>
               </div>
             ))}
           </div>
         </section>
 
-        <Card className="w-full border border-border/70 rounded-2xl shadow-xl bg-card/90 backdrop-blur-md" elevation="low">
+        <Card className="w-full border border-border rounded-none bg-card" elevation="none">
         <CardHeader>
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20">
-            <RegardlessMark size={26} className="text-primary-foreground" />
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-none bg-primary text-primary-foreground border border-primary">
+            <RegardlessMark size={26} strokeColor="#0B0B0C" />
           </div>
           <CardTitle className="font-display text-2xl font-bold">Create your workspace</CardTitle>
-          <CardDescription>Set up Regardless for your social publishing flow.</CardDescription>
+          <CardDescription className="text-xs font-mono">Set up Regardless for your social publishing flow.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 p-3.5 text-xs font-medium text-red-700 dark:text-red-300" role="alert">
+              <div className="rounded-none border border-destructive bg-surface p-3.5 text-xs font-mono text-destructive" role="alert">
                 {error}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-xs font-semibold">Full Name</Label>
+              <Label htmlFor="name" className="text-xs font-mono font-semibold">Full Name</Label>
               <Input
                 id="name"
                 type="text"
@@ -110,12 +110,12 @@ export default function SignUpPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={loading}
-                className="h-10 text-sm rounded-xl"
+                className="h-10 text-sm rounded-none border-border"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-semibold">Email Address</Label>
+              <Label htmlFor="email" className="text-xs font-mono font-semibold">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -124,12 +124,12 @@ export default function SignUpPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                className="h-10 text-sm rounded-xl"
+                className="h-10 text-sm rounded-none border-border"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-xs font-semibold">Password</Label>
+              <Label htmlFor="password" className="text-xs font-mono font-semibold">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -139,22 +139,22 @@ export default function SignUpPage() {
                 required
                 minLength={6}
                 disabled={loading}
-                className="h-10 text-sm rounded-xl"
+                className="h-10 text-sm rounded-none border-border"
               />
             </div>
 
             <Button
               type="submit"
-              className="w-full h-10.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md shadow-primary/20 transition-all"
+              className="w-full h-10.5 rounded-none bg-primary text-primary-foreground font-mono font-bold uppercase tracking-wider hover:opacity-90 border border-primary transition-all"
               disabled={loading}
             >
               {loading ? 'Creating account...' : 'Create workspace'}
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-muted-foreground">
+          <div className="mt-6 text-center text-xs font-mono text-muted-foreground">
             Already have an account?{' '}
-            <Link href="/auth/signin" className="text-primary hover:underline font-semibold">
+            <Link href="/auth/signin" className="text-primary hover:underline font-bold">
               Sign in
             </Link>
           </div>

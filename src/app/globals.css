@@ -4,80 +4,85 @@
 
 @layer base {
   :root {
-    --background: 180 20% 98%; /* cool near-white, not warm white */
-    --surface: 180 15% 96%;
-    --foreground: 190 25% 9%; /* cool near-black, not pure black */
-    --card: 0 0% 100%;
-    --card-foreground: 190 25% 9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 190 25% 9%;
-    --primary: 178 55% 24%; /* deep slate-teal #146F69, replaces indigo/violet */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 180 15% 94%;
-    --secondary-foreground: 190 25% 9%;
-    --muted: 180 15% 94%;
-    --muted-foreground: 190 10% 44%;
-    --accent: 178 40% 94%; /* light teal tint for hover/selected states */
-    --accent-foreground: 178 55% 22%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 180 12% 89%;
-    --border-subtle: 180 12% 89%;
-    --border-strong: 180 12% 80%;
-    --input: 180 12% 89%;
-    --ring: 178 55% 24%;
-    --radius: 0.5rem;
+    --background: 0 0% 4%;        /* near-black #0B0B0C */
+    --surface: 240 3% 8%;          /* #141416 */
+    --foreground: 40 8% 95%;       /* off-white #F2F2F0 */
+    --card: 240 3% 8%;
+    --card-foreground: 40 8% 95%;
+    --popover: 240 3% 8%;
+    --popover-foreground: 40 8% 95%;
+    --primary: 74 100% 62%;        /* acid lime #C6FF3D */
+    --primary-foreground: 0 0% 4%; /* black text on the lime — always, never white-on-lime */
+    --secondary: 240 3% 12%;
+    --secondary-foreground: 40 8% 95%;
+    --muted: 240 3% 12%;
+    --muted-foreground: 240 3% 47%;
+    --accent: 74 45% 10%;          /* dark lime tint, used sparingly for subtle hover states only */
+    --accent-foreground: 74 100% 62%;
+    --destructive: 0 84% 63%;      /* keep red as red */
+    --destructive-foreground: 0 0% 4%;
+    --border: 240 3% 15%;          /* #28282C */
+    --border-subtle: 240 3% 15%;
+    --border-strong: 240 3% 25%;
+    --input: 240 3% 15%;
+    --ring: 74 100% 62%;
+    --approved: 217 100% 65%;      /* blue status */
+    --posted: 142 71% 45%;         /* green status */
+    --radius: 0rem;
 
-    /* Platform & Category Colors (Light) - Calibrated to sit secondary to teal primary */
-    --instagram: 325 60% 48%;
+    /* Platform & Category Colors - Desaturated relative to lime primary */
+    --instagram: 330 35% 55%;
     --instagram-foreground: 0 0% 100%;
-    --instagram-light: 325 60% 96%;
+    --instagram-light: 330 30% 12%;
 
-    --pinterest: 355 65% 50%;
+    --pinterest: 355 40% 55%;
     --pinterest-foreground: 0 0% 100%;
-    --pinterest-light: 355 65% 96%;
+    --pinterest-light: 355 30% 12%;
 
-    --linkedin: 212 60% 46%;
+    --linkedin: 212 35% 55%;
     --linkedin-foreground: 0 0% 100%;
-    --linkedin-light: 212 60% 96%;
+    --linkedin-light: 212 30% 12%;
   }
 
   .dark {
-    --background: 200 18% 6%;
-    --surface: 200 14% 10%;
-    --foreground: 180 12% 94%;
-    --card: 200 15% 12%;
-    --card-foreground: 180 12% 94%;
-    --popover: 200 15% 12%;
-    --popover-foreground: 180 12% 94%;
-    --primary: 174 40% 52%; /* lighter teal, readable on dark */
-    --primary-foreground: 200 18% 6%;
-    --secondary: 200 14% 15%;
-    --secondary-foreground: 180 12% 94%;
-    --muted: 200 14% 15%;
-    --muted-foreground: 190 10% 60%;
-    --accent: 174 35% 16%; /* dark teal surface for hover */
-    --accent-foreground: 174 40% 80%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 200 14% 18%;
-    --border-subtle: 200 14% 18%;
-    --border-strong: 200 14% 26%;
-    --input: 200 14% 18%;
-    --ring: 174 40% 52%;
+    --background: 0 0% 4%;        /* near-black #0B0B0C */
+    --surface: 240 3% 8%;          /* #141416 */
+    --foreground: 40 8% 95%;       /* off-white #F2F2F0 */
+    --card: 240 3% 8%;
+    --card-foreground: 40 8% 95%;
+    --popover: 240 3% 8%;
+    --popover-foreground: 40 8% 95%;
+    --primary: 74 100% 62%;        /* acid lime #C6FF3D */
+    --primary-foreground: 0 0% 4%; /* black text on the lime — always, never white-on-lime */
+    --secondary: 240 3% 12%;
+    --secondary-foreground: 40 8% 95%;
+    --muted: 240 3% 12%;
+    --muted-foreground: 240 3% 47%;
+    --accent: 74 45% 10%;          /* dark lime tint, used sparingly for subtle hover states only */
+    --accent-foreground: 74 100% 62%;
+    --destructive: 0 84% 63%;      /* keep red as red */
+    --destructive-foreground: 0 0% 4%;
+    --border: 240 3% 15%;          /* #28282C */
+    --border-subtle: 240 3% 15%;
+    --border-strong: 240 3% 25%;
+    --input: 240 3% 15%;
+    --ring: 74 100% 62%;
+    --approved: 217 100% 65%;
+    --posted: 142 71% 45%;
+    --radius: 0rem;
 
-    /* Platform & Category Colors (Dark) */
-    --instagram: 325 55% 62%;
+    /* Platform & Category Colors */
+    --instagram: 330 35% 55%;
     --instagram-foreground: 0 0% 100%;
-    --instagram-light: 325 45% 16%;
+    --instagram-light: 330 30% 12%;
 
-    --pinterest: 355 60% 62%;
+    --pinterest: 355 40% 55%;
     --pinterest-foreground: 0 0% 100%;
-    --pinterest-light: 355 45% 16%;
+    --pinterest-light: 355 30% 12%;
 
-    --linkedin: 212 55% 60%;
+    --linkedin: 212 35% 55%;
     --linkedin-foreground: 0 0% 100%;
-    --linkedin-light: 212 45% 16%;
+    --linkedin-light: 212 30% 12%;
   }
 }
 
@@ -143,7 +148,7 @@ select:focus-visible,
 
 /* Selection */
 ::selection {
-  @apply bg-primary/20 text-foreground;
+  @apply bg-primary text-primary-foreground;
 }
 
 .signal-surface {
@@ -156,10 +161,8 @@ select:focus-visible,
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(90deg, hsl(var(--primary) / 0.12), transparent 34%),
-    repeating-linear-gradient(0deg, transparent 0, transparent 13px, hsl(var(--primary) / 0.055) 14px);
-  opacity: 0.8;
+  border: 1px solid hsl(var(--border));
+  opacity: 0.5;
 }
 
 .signal-surface > * {
@@ -225,27 +228,27 @@ select:focus-visible,
 .prose p { @apply mb-4 leading-relaxed; }
 .prose ul { @apply list-disc list-inside mb-4 space-y-1; }
 .prose ol { @apply list-decimal list-inside mb-4 space-y-1; }
-.prose code { @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono; }
-.prose pre { @apply bg-muted p-4 rounded-lg overflow-x-auto mb-4; }
+.prose code { @apply bg-muted px-1.5 py-0.5 rounded-none text-sm font-mono; }
+.prose pre { @apply bg-muted p-4 rounded-none overflow-x-auto mb-4 border border-border; }
 .prose pre code { @apply bg-transparent p-0 text-sm; }
-.prose blockquote { @apply border-l-4 border-primary pl-4 italic text-muted-foreground my-4; }
+.prose blockquote { @apply border-l-2 border-primary pl-4 italic text-muted-foreground my-4; }
 .prose a { @apply text-primary underline hover:no-underline; }
-.prose img { @apply rounded-lg my-4 max-w-full h-auto; }
+.prose img { @apply rounded-none my-4 max-w-full h-auto border border-border; }
 
-/* Platform badge variants */
-.badge-instagram { @apply bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300; }
-.badge-pinterest { @apply bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300; }
-.badge-linkedin { @apply bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300; }
+/* Platform badge variants - desaturated, sharp, secondary */
+.badge-instagram { @apply bg-surface text-pink-400 border border-zinc-800 rounded-none font-mono text-[10px] uppercase font-bold tracking-wider; }
+.badge-pinterest { @apply bg-surface text-rose-400 border border-zinc-800 rounded-none font-mono text-[10px] uppercase font-bold tracking-wider; }
+.badge-linkedin { @apply bg-surface text-sky-400 border border-zinc-800 rounded-none font-mono text-[10px] uppercase font-bold tracking-wider; }
 
-/* Status badge variants */
-.badge-idea { @apply bg-slate-100 text-slate-700 dark:bg-slate-800/80 dark:text-slate-300; }
-.badge-selected { @apply bg-slate-100 text-slate-700 dark:bg-slate-800/80 dark:text-slate-300; }
-.badge-drafted { @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300; }
-.badge-in_revision { @apply bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300; }
-.badge-approved { @apply bg-blue-100 text-[#1E3F9E] dark:bg-blue-950/60 dark:text-blue-300; }
-.badge-scheduled { @apply bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300; }
-.badge-posted { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300; }
-.badge-failed { @apply bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300; }
+/* Status badge variants - solid color blocks, not pastel tints */
+.badge-idea { @apply bg-surface border border-border text-muted-foreground rounded-none font-mono text-[10px] uppercase tracking-wider font-semibold; }
+.badge-selected { @apply bg-surface border border-border text-muted-foreground rounded-none font-mono text-[10px] uppercase tracking-wider font-semibold; }
+.badge-drafted { @apply bg-surface border border-border text-muted-foreground rounded-none font-mono text-[10px] uppercase tracking-wider font-semibold; }
+.badge-in_revision { @apply bg-destructive text-black border border-destructive rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
+.badge-approved { @apply bg-[hsl(var(--approved))] text-black border border-[hsl(var(--approved))] rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
+.badge-scheduled { @apply bg-primary text-primary-foreground border border-primary rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
+.badge-posted { @apply bg-[hsl(var(--posted))] text-black border border-[hsl(var(--posted))] rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
+.badge-failed { @apply bg-destructive text-black border border-destructive rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
 
 /* Scrollbar hiding utilities */
 .no-scrollbar::-webkit-scrollbar {

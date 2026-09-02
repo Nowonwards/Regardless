@@ -139,8 +139,8 @@ function SettingsPageInner() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <textarea id="bio" className="w-full min-h-[100px] p-2 border rounded-md" defaultValue="Social media content creator" />
+                <Label htmlFor="bio" className="text-xs font-mono font-bold uppercase tracking-wider">Bio</Label>
+                <textarea id="bio" className="w-full min-h-[100px] p-2 border border-border rounded-none bg-surface text-foreground font-mono text-xs focus:ring-1 focus:ring-primary focus:outline-none" defaultValue="Social media content creator" />
               </div>
               <Button>Save Changes</Button>
             </CardContent>

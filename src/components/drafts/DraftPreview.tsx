@@ -302,7 +302,7 @@ export function DraftPreview({
   const isCurrentSlideGenerating = generatingSlideId === 'ALL' || generatingSlideId === slides[activeSlide]?.id;
 
   const renderInstagramCarousel = () => (
-    <div className="w-full max-w-[380px] mx-auto bg-card text-card-foreground rounded-xl border border-border shadow-md overflow-hidden text-left">
+    <div className="w-full max-w-[380px] mx-auto bg-card text-card-foreground rounded-none border border-border overflow-hidden text-left">
       {/* 1. Post Header */}
       <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border/40 bg-card">
         <div className="flex items-center gap-2.5">
@@ -346,7 +346,7 @@ export function DraftPreview({
               size="sm"
               onClick={() => handleGenerateImage(slides[activeSlide]?.id)}
               disabled={generatingSlideId !== null}
-              className="gap-1.5 text-xs bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 shadow-sm"
+              className="gap-1.5 text-xs font-mono font-bold bg-primary text-primary-foreground border border-primary hover:opacity-90 rounded-none"
             >
               <ImageIcon className="h-3.5 w-3.5" />
               Render Slide Card PNG
@@ -435,7 +435,7 @@ export function DraftPreview({
   );
 
   const renderPinterestPin = () => (
-    <div className="relative max-w-xs mx-auto bg-white rounded-xl overflow-hidden shadow-lg">
+    <div className="relative max-w-xs mx-auto bg-card rounded-none border border-border overflow-hidden">
       {imageLoading[slides[0]?.id || ''] ? (
         <div className="aspect-[2/3] flex items-center justify-center bg-gray-100">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -468,24 +468,24 @@ export function DraftPreview({
   );
 
   const renderLinkedInPost = () => (
-    <div className="max-w-2xl mx-auto bg-white rounded-xl border shadow-sm overflow-hidden">
-      <div className="p-4 border-b flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-          <span className="text-primary font-medium">U</span>
+    <div className="max-w-2xl mx-auto bg-card rounded-none border border-border overflow-hidden">
+      <div className="p-4 border-b border-border flex items-center gap-3">
+        <div className="w-10 h-10 rounded-none border border-border bg-surface flex items-center justify-center font-mono">
+          <span className="text-primary font-bold">U</span>
         </div>
         <div>
-          <p className="font-medium">Your Name</p>
-          <p className="text-xs text-muted-foreground">Just now</p>
+          <p className="font-semibold text-sm">Your Name</p>
+          <p className="text-xs font-mono text-muted-foreground">Just now</p>
         </div>
       </div>
 
       <div className="p-4">
-        <p className="whitespace-pre-wrap mb-4">{caption}</p>
+        <p className="whitespace-pre-wrap mb-4 font-sans text-sm">{caption}</p>
 
         {slides[0]?.imageUrl && (
-          <div className="rounded-lg overflow-hidden mb-4">
+          <div className="rounded-none border border-border overflow-hidden mb-4">
             {imageLoading[slides[0].id] ? (
-              <div className="aspect-video flex items-center justify-center bg-gray-100">
+              <div className="aspect-video flex items-center justify-center bg-surface">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : (
@@ -507,7 +507,7 @@ export function DraftPreview({
           {hashtags.map((tag, idx) => (
             <span
               key={idx}
-              className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-full cursor-pointer hover:bg-blue-100"
+              className="px-2 py-0.5 text-xs font-mono bg-surface text-primary border border-border rounded-none cursor-pointer hover:border-primary"
               onClick={() => copyToClipboard(tag, `hashtag-${idx}`)}
             >
               {copiedField === `hashtag-${idx}` ? <Check className="inline h-3 w-3 ml-1" /> : tag}
@@ -579,24 +579,24 @@ export function DraftPreview({
           </div>
 
           {showEditSlide && (
-            <div className="p-3 bg-muted/50 border border-border/80 rounded-xl space-y-2.5 text-left animate-in fade-in-50">
+            <div className="p-3 bg-surface border border-border rounded-none space-y-2.5 text-left font-mono">
               <div>
-                <label className="text-[11px] font-medium text-muted-foreground">Slide {activeSlide + 1} Headline</label>
+                <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-muted-foreground">Slide {activeSlide + 1} Headline</label>
                 <input
                   type="text"
                   value={customHeadline}
                   onChange={(e) => setCustomHeadline(e.target.value)}
-                  className="w-full mt-1 px-2.5 py-1.5 text-xs bg-background border border-input rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full mt-1 px-2.5 py-1.5 text-xs font-mono bg-background border border-border rounded-none focus:outline-none focus:ring-1 focus:ring-primary"
                   placeholder="Headline..."
                 />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-muted-foreground">Slide {activeSlide + 1} Take / Insight</label>
+                <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-muted-foreground">Slide {activeSlide + 1} Take / Insight</label>
                 <textarea
                   value={customTake}
                   onChange={(e) => setCustomTake(e.target.value)}
                   rows={2}
-                  className="w-full mt-1 px-2.5 py-1.5 text-xs bg-background border border-input rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full mt-1 px-2.5 py-1.5 text-xs font-mono bg-background border border-border rounded-none resize-none focus:outline-none focus:ring-1 focus:ring-primary"
                   placeholder="Insight..."
                 />
               </div>
@@ -651,16 +651,16 @@ export function DraftPreview({
                 </span>
               </div>
               {post.status === 'SCHEDULED' && scheduledDate ? (
-                <div className="mt-3 flex items-center justify-between p-3 rounded-xl bg-primary/10 border border-primary/30 text-primary">
-                  <div className="flex items-center gap-2 text-xs font-medium">
-                    <Calendar className="h-4 w-4 text-primary shrink-0" />
+                <div className="mt-3 flex items-center justify-between p-3 rounded-none bg-primary text-primary-foreground border border-primary">
+                  <div className="flex items-center gap-2 text-xs font-semibold">
+                    <Calendar className="h-4 w-4 text-primary-foreground shrink-0" />
                     <span>Auto-publishing scheduled for <strong className="font-mono">{scheduledDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} at {scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong></span>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <Button size="sm" variant="outline" onClick={() => setShowScheduleModal(true)} className="h-7 text-xs font-medium border-primary/40 hover:bg-primary/10">
+                    <Button size="sm" variant="outline" onClick={() => setShowScheduleModal(true)} className="h-7 text-xs font-mono font-bold bg-black text-white border-black hover:bg-black/90">
                       Change Time
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={handleUnscheduleClick} className="h-7 text-xs text-muted-foreground hover:text-destructive">
+                    <Button size="sm" variant="ghost" onClick={handleUnscheduleClick} className="h-7 text-xs font-mono font-semibold text-black hover:bg-black/10">
                       Cancel
                     </Button>
                   </div>
@@ -668,7 +668,7 @@ export function DraftPreview({
               ) : scheduledDate ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Badge variant="outline" className="shrink-0 gap-1 mt-2">
+                    <Badge variant="outline" className="shrink-0 gap-1 mt-2 rounded-none font-mono">
                       <Calendar className="h-3 w-3" />
                       <span>{scheduledDate.toLocaleDateString()} at {scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </Badge>
@@ -715,9 +715,10 @@ export function DraftPreview({
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
-                      onClick={() => handleGenerateImage(undefined, undefined, true, 'template')}
+                      variant="outline"
+                      onClick={() => handleGenerateImage(undefined, undefined, false, 'template')}
                       disabled={generatingSlideId !== null}
-                      className="gap-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20"
+                      className="gap-1.5 text-xs rounded-none border border-border"
                     >
                       {generatingSlideId === 'ALL' ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -728,10 +729,9 @@ export function DraftPreview({
                     </Button>
                     <Button
                       size="sm"
-                      variant="outline"
                       onClick={() => handleGenerateImage(undefined, undefined, true, 'ai')}
                       disabled={generatingSlideId !== null}
-                      className="gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10"
+                      className="gap-1.5 text-xs rounded-none bg-primary text-primary-foreground font-bold hover:opacity-90 border border-primary"
                     >
                       <Sparkles className="h-3.5 w-3.5" />
                       AI Graphics (Gemini)
@@ -763,11 +763,10 @@ export function DraftPreview({
                             Re-render Card
                           </Button>
                           <Button
-                            variant="outline"
                             size="sm"
                             onClick={() => handleGenerateImage(slide.id, slide.imagePrompt, false, 'ai')}
                             disabled={generatingSlideId !== null}
-                            className="text-xs gap-1 h-7 border-primary/30 text-primary hover:bg-primary/10"
+                            className="text-xs gap-1 h-7 rounded-none bg-primary text-primary-foreground font-bold hover:opacity-90 border border-primary"
                           >
                             <Sparkles className="h-3 w-3" />
                             AI Visual
@@ -792,7 +791,7 @@ export function DraftPreview({
                       </div>
 
                       {slide.imageUrl && (
-                        <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 mb-3 border">
+                        <div className="relative aspect-video rounded-none overflow-hidden bg-surface mb-3 border border-border">
                           {imageLoading[slide.id] ? (
                             <div className="absolute inset-0 flex items-center justify-center">
                               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -903,13 +902,13 @@ export function DraftPreview({
 
                 {/* AI Regenerate Prompt Bar */}
                 {showRegenerateCaptionPrompt && (
-                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="rounded-none border border-primary bg-surface p-4 space-y-3 animate-in fade-in duration-150">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-primary" />
-                        <span className="text-xs font-semibold text-foreground">AI Caption Copilot</span>
+                        <span className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">AI Caption Copilot</span>
                       </div>
-                      <span className="text-[11px] text-muted-foreground">Add specific guidance or comment</span>
+                      <span className="text-[11px] font-mono text-muted-foreground">Add specific guidance or comment</span>
                     </div>
 
                     <div className="flex gap-2">
@@ -930,7 +929,7 @@ export function DraftPreview({
                         size="sm"
                         onClick={() => handleRegenerateCaption()}
                         disabled={isRegeneratingCaption}
-                        className="h-9 text-xs font-semibold shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 px-3.5"
+                        className="h-9 text-xs font-mono font-bold shrink-0 bg-primary text-primary-foreground hover:opacity-90 gap-1.5 px-3.5 border border-primary rounded-none"
                       >
                         {isRegeneratingCaption ? (
                           <>
@@ -948,7 +947,7 @@ export function DraftPreview({
 
                     {/* Quick Preset Chips */}
                     <div className="flex items-center flex-wrap gap-1.5 pt-0.5">
-                      <span className="text-[11px] text-muted-foreground mr-1">Presets:</span>
+                      <span className="text-[11px] font-mono text-muted-foreground mr-1">Presets:</span>
                       {[
                         { label: 'Punchier & bolder', icon: Flame, comment: 'Make it punchier, bolder, and more provocative' },
                         { label: 'More sarcastic tone', icon: Zap, comment: 'Enhance the sarcastic and opinionated brand voice' },
@@ -965,7 +964,7 @@ export function DraftPreview({
                               setCaptionAiComment(preset.comment);
                               handleRegenerateCaption(preset.comment);
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] font-medium bg-background hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/80 hover:border-primary/30 px-2 py-0.5 rounded-md transition-colors"
+                            className="inline-flex items-center gap-1 text-[10px] font-mono font-medium bg-background hover:bg-primary hover:text-primary-foreground border border-border px-2 py-0.5 rounded-none transition-colors"
                           >
                             <Icon className="h-3 w-3" />
                             <span>{preset.label}</span>
@@ -978,7 +977,7 @@ export function DraftPreview({
 
                 {/* Manual Edit Mode */}
                 {isEditingCaption ? (
-                  <div className="rounded-xl border bg-card p-4 space-y-4 shadow-sm">
+                  <div className="rounded-none border border-border bg-card p-4 space-y-4">
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-semibold text-foreground">Edit Caption Text</label>
@@ -1044,21 +1043,21 @@ export function DraftPreview({
                   /* Standard Display Mode */
                   <>
                     <div>
-                      <div className="p-4 bg-muted/40 rounded-xl border whitespace-pre-wrap text-sm leading-relaxed font-sans text-foreground/90 select-text">
-                        {caption || <span className="text-muted-foreground italic">No caption generated yet. Click 'Regenerate with AI' or 'Edit Caption'.</span>}
+                      <div className="p-4 bg-surface rounded-none border border-border whitespace-pre-wrap text-xs font-mono leading-relaxed text-foreground select-text">
+                        {caption || <span className="text-muted-foreground italic font-mono">No caption generated yet. Click &apos;Regenerate with AI&apos; or &apos;Edit Caption&apos;.</span>}
                       </div>
                     </div>
 
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-medium text-muted-foreground">Hashtags ({hashtags.length})</p>
+                        <p className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">Hashtags ({hashtags.length})</p>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => copyToClipboard(hashtags.join(' '), 'hashtags')}
-                              className="gap-1 text-xs h-7 px-2"
+                              className="gap-1 text-xs font-mono h-7 px-2 rounded-none border-border"
                             >
                               <Copy className="h-3.5 w-3.5" />
                               {copiedField === 'hashtags' ? 'Copied!' : 'Copy all'}
@@ -1067,12 +1066,12 @@ export function DraftPreview({
                           <TooltipContent side="top">{copiedField === 'hashtags' ? 'Copied!' : 'Copy all hashtags'}</TooltipContent>
                         </Tooltip>
                       </div>
-                      <div className="flex flex-wrap gap-1.5 p-3 bg-muted/40 rounded-xl border">
+                      <div className="flex flex-wrap gap-1.5 p-3 bg-surface rounded-none border border-border">
                         {hashtags.map((tag, idx) => (
                           <Badge
                             key={idx}
                             variant="secondary"
-                            className="cursor-pointer hover:bg-secondary/80 text-xs py-0.5 font-normal"
+                            className="cursor-pointer hover:bg-secondary/80 text-xs py-0.5 font-mono rounded-none border"
                             onClick={() => copyToClipboard(tag, `tag-${idx}`)}
                           >
                             {tag}
@@ -1089,8 +1088,8 @@ export function DraftPreview({
                     <p className="text-xs font-medium text-muted-foreground mb-2">Alt Text for Screen Readers</p>
                     <div className="space-y-1.5">
                       {altTexts.map((alt, idx) => (
-                        <div key={idx} className="p-2.5 bg-muted/40 rounded-lg border text-xs">
-                          <span className="font-semibold text-muted-foreground">Slide {idx + 1}:</span> {alt}
+                        <div key={idx} className="p-2.5 bg-surface rounded-none border border-border text-xs font-mono">
+                          <span className="font-bold text-muted-foreground">Slide {idx + 1}:</span> {alt}
                         </div>
                       ))}
                     </div>
@@ -1121,7 +1120,7 @@ export function DraftPreview({
                               {new Date(version.createdAt).toLocaleString()}
                             </p>
                             {version.feedback && (
-                              <p className="text-sm text-blue-600 mt-1 bg-blue-50 dark:bg-blue-950/40 p-2 rounded">
+                              <p className="text-xs font-mono text-primary mt-1 bg-surface p-2 rounded-none border border-primary/30">
                                 Feedback: {version.feedback}
                               </p>
                             )}
@@ -1145,7 +1144,7 @@ export function DraftPreview({
                 value={revisionFeedback}
                 onChange={(e) => setRevisionFeedback(e.target.value)}
                 placeholder="Describe what you'd like to change (e.g., 'make slide 3 punchier', 'different angle for the hook')..."
-                className="w-full min-h-[80px] p-3 border border-input rounded-lg text-sm focus:ring-2 focus:ring-ring bg-background text-foreground"
+                className="w-full min-h-[80px] p-3 border border-border rounded-none text-xs font-mono focus:ring-1 focus:ring-primary focus:outline-none bg-surface text-foreground"
                 rows={3}
               />
               <div className="flex justify-end gap-2">
@@ -1190,7 +1189,7 @@ export function DraftPreview({
                     <Button
                       onClick={handlePublishClick}
                       disabled={isPublishing}
-                      className="flex-1 sm:flex-initial gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                      className="flex-1 sm:flex-initial gap-1.5 bg-primary text-primary-foreground font-bold hover:opacity-90 border border-primary rounded-none"
                     >
                       {isPublishing ? (
                         <>
@@ -1209,7 +1208,7 @@ export function DraftPreview({
                     <TooltipTrigger asChild>
                       <Button
                         variant="outline"
-                        className="flex-1 sm:flex-initial gap-1"
+                        className="flex-1 sm:flex-initial gap-1 rounded-none border border-border"
                         disabled={isPublishing}
                         onClick={() => setShowScheduleModal(true)}
                       >
@@ -1221,7 +1220,7 @@ export function DraftPreview({
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="outline" disabled={isPublishing} onClick={() => setShowRevisionInput(true)} className="gap-1">
+                      <Button variant="outline" disabled={isPublishing} onClick={() => setShowRevisionInput(true)} className="gap-1 rounded-none border border-border">
                         <RotateCcw className="h-4 w-4" />
                         Revise
                       </Button>
@@ -1234,7 +1233,7 @@ export function DraftPreview({
                   <Button
                     onClick={() => setShowScheduleModal(true)}
                     disabled={isPublishing}
-                    className="flex-1 sm:flex-initial gap-1.5 bg-primary text-primary-foreground font-semibold shadow-sm"
+                    className="flex-1 sm:flex-initial gap-1.5 bg-primary text-primary-foreground font-bold hover:opacity-90 border border-primary rounded-none"
                   >
                     <Calendar className="h-4 w-4" />
                     Reschedule
@@ -1244,7 +1243,7 @@ export function DraftPreview({
                     variant="outline"
                     onClick={handleUnscheduleClick}
                     disabled={isPublishing}
-                    className="flex-1 sm:flex-initial gap-1 text-muted-foreground hover:text-foreground"
+                    className="flex-1 sm:flex-initial gap-1 text-muted-foreground hover:text-foreground rounded-none border border-border"
                   >
                     Cancel Schedule
                   </Button>
@@ -1254,7 +1253,7 @@ export function DraftPreview({
                       variant="ghost"
                       onClick={handlePublishClick}
                       disabled={isPublishing}
-                      className="flex-1 sm:flex-initial gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                      className="flex-1 sm:flex-initial gap-1.5 text-xs text-muted-foreground hover:text-foreground rounded-none"
                     >
                       {isPublishing ? (
                         <>
@@ -1272,7 +1271,7 @@ export function DraftPreview({
 
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="outline" disabled={isPublishing} onClick={() => setShowRevisionInput(true)} className="gap-1">
+                      <Button variant="outline" disabled={isPublishing} onClick={() => setShowRevisionInput(true)} className="gap-1 rounded-none border border-border">
                         <RotateCcw className="h-4 w-4" />
                         Revise
                       </Button>
@@ -1281,7 +1280,7 @@ export function DraftPreview({
                   </Tooltip>
                 </>
               ) : post.status === 'POSTED' ? (
-                <Badge variant="outline" className="text-sm gap-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-950">
+                <Badge className="badge-posted gap-1">
                   <Check className="h-3 w-3" />
                   Published
                 </Badge>

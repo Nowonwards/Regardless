@@ -9,6 +9,7 @@ import {
   Briefcase,
   Loader2,
   CheckCircle2,
+  Check,
   Globe,
   Sliders,
   Cpu,
@@ -344,7 +345,7 @@ export function ChatInterface({
       {/* Studio Header */}
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <div className="flex h-10 w-10 items-center justify-center rounded-none border border-border bg-surface text-primary">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
@@ -357,13 +358,13 @@ export function ChatInterface({
       </div>
 
       {/* Configuration Card */}
-      <Card className="signal-surface border-border shadow-sm" elevation="low">
+      <Card className="rounded-none border border-border bg-card" elevation="none">
         <CardHeader className="pb-4">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <CardTitle className="font-display text-base font-bold flex items-center gap-2">
             <Sliders className="h-4 w-4 text-primary" />
             Ideation Parameters
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs font-mono">
             Choose the platforms and news topics you want to cover this week.
           </CardDescription>
         </CardHeader>
@@ -371,21 +372,21 @@ export function ChatInterface({
         <CardContent className="space-y-6">
           {/* Platform Selector Boxes */}
           <div className="space-y-2.5">
-            <Label className="text-sm font-medium flex items-center justify-between">
+            <Label className="text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-between">
               <span>Target Platforms (Click to toggle)</span>
-              <span className="text-xs text-muted-foreground font-normal">
+              <span className="text-xs font-mono text-muted-foreground font-normal">
                 {selectedPlatforms.length} platform(s) selected
               </span>
             </Label>
 
             {effectiveConnected.length === 0 && !isLoadingPlatforms && (
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-amber-800 dark:text-amber-300">
+              <div className="rounded-none border border-amber-500 bg-surface p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-mono text-amber-500">
                 <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <AlertCircle className="h-4 w-4 shrink-0 text-amber-500" />
                   <span>No social accounts connected yet. Connect your accounts in Settings to generate and publish posts.</span>
                 </div>
                 <Link href="/settings">
-                  <Button size="sm" variant="outline" className="h-7 text-xs font-semibold shrink-0 border-amber-500/40 hover:bg-amber-500/10 gap-1">
+                  <Button size="sm" variant="outline" className="h-7 text-xs font-mono rounded-none shrink-0 border-amber-500 hover:bg-surface gap-1">
                     Connect in Settings
                     <ExternalLink className="h-3 w-3" />
                   </Button>
@@ -407,35 +408,35 @@ export function ChatInterface({
                       key={plat.id}
                       onClick={() => togglePlatform(plat.id)}
                       className={cn(
-                        'p-3.5 rounded-xl border text-left transition-all relative overflow-hidden flex flex-col justify-between h-28 cursor-pointer',
+                        'p-3.5 rounded-none border text-left transition-all relative overflow-hidden flex flex-col justify-between h-28 cursor-pointer',
                         isSelected
-                          ? `${plat.bg} ${plat.border} ring-2 ring-primary/50 shadow-sm font-medium`
-                          : 'bg-card border-border/70 hover:border-primary/40 opacity-75 hover:opacity-100 hover:shadow-xs'
+                          ? 'bg-surface border-primary ring-1 ring-primary'
+                          : 'bg-card border-border hover:border-primary/60'
                       )}
                     >
                       <div className="flex items-center justify-between w-full">
-                        <div className={cn('p-1.5 rounded-lg bg-background shadow-xs', plat.color)}>
+                        <div className={cn('p-1.5 rounded-none border border-border bg-background', plat.color)}>
                           {plat.icon}
                         </div>
 
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                          <span className="text-[10px] font-mono text-emerald-400 bg-surface px-1.5 py-0.5 rounded-none border border-emerald-500/40">
                             Connected
                           </span>
                           <div
                             className={cn(
-                              'h-5 w-5 rounded-full flex items-center justify-center transition-colors',
-                              isSelected ? 'bg-primary text-primary-foreground' : 'border border-muted-foreground/30'
+                              'h-5 w-5 rounded-none flex items-center justify-center transition-colors',
+                              isSelected ? 'bg-primary text-primary-foreground border border-primary' : 'border border-border'
                             )}
                           >
-                            {isSelected && <CheckCircle2 className="h-4 w-4" />}
+                            {isSelected && <Check className="h-3.5 w-3.5" />}
                           </div>
                         </div>
                       </div>
 
                       <div>
-                        <p className="font-semibold text-sm">{plat.label}</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                        <p className="font-display font-bold text-sm">{plat.label}</p>
+                        <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
                           {plat.id === 'INSTAGRAM' ? 'Carousels & Reels' : plat.id === 'LINKEDIN' ? 'Thought Leadership' : 'Infographic Pins'}
                         </p>
                       </div>
@@ -463,17 +464,17 @@ export function ChatInterface({
           {/* News Focus & Category Select Boxes */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="news-focus" className="text-sm font-medium flex items-center gap-1.5">
+              <Label htmlFor="news-focus" className="text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
                 <Globe className="h-3.5 w-3.5 text-primary" />
                 Industry Focus
               </Label>
               <Select value={newsFocus} onValueChange={setNewsFocus} disabled={isGenerating}>
-                <SelectTrigger id="news-focus" className="h-10 text-xs rounded-xl">
+                <SelectTrigger id="news-focus" className="h-10 text-xs font-mono rounded-none border-border">
                   <SelectValue placeholder="Select topic focus" />
                 </SelectTrigger>
                 <SelectContent>
                   {TOPIC_PRESETS.map((t) => (
-                    <SelectItem key={t.value} value={t.value} className="text-xs">
+                    <SelectItem key={t.value} value={t.value} className="text-xs font-mono">
                       {t.label}
                     </SelectItem>
                   ))}
@@ -482,19 +483,19 @@ export function ChatInterface({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="idea-count" className="text-sm font-medium flex items-center gap-1.5">
+              <Label htmlFor="idea-count" className="text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
                 <Layers className="h-3.5 w-3.5 text-primary" />
                 Number of Ideas
               </Label>
               <Select value={ideaCount} onValueChange={setIdeaCount} disabled={isGenerating}>
-                <SelectTrigger id="idea-count" className="h-10 text-xs rounded-xl">
+                <SelectTrigger id="idea-count" className="h-10 text-xs font-mono rounded-none border-border">
                   <SelectValue placeholder="Select count" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="3">3 Post Ideas</SelectItem>
-                  <SelectItem value="4">4 Post Ideas (Recommended)</SelectItem>
-                  <SelectItem value="5">5 Post Ideas</SelectItem>
-                  <SelectItem value="6">6 Post Ideas</SelectItem>
+                  <SelectItem value="3" className="font-mono text-xs">3 Post Ideas</SelectItem>
+                  <SelectItem value="4" className="font-mono text-xs">4 Post Ideas (Recommended)</SelectItem>
+                  <SelectItem value="5" className="font-mono text-xs">5 Post Ideas</SelectItem>
+                  <SelectItem value="6" className="font-mono text-xs">6 Post Ideas</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -502,30 +503,30 @@ export function ChatInterface({
 
           {/* Optional Custom Topic / Keyword */}
           <div className="space-y-2">
-            <Label htmlFor="custom-topic" className="text-sm font-medium flex items-center justify-between">
+            <Label htmlFor="custom-topic" className="text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <Cpu className="h-3.5 w-3.5 text-muted-foreground" />
                 Specific Tech Topic or Keyword (Optional)
               </span>
-              <span className="text-xs text-muted-foreground font-normal">Leave blank for top tech headlines</span>
+              <span className="text-[11px] font-mono text-muted-foreground font-normal">Leave blank for top tech headlines</span>
             </Label>
             <Input
               id="custom-topic"
               value={customKeyword}
               onChange={(e) => setCustomKeyword(e.target.value)}
               placeholder="e.g. Claude 3.7 Sonnet, Devin AI, Python 3.13, Nvidia earnings, YC W25 startups..."
-              className="h-10 text-sm rounded-xl"
+              className="h-10 text-xs font-mono rounded-none border-border"
               disabled={isGenerating}
             />
           </div>
 
           {/* Brand Voice Lock */}
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/30 p-3.5 text-xs">
+          <div className="flex items-center justify-between gap-3 rounded-none border border-border bg-surface p-3.5 text-xs font-mono">
             <div className="flex items-center gap-2 text-muted-foreground">
               <TrendingUp className="h-4 w-4 text-primary" />
-              <span>Voice & Tone: <strong>Sarcastic, Opinionated, No-Filter (Coding & Finance Course)</strong></span>
+              <span>Voice & Tone: <strong className="text-foreground">Sarcastic, Opinionated, No-Filter (Coding & Finance Course)</strong></span>
             </div>
-            <Badge variant="outline" className="shrink-0 bg-background text-[10px] rounded-md font-medium">Enforced</Badge>
+            <Badge variant="outline" className="shrink-0 bg-background text-[10px] rounded-none font-mono font-bold">Enforced</Badge>
           </div>
 
           {/* Generate Button */}
@@ -533,7 +534,7 @@ export function ChatInterface({
             onClick={handleGenerate}
             disabled={isGenerating || selectedPlatforms.length === 0}
             size="lg"
-            className="w-full h-11 text-sm font-semibold gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all disabled:opacity-50 disabled:pointer-events-none"
+            className="w-full h-11 text-xs font-mono font-bold uppercase tracking-wider gap-2 rounded-none bg-primary text-primary-foreground border border-primary hover:opacity-90 transition-all disabled:opacity-50 disabled:pointer-events-none"
           >
             {isGenerating ? (
               <>
@@ -555,8 +556,8 @@ export function ChatInterface({
 
           {/* Progress / Step Feedback */}
           {isGenerating && (
-            <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-center animate-pulse">
-              <p className="text-xs font-medium text-primary flex items-center justify-center gap-2">
+            <div className="rounded-none border border-primary bg-surface p-4 text-center">
+              <p className="text-xs font-mono font-bold text-primary flex items-center justify-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {generationStep || 'Scanning tech news & generating ideas...'}
               </p>

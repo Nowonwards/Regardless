@@ -164,12 +164,12 @@ export default function ChatPage() {
     <Tabs
       value={activeTab}
       onValueChange={(v) => setActiveTab(v as 'chat' | 'ideas')}
-      className="h-[calc(100vh-5.5rem)] flex flex-col w-full overflow-hidden rounded-lg border bg-background"
+      className="h-[calc(100vh-5.5rem)] flex flex-col w-full overflow-hidden rounded-none border border-border bg-background"
     >
-      <div className="border-b px-3 py-2">
-        <TabsList className="grid h-9 w-full max-w-md grid-cols-2">
-          <TabsTrigger value="chat">Ideation Studio</TabsTrigger>
-          <TabsTrigger value="ideas">Post Ideas ({ideas.length})</TabsTrigger>
+      <div className="border-b border-border px-3 py-2 bg-surface">
+        <TabsList className="grid h-9 w-full max-w-md grid-cols-2 rounded-none border border-border bg-background">
+          <TabsTrigger value="chat" className="font-mono text-xs">Ideation Studio</TabsTrigger>
+          <TabsTrigger value="ideas" className="font-mono text-xs">Post Ideas ({ideas.length})</TabsTrigger>
         </TabsList>
       </div>
 
