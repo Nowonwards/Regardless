@@ -543,7 +543,7 @@ export function IdeasSelector({
         <Separator />
         <CardContent className="p-4 bg-muted/10">
           <Button
-            className="w-full h-11 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold shadow-md shadow-purple-500/20 transition-all disabled:opacity-50"
+            className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md shadow-primary/20 transition-all disabled:opacity-50"
             size="lg"
             onClick={onGenerate}
             disabled={selectedIds.length === 0 || isGenerating}

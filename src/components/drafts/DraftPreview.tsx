@@ -1190,7 +1190,7 @@ export function DraftPreview({
                     <Button
                       onClick={handlePublishClick}
                       disabled={isPublishing}
-                      className="flex-1 sm:flex-initial gap-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-sm"
+                      className="flex-1 sm:flex-initial gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
                     >
                       {isPublishing ? (
                         <>

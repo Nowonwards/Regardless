@@ -320,7 +320,7 @@ export function ScheduleModal({
               size="sm"
               onClick={handleConfirm}
               disabled={isTargetInPast}
-              className="rounded-xl text-xs font-semibold gap-1.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-md shadow-purple-500/20 h-9 px-5 disabled:opacity-50"
+              className="rounded-xl text-xs font-semibold gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 h-9 px-5 disabled:opacity-50"
             >
               <Check className="h-3.5 w-3.5" />
               Confirm Schedule

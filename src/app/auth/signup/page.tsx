@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowRight, RadioTower, Sparkles } from 'lucide-react';
+import { ArrowRight, RadioTower } from 'lucide-react';
+import { RegardlessMark } from '@/components/icons/RegardlessMark';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -86,8 +87,8 @@ export default function SignUpPage() {
 
         <Card className="w-full border border-border/70 rounded-2xl shadow-xl bg-card/90 backdrop-blur-md" elevation="low">
         <CardHeader>
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-500 text-white shadow-md shadow-purple-500/25">
-            <Sparkles className="h-6 w-6" />
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20">
+            <RegardlessMark size={26} className="text-primary-foreground" />
           </div>
           <CardTitle className="font-display text-2xl font-bold">Create your workspace</CardTitle>
           <CardDescription>Set up Regardless for your social publishing flow.</CardDescription>
@@ -144,7 +145,7 @@ export default function SignUpPage() {
 
             <Button
               type="submit"
-              className="w-full h-10.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold shadow-md shadow-purple-500/20 transition-all"
+              className="w-full h-10.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md shadow-primary/20 transition-all"
               disabled={loading}
             >
               {loading ? 'Creating account...' : 'Create workspace'}

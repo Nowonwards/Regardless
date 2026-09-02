@@ -23,9 +23,9 @@ import { Platform, ConnectionStatus, PlatformConnection } from '@/types';
 import { cn } from '@/lib/utils';
 
 const PLATFORM_CONFIG = {
-  INSTAGRAM: { name: 'Instagram', icon: Instagram, color: 'text-purple-600', bg: 'bg-purple-100' },
-  LINKEDIN: { name: 'LinkedIn', icon: Linkedin, color: 'text-blue-600', bg: 'bg-blue-100' },
-  PINTEREST: { name: 'Pinterest', icon: Pin, color: 'text-red-600', bg: 'bg-red-100' },
+  INSTAGRAM: { name: 'Instagram', icon: Instagram, color: 'text-[hsl(var(--instagram))]', bg: 'bg-[hsl(var(--instagram-light))]' },
+  LINKEDIN: { name: 'LinkedIn', icon: Linkedin, color: 'text-[hsl(var(--linkedin))]', bg: 'bg-[hsl(var(--linkedin-light))]' },
+  PINTEREST: { name: 'Pinterest', icon: Pin, color: 'text-[hsl(var(--pinterest))]', bg: 'bg-[hsl(var(--pinterest-light))]' },
 };
 
 const STATUS_CONFIG: Record<ConnectionStatus, { label: string; icon: React.ReactNode; color: string }> = {

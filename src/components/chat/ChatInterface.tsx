@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Sparkles,
-  Target,
-  Hash,
-  Type,
+  Camera,
+  Pin,
+  Briefcase,
   Loader2,
   CheckCircle2,
   Globe,
@@ -42,26 +42,26 @@ const PLATFORM_OPTIONS: { id: Platform; label: string; icon: React.ReactNode; co
   {
     id: 'INSTAGRAM',
     label: 'Instagram',
-    icon: <Target className="h-4 w-4" />,
-    color: 'text-purple-600 dark:text-purple-400',
-    border: 'border-purple-300 dark:border-purple-800',
-    bg: 'bg-purple-50 dark:bg-purple-950/30',
+    icon: <Camera className="h-4 w-4" />,
+    color: 'text-[hsl(var(--instagram))]',
+    border: 'border-[hsl(var(--instagram))]/30',
+    bg: 'bg-[hsl(var(--instagram-light))]',
   },
   {
     id: 'LINKEDIN',
     label: 'LinkedIn',
-    icon: <Type className="h-4 w-4" />,
-    color: 'text-blue-600 dark:text-blue-400',
-    border: 'border-blue-300 dark:border-blue-800',
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
+    icon: <Briefcase className="h-4 w-4" />,
+    color: 'text-[hsl(var(--linkedin))]',
+    border: 'border-[hsl(var(--linkedin))]/30',
+    bg: 'bg-[hsl(var(--linkedin-light))]',
   },
   {
     id: 'PINTEREST',
     label: 'Pinterest',
-    icon: <Hash className="h-4 w-4" />,
-    color: 'text-red-600 dark:text-red-400',
-    border: 'border-red-300 dark:border-red-800',
-    bg: 'bg-red-50 dark:bg-red-950/30',
+    icon: <Pin className="h-4 w-4" />,
+    color: 'text-[hsl(var(--pinterest))]',
+    border: 'border-[hsl(var(--pinterest))]/30',
+    bg: 'bg-[hsl(var(--pinterest-light))]',
   },
 ];
 
@@ -533,7 +533,7 @@ export function ChatInterface({
             onClick={handleGenerate}
             disabled={isGenerating || selectedPlatforms.length === 0}
             size="lg"
-            className="w-full h-11 text-sm font-semibold gap-2 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg shadow-purple-500/20 transition-all disabled:opacity-50 disabled:pointer-events-none"
+            className="w-full h-11 text-sm font-semibold gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all disabled:opacity-50 disabled:pointer-events-none"
           >
             {isGenerating ? (
               <>
