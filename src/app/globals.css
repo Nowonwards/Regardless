@@ -4,44 +4,44 @@
 
 @layer base {
   :root {
-    --background: 0 0% 4%;        /* near-black #0B0B0C */
-    --surface: 240 3% 8%;          /* #141416 */
-    --foreground: 40 8% 95%;       /* off-white #F2F2F0 */
-    --card: 240 3% 8%;
-    --card-foreground: 40 8% 95%;
-    --popover: 240 3% 8%;
-    --popover-foreground: 40 8% 95%;
-    --primary: 74 100% 62%;        /* acid lime #C6FF3D */
-    --primary-foreground: 0 0% 4%; /* black text on the lime — always, never white-on-lime */
-    --secondary: 240 3% 12%;
-    --secondary-foreground: 40 8% 95%;
-    --muted: 240 3% 12%;
-    --muted-foreground: 240 3% 47%;
-    --accent: 74 45% 10%;          /* dark lime tint, used sparingly for subtle hover states only */
-    --accent-foreground: 74 100% 62%;
-    --destructive: 0 84% 63%;      /* keep red as red */
-    --destructive-foreground: 0 0% 4%;
-    --border: 240 3% 15%;          /* #28282C */
-    --border-subtle: 240 3% 15%;
-    --border-strong: 240 3% 25%;
-    --input: 240 3% 15%;
+    --background: 0 0% 97%;        /* off-white #F7F7F5, not stark pure white */
+    --surface: 0 0% 100%;          /* #FFFFFF for cards, distinct from the page background */
+    --foreground: 0 0% 4%;         /* near-black #0B0B0C */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 4%;
+    --primary: 74 100% 62%;        /* same acid lime #C6FF3D — brand accent doesn't change between themes */
+    --primary-foreground: 0 0% 4%; /* black text on lime, unchanged from dark mode */
+    --secondary: 0 0% 92%;
+    --secondary-foreground: 0 0% 4%;
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 29%;
+    --accent: 74 100% 92%;         /* very light lime tint, for hover states only */
+    --accent-foreground: 0 0% 4%;
+    --destructive: 351 82% 51%;    /* slightly deepened red for legibility on light bg */
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 7%;             /* near-black #111113 — light mode borders are HARD BLACK, not soft gray. */
+    --border-subtle: 0 0% 15%;
+    --border-strong: 0 0% 0%;
+    --input: 0 0% 7%;
     --ring: 74 100% 62%;
-    --approved: 217 100% 65%;      /* blue status */
-    --posted: 142 71% 45%;         /* green status */
+    --approved: 226 74% 51%;       /* deepened blue, same reason */
+    --posted: 152 76% 30%;         /* deepened green, same reason */
     --radius: 0rem;
 
-    /* Platform & Category Colors - Desaturated relative to lime primary */
-    --instagram: 330 35% 55%;
+    /* Platform & Category Colors */
+    --instagram: 330 65% 45%;
     --instagram-foreground: 0 0% 100%;
-    --instagram-light: 330 30% 12%;
+    --instagram-light: 330 40% 92%;
 
-    --pinterest: 355 40% 55%;
+    --pinterest: 355 75% 45%;
     --pinterest-foreground: 0 0% 100%;
-    --pinterest-light: 355 30% 12%;
+    --pinterest-light: 355 40% 92%;
 
-    --linkedin: 212 35% 55%;
+    --linkedin: 212 75% 40%;
     --linkedin-foreground: 0 0% 100%;
-    --linkedin-light: 212 30% 12%;
+    --linkedin-light: 212 40% 92%;
   }
 
   .dark {
@@ -236,19 +236,19 @@ select:focus-visible,
 .prose img { @apply rounded-none my-4 max-w-full h-auto border border-border; }
 
 /* Platform badge variants - desaturated, sharp, secondary */
-.badge-instagram { @apply bg-surface text-pink-400 border border-zinc-800 rounded-none font-mono text-[10px] uppercase font-bold tracking-wider; }
-.badge-pinterest { @apply bg-surface text-rose-400 border border-zinc-800 rounded-none font-mono text-[10px] uppercase font-bold tracking-wider; }
-.badge-linkedin { @apply bg-surface text-sky-400 border border-zinc-800 rounded-none font-mono text-[10px] uppercase font-bold tracking-wider; }
+.badge-instagram { @apply bg-surface text-pink-600 dark:text-pink-400 border border-border rounded-none font-mono text-[10px] uppercase font-bold tracking-wider; }
+.badge-pinterest { @apply bg-surface text-rose-600 dark:text-rose-400 border border-border rounded-none font-mono text-[10px] uppercase font-bold tracking-wider; }
+.badge-linkedin { @apply bg-surface text-sky-700 dark:text-sky-400 border border-border rounded-none font-mono text-[10px] uppercase font-bold tracking-wider; }
 
 /* Status badge variants - solid color blocks, not pastel tints */
 .badge-idea { @apply bg-surface border border-border text-muted-foreground rounded-none font-mono text-[10px] uppercase tracking-wider font-semibold; }
 .badge-selected { @apply bg-surface border border-border text-muted-foreground rounded-none font-mono text-[10px] uppercase tracking-wider font-semibold; }
 .badge-drafted { @apply bg-surface border border-border text-muted-foreground rounded-none font-mono text-[10px] uppercase tracking-wider font-semibold; }
-.badge-in_revision { @apply bg-destructive text-black border border-destructive rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
-.badge-approved { @apply bg-[hsl(var(--approved))] text-black border border-[hsl(var(--approved))] rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
+.badge-in_revision { @apply bg-destructive text-white border border-destructive rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
+.badge-approved { @apply bg-[hsl(var(--approved))] text-white border border-[hsl(var(--approved))] rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
 .badge-scheduled { @apply bg-primary text-primary-foreground border border-primary rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
-.badge-posted { @apply bg-[hsl(var(--posted))] text-black border border-[hsl(var(--posted))] rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
-.badge-failed { @apply bg-destructive text-black border border-destructive rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
+.badge-posted { @apply bg-[hsl(var(--posted))] text-white border border-[hsl(var(--posted))] rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
+.badge-failed { @apply bg-destructive text-white border border-destructive rounded-none font-mono text-[10px] uppercase tracking-wider font-bold; }
 
 /* Scrollbar hiding utilities */
 .no-scrollbar::-webkit-scrollbar {

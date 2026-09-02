@@ -364,8 +364,8 @@ export function DraftsList({
                               loading="lazy"
                             />
                           ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center text-zinc-400 bg-surface">
-                              <span className="text-xs font-semibold text-zinc-200 line-clamp-2">{post.title}</span>
+                            <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center text-muted-foreground bg-surface">
+                              <span className="text-xs font-semibold text-foreground line-clamp-2">{post.title}</span>
                             </div>
                           )}
 

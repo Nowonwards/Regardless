@@ -85,14 +85,14 @@ export function Sidebar({ collapsed = false, onToggleCollapse, isMobile = false,
               className={cn(
                 'relative flex items-center gap-3 rounded-none px-3.5 py-2.5 text-sm font-medium transition-all duration-150',
                 isActive
-                  ? 'bg-primary text-primary-foreground font-bold border border-primary'
+                  ? 'bg-foreground text-primary font-bold border border-foreground dark:bg-primary dark:text-primary-foreground dark:border-primary'
                   : 'text-muted-foreground hover:bg-surface hover:text-foreground border border-transparent hover:border-border',
                 collapsed && !isMobile && 'justify-center px-2.5'
               )}
               title={collapsed && !isMobile ? item.label : undefined}
               aria-current={isActive ? 'page' : undefined}
             >
-              <Icon className={cn('h-4.5 w-4.5 shrink-0 transition-colors', isActive ? 'text-primary-foreground' : 'text-muted-foreground')} aria-hidden="true" />
+              <Icon className={cn('h-4.5 w-4.5 shrink-0 transition-colors', isActive ? 'text-primary dark:text-primary-foreground' : 'text-muted-foreground')} aria-hidden="true" />
               {(!collapsed || isMobile) && <span className="truncate">{item.label}</span>}
             </Link>
           );

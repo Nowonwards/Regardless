@@ -31,7 +31,7 @@ const PLATFORM_CONFIG = {
 const STATUS_CONFIG: Record<ConnectionStatus, { label: string; icon: React.ReactNode; color: string }> = {
   CONNECTED: { label: 'Connected', icon: <CheckCircle className="h-4 w-4 text-green-600" />, color: 'text-green-600' },
   EXPIRED: { label: 'Expired', icon: <AlertCircle className="h-4 w-4 text-yellow-600" />, color: 'text-yellow-600' },
-  DISCONNECTED: { label: 'Disconnected', icon: <XCircle className="h-4 w-4 text-gray-600" />, color: 'text-gray-600' },
+  DISCONNECTED: { label: 'Disconnected', icon: <XCircle className="h-4 w-4 text-muted-foreground" />, color: 'text-muted-foreground' },
   PENDING: { label: 'Pending', icon: <Loader2 className="h-4 w-4 animate-spin text-blue-600" />, color: 'text-blue-600' },
   FAILED: { label: 'Failed', icon: <AlertCircle className="h-4 w-4 text-red-600" />, color: 'text-red-600' },
 };

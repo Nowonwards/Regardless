@@ -437,7 +437,7 @@ export function DraftPreview({
   const renderPinterestPin = () => (
     <div className="relative max-w-xs mx-auto bg-card rounded-none border border-border overflow-hidden">
       {imageLoading[slides[0]?.id || ''] ? (
-        <div className="aspect-[2/3] flex items-center justify-center bg-gray-100">
+        <div className="aspect-[2/3] flex items-center justify-center bg-muted">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : slides[0]?.imageUrl ? (
@@ -452,7 +452,7 @@ export function DraftPreview({
           />
         </div>
       ) : (
-        <div className="aspect-[2/3] flex items-center justify-center bg-gray-100 text-muted-foreground">
+        <div className="aspect-[2/3] flex items-center justify-center bg-muted text-muted-foreground">
           <ImageIcon className="h-12 w-12" />
           <p>No image generated</p>
         </div>

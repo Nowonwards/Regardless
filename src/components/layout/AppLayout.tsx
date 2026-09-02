@@ -16,7 +16,7 @@ export function AppLayout({ children, user }: AppLayoutProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-background/80 flex">
+    <div className="h-screen w-full overflow-hidden bg-background flex">
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
