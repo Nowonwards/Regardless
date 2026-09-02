@@ -3,20 +3,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Platform, PostStatus } from '@/types';
-import { processScheduledPosts } from '@/lib/jobs/scheduler';
 
 export async function GET(request: NextRequest) {
   try {
     const sessionToken = await getServerSession(authOptions);
     if (!sessionToken?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Process any due scheduled posts
-    try {
-      await processScheduledPosts();
-    } catch (e) {
-      console.error('[Calendar GET] Background scheduler check error:', e);
     }
 
     const userId = sessionToken.user.id;

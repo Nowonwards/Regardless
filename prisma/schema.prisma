@@ -118,9 +118,10 @@ model Post {
   status          PostStatus  @default(DRAFTED)
   title           String
   content         Json        // Full post content: slides, images, caption, hashtags
-  scheduledAt     DateTime?
-  publishedAt     DateTime?
-  errorMessage    String?
+  scheduledAt         DateTime?
+  publishedAt         DateTime?
+  publishingStartedAt DateTime? // Lock timestamp to prevent duplicate concurrent publishing
+  errorMessage        String?
   currentVersion  Int         @default(1)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt

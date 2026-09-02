@@ -10,8 +10,6 @@ import { Platform, PostStatus, PostContent } from '@/types';
 import { Prisma } from '@prisma/client';
 import { createNotification } from '@/lib/notifications';
 
-import { processScheduledPosts } from '@/lib/jobs/scheduler';
-
 export async function GET(request: NextRequest) {
   try {
     const sessionToken = await getServerSession(authOptions);
@@ -20,13 +18,6 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = sessionToken.user.id;
-
-    // Check and process any due scheduled posts
-    try {
-      await processScheduledPosts();
-    } catch (e) {
-      console.error('[Drafts GET] Background scheduler check error:', e);
-    }
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') as PostStatus | null;
