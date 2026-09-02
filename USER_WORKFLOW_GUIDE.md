@@ -13,6 +13,8 @@ graph TD
     A[1. Authentication & Onboarding] --> B[2. Connect Social Platforms in Settings]
     B --> C[3. Content Studio / Chat]
     C -->|Mode A: Conversational AI Chat| D[In-Stream Post Ideas with Checkboxes]
+    C -->|Mode B: News Ideation Form| D3[Tavily News Parameter Synthesis]
+    D3 -->|Generated Ideas| D
     D -->|Create Drafts Button| E[5. Drafts Gallery & Slide Editor]
     D -->|Saved Globally| D2[4. Global Post Ideas /ideas]
     D2 -->|Batch Generate| E
@@ -21,7 +23,7 @@ graph TD
     G --> E
     F -->|Approve & Date| H[Schedule in Calendar]
     F -->|Direct Publish| I[Composio + Sharp JPEG Pipeline]
-    C -->|Mode B: Manual Post Studio| M[Create Custom Post with Uploaded Images & Captions]
+    C -->|Mode C: Manual Post Studio| M[Create Custom Post with Uploaded Images & Captions]
     M -->|Save to Approved| N[Kanban: Approved Column]
     M -->|Schedule Date & Time| H
     M -->|Publish Live Now| I
@@ -74,11 +76,11 @@ Link your creator and business social media accounts so Regardless can publish p
 
 ---
 
-### 3. Content Studio & Conversational Ideation
+### 3. Content Studio & Three Production Modes
 * **Route**: `/chat`
 
 #### User Goal
-Brainstorm post ideas conversationally with an opinionated AI strategist or directly create, design, and schedule custom posts from scratch.
+Brainstorm post ideas conversationally with an AI strategist, configure parameter-based tech news scans, or directly construct and schedule custom posts from scratch.
 
 #### Studio Modes
 
@@ -89,7 +91,12 @@ Brainstorm post ideas conversationally with an opinionated AI strategist or dire
 * **In-Stream Interactive Idea Cards**: When ideas are generated, they render seamlessly inside the conversation stream with checkboxes for every idea and a **"Create Drafts (N selected)"** button, as well as single-click **"Draft"** buttons on individual cards.
 * **Continuous Conversation**: Creating drafts or generating ideas does not disrupt or navigate away from the chat thread. All generated ideas are also automatically preserved in the global `/ideas` page.
 
-##### Mode B: Manual Post Studio ("Create by Myself")
+##### Mode B: News Ideation Form
+* **Structured Parameter Generator**: Configure target platforms, industry focus dropdown (*All Tech News*, *AI Models*, *Dev Tools*, *Startups/VC*, *Big Tech Drama*), idea count (3 to 6 ideas), and optional custom keyword focus.
+* **Tavily Live News Synthesis**: Pulls latest verified headlines and pairs them with Regardless's opinionated, sarcastic brand tone.
+* **Batch Results**: Renders generated ideas with checkboxes, key takeaways, and a direct **"Create Drafts"** button, along with the live news context summary.
+
+##### Mode C: Manual Post Studio ("Create by Myself")
 * **Direct Content Creation**: Build complete social posts from scratch without needing to go through the AI ideation/drafting pipeline.
 * **Platform Selection**: Target Instagram, LinkedIn, or Pinterest.
 * **Visual Slide & Media Manager**:
