@@ -280,6 +280,7 @@ export function ChatInterface({
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
+      let streamError: string | null = null;
 
       if (reader) {
         while (true) {
@@ -312,12 +313,18 @@ export function ChatInterface({
                 if (data.sessionId && onSessionUpdate) {
                   onSessionUpdate(data.title || 'Chat', data.sessionId);
                 }
+              } else if (data.error) {
+                streamError = data.error;
               }
             } catch {
               // Ignore parse errors on stream boundary
             }
           }
         }
+      }
+
+      if (streamError && !fullContent) {
+        throw new Error(streamError);
       }
 
       const extractedIdeas = extractIdeasFromContent(fullContent);
