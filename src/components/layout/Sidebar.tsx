@@ -13,7 +13,6 @@ import {
   Sun,
   Moon,
 } from 'lucide-react';
-import { RegardlessMark } from '@/components/icons/RegardlessMark';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/theme-provider';
 import { cn } from '@/lib/utils';
@@ -46,19 +45,18 @@ export function Sidebar({ collapsed = false, onToggleCollapse, isMobile = false,
         isMobile ? 'w-64 z-50' : collapsed ? 'w-16 hidden lg:flex' : 'w-64 hidden lg:flex'
       )}
     >
-      <div className={cn('flex items-center h-16 px-4 border-b border-border', collapsed && !isMobile ? 'justify-center' : 'justify-between')}>
+      <div className={cn('flex items-center h-16 px-5 border-b border-border', collapsed && !isMobile ? 'justify-center' : 'justify-between')}>
         {!collapsed || isMobile ? (
-          <Link href="/" className="flex min-w-0 items-center gap-2.5 group" aria-label="Regardless home">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-primary text-primary-foreground border border-primary group-hover:opacity-90 transition-opacity" aria-hidden="true">
-              <RegardlessMark size={20} strokeColor="#0B0B0C" />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="font-display font-bold text-base tracking-tight truncate text-foreground">Regardless</span>
-            </div>
+          <Link href="/" className="flex min-w-0 items-center group py-1" aria-label="Regardless home">
+            <span className="font-wordmark font-black text-[22px] tracking-[-0.01em] text-foreground not-italic select-none leading-none group-hover:opacity-85 transition-opacity">
+              Regardless
+            </span>
           </Link>
         ) : (
-          <Link href="/" className="flex h-9 w-9 items-center justify-center rounded-none bg-primary text-primary-foreground border border-primary hover:opacity-90 transition-opacity" aria-label="Regardless home">
-            <RegardlessMark size={20} strokeColor="#0B0B0C" aria-hidden="true" />
+          <Link href="/" className="flex items-center justify-center py-1 group" aria-label="Regardless home">
+            <span className="font-wordmark font-black text-[22px] tracking-[-0.01em] text-foreground not-italic select-none leading-none group-hover:opacity-85 transition-opacity">
+              R
+            </span>
           </Link>
         )}
         <Button
