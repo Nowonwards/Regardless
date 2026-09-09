@@ -18,6 +18,7 @@ import {
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
+import { SignInButton, SignUpButton, Show, UserButton } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -349,45 +350,30 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
             </PopoverContent>
           </Popover>
 
-          {/* User Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="relative h-9 w-9 rounded-none border border-border hover:border-primary transition-colors p-0"
-                aria-label={user?.name || 'User menu'}
-              >
-                <Avatar className="h-full w-full rounded-none">
-                  <AvatarImage src={user?.image || ''} alt={user?.name || ''} className="rounded-none" />
-                  <AvatarFallback className="rounded-none bg-primary text-primary-foreground font-mono font-bold">
-                    {user?.name?.[0]?.toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 rounded-none border border-border" align="end" forceMount>
-              <div className="px-3 py-2 border-b">
-                <p className="font-semibold text-sm truncate">{user?.name || 'User'}</p>
-                <p className="text-xs text-muted-foreground truncate">{user?.email || 'user@regardless.app'}</p>
-              </div>
-              <DropdownMenuItem onClick={() => router.push('/settings')}>
-                <User className="h-4 w-4 mr-2" aria-hidden="true" />
-                Profile Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/settings')}>
-                <SettingsIcon className="h-4 w-4 mr-2" aria-hidden="true" />
-                Platform Connections
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
-                onClick={() => signOut({ callbackUrl: '/auth/signin' })}
-              >
-                <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
-                Log out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Clerk Auth Controls */}
+          <Show when="signed-out">
+            <div className="flex items-center gap-2">
+              <SignInButton mode="modal">
+                <Button variant="outline" size="sm" className="rounded-none border-border text-xs font-mono">
+                  Sign In
+                </Button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <Button size="sm" className="rounded-none bg-primary text-primary-foreground text-xs font-mono font-bold hover:bg-primary/90">
+                  Sign Up
+                </Button>
+              </SignUpButton>
+            </div>
+          </Show>
+          <Show when="signed-in">
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: 'h-8 w-8 rounded-none border border-border',
+                },
+              }}
+            />
+          </Show>
         </div>
       </div>
     </header>
