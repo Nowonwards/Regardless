@@ -297,3 +297,113 @@ select:focus-visible,
     display: none !important;
   }
 }
+
+/* ==========================================================================
+   Clean Brutalist Clerk Overrides
+   Ensures zero-radius, hard 1px borders, and consistent dark/surface themes
+   ========================================================================== */
+.cl-rootBox,
+.cl-cardBox,
+.cl-card,
+.cl-footer,
+.cl-socialButtonsBlockButton,
+.cl-formButtonPrimary,
+.cl-formFieldInput,
+.cl-badge,
+.cl-modalBackdrop,
+.cl-identityPreview,
+.cl-menuButton,
+.cl-userButtonPopoverCard {
+  border-radius: 0px !important;
+}
+
+.cl-card {
+  background-color: hsl(var(--surface)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: none !important;
+}
+
+.cl-footer {
+  background-color: hsl(var(--surface)) !important;
+  border-top: 1px solid hsl(var(--border)) !important;
+}
+
+.cl-footerActionText {
+  color: hsl(var(--muted-foreground)) !important;
+  font-family: var(--font-mono), monospace !important;
+}
+
+.cl-footerActionLink {
+  color: hsl(var(--foreground)) !important;
+  font-family: var(--font-mono), monospace !important;
+  font-weight: 600 !important;
+  text-decoration: underline !important;
+}
+
+.cl-footerActionLink:hover {
+  color: hsl(var(--primary)) !important;
+}
+
+.cl-devModeNotice {
+  background-color: transparent !important;
+  border: 1px dashed hsl(var(--border)) !important;
+  border-radius: 0px !important;
+  color: hsl(var(--muted-foreground)) !important;
+  font-family: var(--font-mono), monospace !important;
+  font-size: 10px !important;
+}
+
+.cl-formButtonPrimary {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  font-family: var(--font-mono), monospace !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  box-shadow: none !important;
+  border-radius: 0px !important;
+}
+
+.cl-formButtonPrimary:hover {
+  opacity: 0.9 !important;
+}
+
+.cl-socialButtonsBlockButton {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0px !important;
+  color: hsl(var(--foreground)) !important;
+  font-family: var(--font-mono), monospace !important;
+  box-shadow: none !important;
+}
+
+.cl-socialButtonsBlockButton:hover {
+  background-color: hsl(var(--surface)) !important;
+}
+
+.cl-socialButtonsBlockButtonText {
+  color: hsl(var(--foreground)) !important;
+  font-family: var(--font-mono), monospace !important;
+}
+
+.cl-formFieldInput {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0px !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: none !important;
+}
+
+.cl-formFieldInput:focus {
+  border-color: hsl(var(--foreground)) !important;
+  box-shadow: none !important;
+}
+
+.cl-dividerLine {
+  background-color: hsl(var(--border)) !important;
+}
+
+.cl-dividerText {
+  color: hsl(var(--muted-foreground)) !important;
+  font-family: var(--font-mono), monospace !important;
+}
