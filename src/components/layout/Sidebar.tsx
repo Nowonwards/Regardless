@@ -45,16 +45,16 @@ export function Sidebar({ collapsed = false, onToggleCollapse, isMobile = false,
         isMobile ? 'w-64 z-50' : collapsed ? 'w-16 hidden lg:flex' : 'w-64 hidden lg:flex'
       )}
     >
-      <div className={cn('flex items-center h-16 px-5 border-b border-border', collapsed && !isMobile ? 'justify-center' : 'justify-between')}>
+      <div className={cn('flex items-center h-16 pl-4 pr-3 border-b border-border', collapsed && !isMobile ? 'justify-center' : 'justify-between')}>
         {!collapsed || isMobile ? (
-          <Link href="/" className="flex min-w-0 items-center group py-1" aria-label="Regardless home">
-            <span className="font-wordmark font-black text-[22px] tracking-[-0.01em] text-foreground not-italic select-none leading-none group-hover:opacity-85 transition-opacity">
+          <Link href="/" className="flex min-w-0 items-center group py-1 whitespace-nowrap overflow-visible" aria-label="Regardless home">
+            <span className="font-wordmark font-normal text-[42px] leading-none tracking-normal text-foreground select-none group-hover:opacity-85 transition-opacity">
               Regardless
             </span>
           </Link>
         ) : (
-          <Link href="/" className="flex items-center justify-center py-1 group" aria-label="Regardless home">
-            <span className="font-wordmark font-black text-[22px] tracking-[-0.01em] text-foreground not-italic select-none leading-none group-hover:opacity-85 transition-opacity">
+          <Link href="/" className="flex items-center justify-center py-1 group overflow-visible" aria-label="Regardless home">
+            <span className="font-wordmark font-normal text-[38px] leading-none tracking-normal text-foreground select-none group-hover:opacity-85 transition-opacity">
               R
             </span>
           </Link>

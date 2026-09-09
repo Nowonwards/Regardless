@@ -93,7 +93,7 @@ const config: Config = {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
         display: ['var(--font-display)', 'var(--font-sans)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-mono)', 'monospace'],
-        wordmark: ['var(--font-fraunces)', 'serif'],
+        wordmark: ['var(--font-wordmark)', 'cursive'],
       },
       keyframes: {
         'accordion-down': {
