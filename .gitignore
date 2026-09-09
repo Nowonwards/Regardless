@@ -42,6 +42,8 @@ lerna-debug.log*
 .DS_Store
 *.pem
 Thumbs.db
+scratch/
+
 
 # IDE & Editor files
 .vscode/
