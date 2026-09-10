@@ -13,11 +13,14 @@ export async function GET(request: NextRequest) {
 
     const userId = user.id;
 
-    // Prune abandoned empty sessions where the user never sent a message
+    // Prune abandoned empty sessions older than 10 minutes (where the user never sent a message)
     try {
       await prisma.chatSession.deleteMany({
         where: {
           userId,
+          createdAt: {
+            lt: new Date(Date.now() - 10 * 60 * 1000),
+          },
           messages: {
             none: {
               role: 'user',

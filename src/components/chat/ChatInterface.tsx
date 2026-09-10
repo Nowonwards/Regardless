@@ -120,7 +120,7 @@ export function ChatInterface({
     scrollToBottom();
   }, [messages, streamingContent, activeSearchSources]);
 
-  // Load session messages from DB
+  // Load session messages from DB using dedicated /api/chat/history endpoint
   useEffect(() => {
     setStreamingContent('');
     setActiveSearchSources([]);
@@ -141,18 +141,17 @@ export function ChatInterface({
 
     const fetchSessionHistory = async () => {
       try {
-        const res = await fetch('/api/sessions');
+        const res = await fetch(`/api/chat/history?sessionId=${encodeURIComponent(sessionId)}`);
         if (res.ok) {
           const data = await res.json();
-          const current = (data.sessions || []).find((s: any) => s.id === sessionId);
-          if (current && current.messages && current.messages.length > 0) {
-            const mapped: ChatMessageItem[] = current.messages.map((m: any) => {
+          if (data.messages && data.messages.length > 0) {
+            const mapped: ChatMessageItem[] = data.messages.map((m: any) => {
               const parsedIdeas = m.role === 'assistant' ? extractIdeasFromContent(m.content) : [];
               const meta = (m.metadata as any) || {};
               return {
                 id: m.id,
                 role: m.role,
-                content: cleanAssistantContent(m.content),
+                content: m.role === 'assistant' ? cleanAssistantContent(m.content) : m.content,
                 ideas: parsedIdeas,
                 searchSources: meta.searchSources || [],
                 searchQuery: meta.searchQuery,
@@ -182,43 +181,55 @@ export function ChatInterface({
     fetchSessionHistory();
   }, [sessionId]);
 
-  // Helper to extract ideas JSON from assistant response
+  // Helper to extract ideas JSON from assistant response with deduplication
   const extractIdeasFromContent = (text: string): IdeaContent[] => {
     if (!text) return [];
     const ideas: IdeaContent[] = [];
+    const seenTitles = new Set<string>();
 
-    const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/;
-    const jsonMatch = text.match(jsonBlockRegex);
-    if (jsonMatch && jsonMatch[1]) {
+    const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
+    let match;
+    while ((match = jsonBlockRegex.exec(text)) !== null) {
       try {
-        const parsed = JSON.parse(jsonMatch[1].trim());
-        const list = Array.isArray(parsed) ? parsed : [parsed];
-        for (const item of list) {
-          if (item && (item.title || item.name)) {
-            ideas.push({
-              id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
-              title: item.title || item.name || 'Untitled Idea',
-              description: item.description || item.concept || item.hook || '',
-              platform: (item.platform || selectedPlatforms[0] || 'INSTAGRAM').toUpperCase() as Platform,
-              hook: item.hook || item.title,
-              angle: item.angle || '',
-              keyPoints: Array.isArray(item.keyPoints) ? item.keyPoints : [],
-              suggestedFormat: item.suggestedFormat || 'carousel',
-              hashtags: Array.isArray(item.hashtags) ? item.hashtags : ['#tech'],
-              cta: item.cta,
-            });
+        const potentialJson = match[1].trim();
+        if (potentialJson.startsWith('[') || potentialJson.startsWith('{')) {
+          const parsed = JSON.parse(potentialJson);
+          const list = Array.isArray(parsed) ? parsed : [parsed];
+          for (const item of list) {
+            if (item && (item.title || item.name)) {
+              const title = String(item.title || item.name || 'Untitled Idea').trim();
+              const normalizedTitle = title.toLowerCase();
+              if (seenTitles.has(normalizedTitle)) continue;
+              seenTitles.add(normalizedTitle);
+
+              ideas.push({
+                id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
+                title,
+                description: item.description || item.concept || item.hook || '',
+                platform: (item.platform || selectedPlatforms[0] || 'INSTAGRAM').toUpperCase() as Platform,
+                hook: item.hook || title,
+                angle: item.angle || '',
+                keyPoints: Array.isArray(item.keyPoints) ? item.keyPoints : [],
+                suggestedFormat: item.suggestedFormat || 'carousel',
+                hashtags: Array.isArray(item.hashtags) ? item.hashtags : ['#tech'],
+                cta: item.cta,
+              });
+            }
           }
         }
       } catch {
-        // Fallback to empty if json block is malformed
+        // Continue to next code block if parse fails
       }
     }
     return ideas;
   };
 
-  // Helper to strip raw JSON block from displayed conversational text
+  // Helper to strip raw JSON block cleanly from displayed conversational text
   const cleanAssistantContent = (text: string): string => {
-    return text.replace(/```(?:json)?\s*\[[\s\S]*?\]\s*```/g, '').trim();
+    if (!text) return '';
+    let cleaned = text.replace(/```(?:json)?\s*[\{\[][\s\S]*?[\}\]]\s*```/gi, '');
+    cleaned = cleaned.replace(/```(?:json)?\s*[\s\S]*?```/gi, '');
+    return cleaned.trim();
   };
 
   const togglePlatform = (p: Platform) => {
@@ -385,12 +396,14 @@ export function ChatInterface({
       setIsDraftingBatch(true);
     }
 
+    const currentSessionId = sessionId && sessionId !== 'new' ? sessionId : undefined;
+
     try {
       const res = await fetch('/api/drafts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionId,
+          sessionId: currentSessionId,
           ideaTitles: targetIdeas.map((i) => i.title),
           ideas: targetIdeas,
         }),

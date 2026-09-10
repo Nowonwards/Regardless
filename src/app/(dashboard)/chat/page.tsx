@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Select,
@@ -14,7 +15,7 @@ import { ChatInterface } from '@/components/chat/ChatInterface';
 import { NewsIdeationForm } from '@/components/chat/NewsIdeationForm';
 import { ManualPostStudio } from '@/components/chat/ManualPostStudio';
 import { Platform, IdeaContent } from '@/types';
-import { Sparkles, Layers, RadioTower, Clock, Plus } from 'lucide-react';
+import { Sparkles, Layers, RadioTower, Clock, Plus, Loader2 } from 'lucide-react';
 
 interface ChatSessionSummary {
   id: string;
@@ -25,9 +26,13 @@ interface ChatSessionSummary {
   ideas?: IdeaContent[];
 }
 
-export default function ChatPage() {
+function ChatPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const querySessionId = searchParams.get('sessionId');
+
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
-  const [sessionId, setSessionId] = useState<string>('new');
+  const [sessionId, setSessionId] = useState<string>(querySessionId || 'new');
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [connectedPlatforms, setConnectedPlatforms] = useState<Platform[]>([]);
   const [isLoadingPlatforms, setIsLoadingPlatforms] = useState(true);
@@ -63,12 +68,17 @@ export default function ChatPage() {
         const fetchedSessions: ChatSessionSummary[] = data.sessions || [];
         setSessions(fetchedSessions);
 
-        if (preferSessionId === 'new') {
+        const targetId = preferSessionId || querySessionId;
+        if (targetId === 'new') {
           setSessionId('new');
-        } else if (preferSessionId && fetchedSessions.some((s) => s.id === preferSessionId)) {
-          setSessionId(preferSessionId);
+        } else if (targetId && fetchedSessions.some((s) => s.id === targetId)) {
+          setSessionId(targetId);
         } else if (fetchedSessions.length > 0) {
+          // Default to latest active session if no specific session is requested
           setSessionId(fetchedSessions[0].id);
+          if (typeof window !== 'undefined') {
+            window.history.replaceState(null, '', `/chat?sessionId=${fetchedSessions[0].id}`);
+          }
         } else {
           setSessionId('new');
         }
@@ -82,10 +92,20 @@ export default function ChatPage() {
     fetchSessions();
   }, []);
 
+  const handleSelectSession = (val: string) => {
+    setSessionId(val);
+    if (typeof window !== 'undefined') {
+      const newUrl = val === 'new' ? '/chat' : `/chat?sessionId=${val}`;
+      window.history.replaceState(null, '', newUrl);
+    }
+  };
+
   const handleCreateNewChat = () => {
-    // Lazy creation: start fresh in-memory session without creating empty DB record
     setSessionId('new');
     setActiveTab('chat');
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/chat');
+    }
   };
 
   const handleIdeasGenerated = async (newIdeas: IdeaContent[]) => {
@@ -106,8 +126,14 @@ export default function ChatPage() {
   };
 
   const handleSessionUpdate = (_title?: string, newSessionId?: string) => {
-    // Refresh sessions list and stay locked to the current or newly initialized session
-    fetchSessions(newSessionId || sessionId);
+    const targetSessionId = newSessionId || sessionId;
+    if (targetSessionId && targetSessionId !== 'new') {
+      setSessionId(targetSessionId);
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', `/chat?sessionId=${targetSessionId}`);
+      }
+    }
+    fetchSessions(targetSessionId);
   };
 
   const formatSessionTimestamp = (dateStr: string | Date): string => {
@@ -164,7 +190,7 @@ export default function ChatPage() {
           <div className="flex items-center gap-2 shrink-0">
             <div className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-foreground dark:text-primary shrink-0" />
-              <Select value={sessionId} onValueChange={(val) => setSessionId(val)}>
+              <Select value={sessionId} onValueChange={handleSelectSession}>
                 <SelectTrigger className="h-8 min-w-[220px] max-w-[320px] rounded-none border-border bg-background text-[11px] font-mono">
                   <div className="flex items-center gap-1.5 truncate">
                     {sessionId === 'new' || !currentSession ? (
@@ -257,5 +283,20 @@ export default function ChatPage() {
         </TabsContent>
       </div>
     </Tabs>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-[calc(100vh-5.5rem)] w-full items-center justify-center border border-border bg-background font-mono text-xs text-muted-foreground gap-2">
+          <Loader2 className="h-4 w-4 animate-spin text-foreground dark:text-primary" />
+          <span>Loading Ideation Studio...</span>
+        </div>
+      }
+    >
+      <ChatPageContent />
+    </Suspense>
   );
 }

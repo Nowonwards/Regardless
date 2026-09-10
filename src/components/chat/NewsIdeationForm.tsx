@@ -147,6 +147,7 @@ export function NewsIdeationForm({
   const extractIdeasFromResponse = (content: string): IdeaContent[] => {
     if (!content) return [];
     const parsedIdeas: IdeaContent[] = [];
+    const seenTitles = new Set<string>();
 
     const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
     let match;
@@ -158,6 +159,11 @@ export function NewsIdeationForm({
           const list = Array.isArray(parsed) ? parsed : [parsed];
           for (const item of list) {
             if (item && (item.title || item.name)) {
+              const title = String(item.title || item.name || 'Untitled Idea').trim();
+              const normalized = title.toLowerCase();
+              if (seenTitles.has(normalized)) continue;
+              seenTitles.add(normalized);
+
               const platformUpper = (item.platform || selectedPlatforms[0] || 'INSTAGRAM').toUpperCase();
               const validPlatform: Platform = selectedPlatforms.includes(platformUpper as Platform)
                 ? (platformUpper as Platform)
@@ -165,10 +171,10 @@ export function NewsIdeationForm({
 
               parsedIdeas.push({
                 id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
-                title: item.title || item.name || 'Untitled Idea',
+                title,
                 description: item.description || item.concept || item.content?.hook || item.hook || '',
                 platform: validPlatform,
-                hook: item.hook || item.content?.hook || item.description || '',
+                hook: item.hook || item.content?.hook || item.description || title,
                 angle: item.angle || item.content?.angle || '',
                 keyPoints: Array.isArray(item.keyPoints)
                   ? item.keyPoints
@@ -285,13 +291,15 @@ export function NewsIdeationForm({
     const selectedObjects = generatedIdeas.filter((i) => selectedIdeaIds.includes(i.id));
     if (selectedObjects.length === 0) return;
 
+    const currentSessionId = sessionId && sessionId !== 'new' ? sessionId : undefined;
+
     setIsDrafting(true);
     try {
       const res = await fetch('/api/drafts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionId,
+          sessionId: currentSessionId,
           ideaTitles: selectedObjects.map((i) => i.title),
           ideas: selectedObjects,
         }),

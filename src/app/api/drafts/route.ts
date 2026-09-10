@@ -137,11 +137,22 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'No ideas specified for draft generation' }, { status: 400 });
       }
 
-      // Fetch any existing ideas in DB or use the passed ideas list
+      // Validate sessionId against ChatSession table to prevent Foreign Key constraint errors
+      let validSessionId: string | null = null;
+      if (sessionId && sessionId !== 'new') {
+        const sessionRecord = await prisma.chatSession.findFirst({
+          where: { id: sessionId, userId },
+          select: { id: true },
+        });
+        if (sessionRecord) {
+          validSessionId = sessionRecord.id;
+        }
+      }
+
+      // Fetch any existing ideas in DB for this user matching target titles
       let dbIdeas = await prisma.idea.findMany({
         where: {
           userId,
-          ...(sessionId ? { sessionId } : {}),
           title: { in: targetTitles },
         },
       });
@@ -155,7 +166,7 @@ export async function POST(request: NextRequest) {
           ideaObj = await prisma.idea.create({
             data: {
               userId,
-              sessionId,
+              sessionId: validSessionId,
               platform: (passedIdea.platform || 'INSTAGRAM') as Platform,
               title: passedIdea.title,
               description: passedIdea.description || '',

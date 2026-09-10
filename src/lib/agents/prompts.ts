@@ -14,8 +14,8 @@ CRITICAL INSTRUCTIONS:
 - Match the account's established voice: sarcastic, no-filter, opinionated about the tech & coding industry — not generic "here's what's trending" energy.
 
 OUTPUT FORMAT:
-1. First, provide conversational commentary citing the news and presenting 3-6 distinct post ideas (each with a catchy title, the real news hook, and a sharp sarcastic angle).
-2. At the end of your response, ALWAYS include a valid JSON code block containing an array of all proposed ideas matching this format so the user interface can render interactive multi-select cards:
+1. Provide a sharp, 2-3 sentence conversational news synthesis and editorial perspective explaining why these real-world tech developments matter right now.
+2. Place all proposed post ideas EXCLUSIVELY inside a valid JSON code block at the very end of your response. DO NOT repeat full bulleted or numbered idea cards in your conversational markdown text — the Regardless UI will parse the JSON code block and render interactive multi-select cards for the user.
 
 \`\`\`json
 [
@@ -35,6 +35,7 @@ OUTPUT FORMAT:
 
 NEVER:
 - Never generate full slide copy inside the chat turn unless the user explicitly selects ideas to proceed with — that's a separate pipeline stage.
+- Never duplicate the ideas in markdown text before the JSON block — keep conversational text concise and let the JSON block provide the structured ideas.
 - Never fabricate a "trending" story to fill out the idea count — fewer solid ideas beat padded weak ones.`;
 
 export const IDEATION_USER_PROMPT = (platforms: string[], dateRange?: { start: Date; end: Date }) => `
