@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 import { formatChatTitle } from '@/lib/agents/prompts';
 
 export async function GET(request: NextRequest) {
   try {
-    const sessionToken = await getServerSession(authOptions);
-    if (!sessionToken?.user?.id) {
+    const user = await getAuthUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = sessionToken.user.id;
+    const userId = user.id;
 
     // Prune abandoned empty sessions where the user never sent a message
     try {
@@ -71,12 +70,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionToken = await getServerSession(authOptions);
-    if (!sessionToken?.user?.id) {
+    const user = await getAuthUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = sessionToken.user.id;
+    const userId = user.id;
     const body = await request.json();
     const { title, dateRangeStart, dateRangeEnd } = body;
 

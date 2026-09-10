@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/auth';
 import {
   getUserNotifications,
   markNotificationAsRead,
@@ -9,12 +8,12 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const user = await getAuthUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { notifications, unreadCount } = await getUserNotifications(session.user.id);
+    const { notifications, unreadCount } = await getUserNotifications(user.id);
     return NextResponse.json({ notifications, unreadCount });
   } catch (error) {
     console.error('Fetch notifications error:', error);
@@ -24,8 +23,8 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const user = await getAuthUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -33,12 +32,12 @@ export async function PATCH(request: NextRequest) {
     const { notificationId, markAll } = body;
 
     if (markAll) {
-      await markAllNotificationsAsRead(session.user.id);
+      await markAllNotificationsAsRead(user.id);
       return NextResponse.json({ success: true });
     }
 
     if (notificationId) {
-      await markNotificationAsRead(notificationId, session.user.id);
+      await markNotificationAsRead(notificationId, user.id);
       return NextResponse.json({ success: true });
     }
 

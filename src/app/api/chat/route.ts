@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { generateStreamCompletion, OllamaMessage } from '@/lib/ollama';
 import { createIdeationPrompt, IDEATION_SYSTEM_PROMPT, formatChatTitle } from '@/lib/agents/prompts';
@@ -8,13 +7,14 @@ import {
   executeTavilySearch,
   formatSearchResultsForPrompt,
   determineSearchQueryWithLLM,
+  buildTechNewsSearchQuery,
 } from '@/lib/agents/tools/tavily-search';
 import { Platform } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
-    const userSession = await getServerSession(authOptions);
-    if (!userSession?.user?.id) {
+    const user = await getAuthUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -38,11 +38,37 @@ export async function POST(request: NextRequest) {
         const searchDecision = await determineSearchQueryWithLLM(message);
         if (searchDecision.needed && searchDecision.query) {
           searchQueryUsed = searchDecision.query;
-          const searchResult = await executeTavilySearch(searchDecision.query, {
+          let searchResult = await executeTavilySearch(searchDecision.query, {
             sessionId: sessionId !== 'new' ? sessionId : undefined,
             topic: 'news',
             maxResults: 5,
           });
+
+          // Fallback 1: If news topic returned 0 results, retry with general topic
+          if (!searchResult.results || searchResult.results.length === 0) {
+            searchResult = await executeTavilySearch(searchDecision.query, {
+              sessionId: sessionId !== 'new' ? sessionId : undefined,
+              topic: 'general',
+              maxResults: 5,
+            });
+          }
+
+          // Fallback 2: If query still returned 0 results, try heuristic tech query
+          if (!searchResult.results || searchResult.results.length === 0) {
+            const fallbackQuery = buildTechNewsSearchQuery(message);
+            if (fallbackQuery !== searchDecision.query) {
+              const fallbackResult = await executeTavilySearch(fallbackQuery, {
+                sessionId: sessionId !== 'new' ? sessionId : undefined,
+                topic: 'general',
+                maxResults: 5,
+              });
+              if (fallbackResult.results && fallbackResult.results.length > 0) {
+                searchResult = fallbackResult;
+                searchQueryUsed = fallbackQuery;
+              }
+            }
+          }
+
           if (searchResult.results && searchResult.results.length > 0) {
             searchResultsText = formatSearchResultsForPrompt(searchResult);
             searchResultData = searchResult;
@@ -66,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (!session) {
       session = await prisma.chatSession.create({
         data: {
-          userId: userSession.user.id,
+          userId: user.id,
           title: calculatedTitle,
           dateRangeStart: dateRange?.start ? new Date(dateRange.start) : null,
           dateRangeEnd: dateRange?.end ? new Date(dateRange.end) : null,

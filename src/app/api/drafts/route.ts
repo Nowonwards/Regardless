@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { generateCompletion } from '@/lib/ollama';
 import { createDraftGenerationPrompt, createRevisionPrompt } from '@/lib/agents/prompts';
@@ -12,12 +11,12 @@ import { createNotification } from '@/lib/notifications';
 
 export async function GET(request: NextRequest) {
   try {
-    const sessionToken = await getServerSession(authOptions);
-    if (!sessionToken?.user?.id) {
+    const user = await getAuthUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = sessionToken.user.id;
+    const userId = user.id;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') as PostStatus | null;
@@ -121,12 +120,12 @@ function parseGeneratedDraft(
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionToken = await getServerSession(authOptions);
-    if (!sessionToken?.user?.id) {
+    const user = await getAuthUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = sessionToken.user.id;
+    const userId = user.id;
     const body = await request.json();
 
     // 1. Check if this is a batch draft generation request (from IdeasSelector / ChatPage)
@@ -288,12 +287,12 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const sessionToken = await getServerSession(authOptions);
-    if (!sessionToken?.user?.id) {
+    const user = await getAuthUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = sessionToken.user.id;
+    const userId = user.id;
     const body = await request.json();
     const { postId, content, feedback, status, scheduledAt } = body;
 
@@ -346,12 +345,12 @@ export async function PUT(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const sessionToken = await getServerSession(authOptions);
-    if (!sessionToken?.user?.id) {
+    const user = await getAuthUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = sessionToken.user.id;
+    const userId = user.id;
     const body = await request.json();
     const { postId, action, feedback, platform } = body;
 
@@ -607,12 +606,12 @@ Slides Context: ${JSON.stringify(currentContent.slides?.map((s) => ({ headline: 
 
 export async function DELETE(request: NextRequest) {
   try {
-    const sessionToken = await getServerSession(authOptions);
-    if (!sessionToken?.user?.id) {
+    const user = await getAuthUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = sessionToken.user.id;
+    const userId = user.id;
     const { searchParams } = new URL(request.url);
     const postId = searchParams.get('postId');
 

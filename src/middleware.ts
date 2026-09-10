@@ -12,7 +12,11 @@ const isPublicRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
     const { userId } = await auth();
-    if (!userId) {
+    const hasNextAuth =
+      Boolean(req.cookies.get('next-auth.session-token')?.value) ||
+      Boolean(req.cookies.get('__Secure-next-auth.session-token')?.value);
+
+    if (!userId && !hasNextAuth) {
       if (req.nextUrl.pathname.startsWith('/api')) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }

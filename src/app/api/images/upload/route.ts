@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/auth';
 import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionToken = await getServerSession(authOptions);
-    if (!sessionToken?.user?.id) {
+    const user = await getAuthUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
