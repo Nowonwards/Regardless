@@ -2,6 +2,8 @@ import { SignIn } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
 import { RadioTower, Sparkles, Layers, Send, ShieldCheck, Activity } from 'lucide-react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { getAuthUser } from '@/lib/auth';
 import { Logo } from '@/components/layout/logo';
 
 const capabilities = [
@@ -73,7 +75,12 @@ const clerkAppearance = {
   },
 };
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const user = await getAuthUser();
+  if (user) {
+    redirect('/overview');
+  }
+
   return (
     <div className="min-h-screen bg-background relative flex flex-col items-center justify-center p-4 sm:p-6 lg:p-10">
       {/* Top Status Header */}
@@ -164,7 +171,7 @@ export default function SignInPage() {
 
           {/* Right Column: Seamless Brutalist Clerk SignIn */}
           <section className="lg:col-span-6 p-6 sm:p-10 lg:p-12 flex flex-col items-center justify-center bg-muted/30">
-            <SignIn appearance={clerkAppearance} fallbackRedirectUrl="/overview" />
+            <SignIn appearance={clerkAppearance} fallbackRedirectUrl="/overview" forceRedirectUrl="/overview" />
           </section>
         </div>
       </main>

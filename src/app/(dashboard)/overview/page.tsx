@@ -5,6 +5,8 @@ import { getAuthUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { OverviewClient, OverviewPost } from './OverviewClient';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Overview – Regardless Studio',
 };
@@ -35,7 +37,25 @@ function formatPostForOverview(post: any): OverviewPost {
 export default async function OverviewPage() {
   const user = await getAuthUser();
   if (!user) {
-    redirect('/sign-in');
+    return (
+      <OverviewClient
+        headlineCount={0}
+        needsApprovalCount={0}
+        failedCount={0}
+        nextPost={null}
+        pipelineCounts={{
+          ideas: 0,
+          drafted: 0,
+          revision: 0,
+          approved: 0,
+          scheduled: 0,
+          posted: 0,
+        }}
+        weekPosts={[]}
+        failedPost={null}
+        queuePosts={[]}
+      />
+    );
   }
 
   const userId = user.id;
