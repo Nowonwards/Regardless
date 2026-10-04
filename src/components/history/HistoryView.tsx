@@ -4,9 +4,8 @@ import { useState } from 'react';
 import {
   Calendar,
   Clock,
-  Camera,
-  Pin,
-  Briefcase,
+  Instagram,
+  Linkedin,
   RefreshCw,
   Copy,
   Check,
@@ -29,16 +28,16 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Platform, PostWithRelations, PostStatus } from '@/types';
 
-const PLATFORM_COLORS: Record<Platform, { badge: string; border: string }> = {
-  INSTAGRAM: { badge: 'badge-instagram', border: 'border-[hsl(var(--instagram))]/20' },
-  PINTEREST: { badge: 'badge-pinterest', border: 'border-[hsl(var(--pinterest))]/20' },
-  LINKEDIN: { badge: 'badge-linkedin', border: 'border-[hsl(var(--linkedin))]/20' },
+const PLATFORM_ICONS: Record<Platform, React.ReactNode> = {
+  INSTAGRAM: <Instagram className="h-3.5 w-3.5" />,
+  PINTEREST: <span className="inline-flex items-center justify-center w-3.5 h-3.5 border border-current font-mono font-bold text-[9px] leading-none">P</span>,
+  LINKEDIN: <Linkedin className="h-3.5 w-3.5" />,
 };
 
-const PLATFORM_ICONS: Record<Platform, React.ReactNode> = {
-  INSTAGRAM: <Camera className="h-3.5 w-3.5" />,
-  PINTEREST: <Pin className="h-3.5 w-3.5" />,
-  LINKEDIN: <Briefcase className="h-3.5 w-3.5" />,
+const PLATFORM_COLORS: Record<Platform, { badge: string; border: string }> = {
+  INSTAGRAM: { badge: 'badge-instagram border', border: 'border-l-[4px] border-l-[#E1306C]' },
+  PINTEREST: { badge: 'badge-pinterest border', border: 'border-l-[4px] border-l-[#E60023]' },
+  LINKEDIN: { badge: 'badge-linkedin border', border: 'border-l-[4px] border-l-[#0A66C2]' },
 };
 
 const STATUS_COLORS: Record<PostStatus, string> = {
@@ -95,7 +94,7 @@ export function HistoryView({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-border rounded-none bg-card">
         <div className="flex items-center gap-3">
           <h2 className="font-display text-xl font-bold">Published Posts</h2>
-          <Badge variant="outline" className="text-xs font-mono">
+          <Badge variant="outline" className="text-xs font-mono border">
             {posts.length} total
           </Badge>
         </div>
@@ -107,7 +106,7 @@ export function HistoryView({
               placeholder="Search published posts..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-60 h-9 text-xs font-mono rounded-none border-border"
+              className="pl-9 w-60 h-9 text-xs font-mono rounded-none border border-border"
             />
           </div>
 
@@ -128,7 +127,7 @@ export function HistoryView({
               size="sm"
               className={cn(
                 'h-8 px-2.5 rounded-none font-mono text-xs font-semibold',
-                viewMode === 'grid' ? 'bg-primary text-primary-foreground border border-primary' : 'text-muted-foreground'
+                viewMode === 'grid' ? 'bg-primary text-primary-foreground border border-border' : 'text-muted-foreground'
               )}
               onClick={() => setViewMode('grid')}
               aria-label="Grid view"
@@ -140,7 +139,7 @@ export function HistoryView({
               size="sm"
               className={cn(
                 'h-8 px-2.5 rounded-none font-mono text-xs font-semibold',
-                viewMode === 'list' ? 'bg-primary text-primary-foreground border border-primary' : 'text-muted-foreground'
+                viewMode === 'list' ? 'bg-primary text-primary-foreground border border-border' : 'text-muted-foreground'
               )}
               onClick={() => setViewMode('list')}
               aria-label="List view"
@@ -172,15 +171,18 @@ export function HistoryView({
                   setSelectedPost(post);
                   setActiveSlide(0);
                 }}
-                className="cursor-pointer transition-all duration-150 hover:border-primary group overflow-hidden rounded-none border border-border bg-card"
+                className={cn(
+                  'cursor-pointer transition-all duration-100 hover:shadow-[4px_4px_0_0_var(--border)] group overflow-hidden rounded-none border border-border bg-card',
+                  PLATFORM_COLORS[post.platform]?.border
+                )}
                 elevation="none"
               >
                 <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
-                  <Badge variant="outline" className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider gap-1', PLATFORM_COLORS[post.platform]?.badge)}>
+                  <Badge variant="outline" className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider gap-1 rounded-none', PLATFORM_COLORS[post.platform]?.badge)}>
                     {PLATFORM_ICONS[post.platform]}
                     {post.platform}
                   </Badge>
-                  <Badge className={cn('text-[10px] font-mono font-medium', STATUS_COLORS[post.status])} variant="outline">
+                  <Badge className={cn('text-[10px] font-mono font-medium rounded-none border', STATUS_COLORS[post.status])} variant="outline">
                     {post.status}
                   </Badge>
                 </CardHeader>
@@ -191,7 +193,7 @@ export function HistoryView({
                   <p className="text-xs text-muted-foreground line-clamp-2">
                     {post.content?.caption || 'No caption available'}
                   </p>
-                  <div className="pt-2 flex items-center justify-between text-xs text-muted-foreground border-t">
+                  <div className="pt-2 flex items-center justify-between text-xs text-muted-foreground border-t border-border/60">
                     <span className="font-mono text-[11px]">{post.content?.slides?.length || 1} slide(s)</span>
                     {post.publishedAt && (
                       <span className="font-mono text-[11px]">{format(new Date(post.publishedAt), 'MMM d, yyyy')}</span>
@@ -210,12 +212,15 @@ export function HistoryView({
                   setSelectedPost(post);
                   setActiveSlide(0);
                 }}
-                className="cursor-pointer transition-all duration-150 rounded-none border border-border hover:border-primary bg-card"
+                className={cn(
+                  'cursor-pointer transition-all duration-100 rounded-none border border-border hover:shadow-[4px_4px_0_0_var(--border)] bg-card',
+                  PLATFORM_COLORS[post.platform]?.border
+                )}
                 elevation="none"
               >
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <Badge variant="outline" className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider gap-1 shrink-0 rounded-none border', PLATFORM_COLORS[post.platform]?.badge)}>
+                    <Badge variant="outline" className={cn('text-[10px] font-mono font-semibold uppercase tracking-wider gap-1 shrink-0 rounded-none', PLATFORM_COLORS[post.platform]?.badge)}>
                       {PLATFORM_ICONS[post.platform]}
                       {post.platform}
                     </Badge>
@@ -228,7 +233,7 @@ export function HistoryView({
                   </div>
 
                   <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
-                    <Badge className={cn('font-mono font-medium text-[10px]', STATUS_COLORS[post.status])} variant="outline">
+                    <Badge className={cn('font-mono font-medium text-[10px] rounded-none border', STATUS_COLORS[post.status])} variant="outline">
                       {post.status}
                     </Badge>
                     {post.publishedAt && (
@@ -237,7 +242,7 @@ export function HistoryView({
                         {format(new Date(post.publishedAt), 'MMM d, yyyy')}
                       </span>
                     )}
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none border border-transparent hover:border-border">
                       <Eye className="h-4 w-4" />
                     </Button>
                   </div>
@@ -249,7 +254,7 @@ export function HistoryView({
 
         {hasMore && (
           <div className="p-4 text-center">
-            <Button variant="outline" onClick={onLoadMore} disabled={isLoading} className="w-full sm:w-auto">
+            <Button variant="outline" onClick={onLoadMore} disabled={isLoading} className="w-full sm:w-auto rounded-none border border-border font-mono text-xs font-semibold">
               {isLoading ? 'Loading...' : 'Load More'}
             </Button>
           </div>
@@ -259,11 +264,11 @@ export function HistoryView({
       {/* Full Preview Modal */}
       {selectedPost && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 animate-in fade-in duration-100"
           onClick={() => setSelectedPost(null)}
         >
           <div
-            className="w-full max-w-2xl max-h-[90vh] bg-background border border-border rounded-none overflow-hidden flex flex-col"
+            className="w-full max-w-2xl max-h-[90vh] bg-background border border-border rounded-none shadow-[4px_4px_0_0_#0B0B0C] overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -308,7 +313,7 @@ export function HistoryView({
                           <Button
                             variant="secondary"
                             size="icon"
-                            className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-none border border-border bg-black/80 text-white hover:bg-black"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-none border border-border bg-card text-foreground hover:bg-surface"
                             onClick={() =>
                               setActiveSlide((prev) => (prev === 0 ? selectedPost.content.slides.length - 1 : prev - 1))
                             }
@@ -318,7 +323,7 @@ export function HistoryView({
                           <Button
                             variant="secondary"
                             size="icon"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-none border border-border bg-black/80 text-white hover:bg-black"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-none border border-border bg-card text-foreground hover:bg-surface"
                             onClick={() =>
                               setActiveSlide((prev) => (prev === selectedPost.content.slides.length - 1 ? 0 : prev + 1))
                             }
@@ -355,7 +360,7 @@ export function HistoryView({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 text-xs gap-1 rounded-none border border-border font-mono"
+                        className="h-7 text-xs gap-1 rounded-none border border-border font-mono font-bold"
                         onClick={() => handleCopyCaption(selectedPost.content.caption)}
                       >
                         {copied ? <Check className="h-3 w-3 text-foreground dark:text-primary" /> : <Copy className="h-3 w-3" />}
@@ -374,7 +379,7 @@ export function HistoryView({
                     <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">Hashtags</h4>
                     <div className="flex flex-wrap gap-1.5">
                       {selectedPost.content.hashtags.map((tag, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-xs font-mono rounded-none border">
+                        <Badge key={idx} variant="secondary" className="text-xs font-mono rounded-none border border-border">
                           {tag.startsWith('#') ? tag : `#${tag}`}
                         </Badge>
                       ))}
@@ -386,7 +391,7 @@ export function HistoryView({
                 <div className="p-4 bg-surface border border-border rounded-none text-xs space-y-1.5 font-mono">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Status</span>
-                    <Badge className="badge-posted">
+                    <Badge className="badge-posted border">
                       {selectedPost.status}
                     </Badge>
                   </div>
@@ -407,11 +412,12 @@ export function HistoryView({
             </ScrollArea>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t flex justify-end gap-2 bg-muted/10">
+            <div className="p-4 border-t border-border flex justify-end gap-2 bg-muted/20">
               {selectedPost.status === 'FAILED' && (
                 <Button
                   variant="outline"
                   size="sm"
+                  className="rounded-none border border-destructive text-destructive font-mono font-bold"
                   onClick={() => {
                     onRetryPublish(selectedPost.id);
                     setSelectedPost(null);
@@ -421,7 +427,7 @@ export function HistoryView({
                   Retry Publishing
                 </Button>
               )}
-              <Button size="sm" onClick={() => setSelectedPost(null)}>
+              <Button size="sm" className="rounded-none border border-border bg-foreground text-background font-mono font-bold" onClick={() => setSelectedPost(null)}>
                 Done
               </Button>
             </div>

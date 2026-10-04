@@ -127,8 +127,8 @@ export default function DraftsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Drafts</h1>
-          <p className="text-muted-foreground">Review, revise, and approve your post drafts</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">Drafts</h1>
+          <p className="text-sm text-muted-foreground">Review, revise, and approve your post drafts</p>
         </div>
       </div>
 

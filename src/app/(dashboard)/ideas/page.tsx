@@ -86,10 +86,10 @@ export default function IdeasPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Post Ideas</h1>
-          <p className="text-muted-foreground">Review and select ideas to generate drafts</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">Post ideas</h1>
+          <p className="text-sm text-muted-foreground">Review and select ideas to generate drafts</p>
         </div>
-        <Button onClick={() => router.push('/chat')}>
+        <Button onClick={() => router.push('/chat')} className="rounded-none border border-border bg-primary text-primary-foreground font-mono font-bold uppercase tracking-wider hover:opacity-90 shadow-[2px_2px_0_0_#0B0B0C] dark:shadow-[2px_2px_0_0_#F4F1EA] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
           <Plus className="h-4 w-4 mr-2" />
           New Ideation Session
         </Button>

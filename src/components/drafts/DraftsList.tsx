@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Filter, Search, Plus, LayoutGrid, List, X, Calendar as CalendarIcon, ChevronRight, Clock } from 'lucide-react';
+import { Filter, Search, Plus, LayoutGrid, List, X, Calendar as CalendarIcon, ChevronRight, Clock, Video, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -148,7 +148,12 @@ export function DraftsList({
           onRevise={onRevise}
           onApprove={onApprove}
           onSchedule={onSchedule}
-          onPublish={onPublish}
+          onPublish={async (id) => {
+            if (onPublish) {
+              await onPublish(id);
+              setSelectedPost(null);
+            }
+          }}
           onDelete={(id) => {
             setSelectedPost(null);
             onDelete?.(id);
@@ -322,7 +327,7 @@ export function DraftsList({
                 <Card
                   key={post.id}
                   onClick={() => setSelectedPost(post)}
-                  className="cursor-pointer overflow-hidden rounded-none border border-border bg-card hover:border-primary transition-all duration-150 group flex flex-col justify-between"
+                  className="cursor-pointer overflow-hidden rounded-none border border-border bg-card hover:shadow-[4px_4px_0_0_var(--border)] transition-all duration-100 group flex flex-col justify-between"
                   elevation="none"
                 >
                   <CardContent className="p-4 space-y-3.5 flex-1 flex flex-col justify-between">
@@ -331,51 +336,83 @@ export function DraftsList({
                       <div className="flex items-center justify-between gap-1.5">
                         <Badge
                           variant="outline"
-                          className={cn('text-[10px] font-mono font-semibold tracking-wider uppercase px-2.5 py-0.5 rounded-none border', platform.className)}
+                          className={cn('text-[10px] font-mono font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-none border', platform.className)}
                         >
                           {platform.label}
                         </Badge>
                         <div className="flex items-center gap-1.5">
                           <Badge
                             variant="outline"
-                            className={cn('text-[10px] font-mono font-medium px-2 py-0.5 rounded-none border', status.className)}
+                            className={cn('text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-none border', status.className)}
                           >
                             {status.label}
                           </Badge>
                           {post.currentVersion > 1 && (
-                            <span className="text-[10px] font-mono text-muted-foreground bg-surface border border-border px-1.5 py-0.5 rounded-none">
+                            <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted border border-border px-1.5 py-0.5 rounded-none">
                               v{post.currentVersion}
                             </span>
                           )}
                         </div>
                       </div>
 
-                      {/* Slide Thumbnail with Multi-Slide Carousel Stack Effect */}
-                      <div className="relative pt-1 pb-1 px-1">
-                        {slideCount > 1 && (
-                          <div className="absolute inset-x-3 bottom-0 h-4 bg-surface rounded-none border border-border -z-0 transform translate-y-1 scale-[0.98]" />
-                        )}
-                        <div className="relative z-10 w-full aspect-[4/3] rounded-none overflow-hidden bg-zinc-950 border border-border">
-                          {firstSlide?.imageUrl ? (
-                            <img
-                              src={firstSlide.imageUrl}
-                              alt={firstSlide.headline || post.title}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center text-muted-foreground bg-surface">
-                              <span className="text-xs font-semibold text-foreground line-clamp-2">{post.title}</span>
-                            </div>
-                          )}
+                      {/* Slide Thumbnail with Format-Aware Presentation */}
+                      {(() => {
+                        const isVideo = post.content?.format === 'video' || !!post.content?.reel;
+                        const isSingleImage = post.content?.format === 'single-image' || (!isVideo && slideCount <= 1);
+                        const durationSec = post.content?.reel?.durationSeconds || 45;
 
-                          {/* Slide Count Overlay Pill */}
-                          <div className="absolute bottom-2 right-2 bg-black/90 border border-white/20 text-white text-[10px] font-mono font-medium px-2 py-0.5 rounded-none flex items-center gap-1">
-                            <span>{slideCount} slide{slideCount > 1 ? 's' : ''}</span>
-                            {slideCount > 1 && <span className="text-white/60 font-mono">• Carousel</span>}
+                        return (
+                          <div className="relative pt-1 pb-1 px-1">
+                            {/* Stack effect ONLY for multi-slide carousels */}
+                            {!isVideo && !isSingleImage && slideCount > 1 && (
+                              <div className="absolute inset-x-3 bottom-0 h-4 bg-muted rounded-none border border-border -z-0 transform translate-y-1 scale-[0.98]" />
+                            )}
+                            <div className="relative z-10 w-full aspect-[4/3] rounded-none overflow-hidden bg-black border border-border group/thumb">
+                              {firstSlide?.imageUrl ? (
+                                <img
+                                  src={firstSlide.imageUrl}
+                                  alt={firstSlide.headline || post.title}
+                                  className="w-full h-full object-cover transition-transform duration-100 group-hover:scale-[1.02]"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center text-muted-foreground bg-card">
+                                  <span className="text-xs font-bold font-sans text-foreground line-clamp-2">{post.title}</span>
+                                </div>
+                              )}
+
+                              {/* Play Button Overlay for Reels */}
+                              {isVideo && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover/thumb:bg-black/10 transition-colors">
+                                  <div className="w-10 h-10 rounded-none bg-primary text-primary-foreground border border-border flex items-center justify-center shadow-[2px_2px_0_0_var(--border)] transform group-hover/thumb:scale-105 transition-transform">
+                                    <Play className="h-4 w-4 fill-current ml-0.5" />
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Slide Count / Reel Format Overlay Pill */}
+                              <div className="absolute bottom-2 right-2 bg-black/90 border border-white/20 text-white text-[10px] font-mono font-medium px-2 py-0.5 rounded-none flex items-center gap-1.5">
+                                {isVideo ? (
+                                  <>
+                                    <Video className="h-3 w-3 text-primary animate-pulse" />
+                                    <span>Reel • {durationSec}s</span>
+                                  </>
+                                ) : isSingleImage ? (
+                                  <>
+                                    <span>1 slide</span>
+                                    <span className="text-white/60 font-mono">• Single Image</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>{slideCount} slides</span>
+                                    <span className="text-white/60 font-mono">• Carousel</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                        );
+                      })()}
 
                       {/* Post Title */}
                       <h3 className="font-display font-bold text-base text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">

@@ -196,7 +196,6 @@ export async function determineSearchQueryWithLLM(
   message: string
 ): Promise<{ needed: boolean; query: string }> {
   try {
-    const { generateCompletion } = await import('@/lib/ollama');
     const systemPrompt = `You are an expert search query formulation specialist for tech news and social media ideation.
 Analyze the user request and determine:
 1. Is an internet search needed to gather current tech news, product launches, AI model releases, controversies, or technical facts? (Answer false ONLY if the user is merely saying greetings/thanks or asking to edit an existing idea without new facts).
@@ -208,13 +207,22 @@ Analyze the user request and determine:
 Respond ONLY with valid JSON in this exact structure:
 {"needed": true, "query": "exact search query"}`;
 
-    const raw = await generateCompletion(
-      [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message },
-      ],
-      { temperature: 0.1, num_predict: 80 }
-    );
+    const { generateGeminiText } = await import('@/lib/composio');
+    const geminiRaw = await generateGeminiText(message, systemPrompt);
+    let raw = geminiRaw || '';
+
+    if (!raw) {
+      try {
+        const { generateCompletion } = await import('@/lib/ollama');
+        raw = await generateCompletion(
+          [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message },
+          ],
+          { temperature: 0.1, num_predict: 80 }
+        );
+      } catch {}
+    }
 
     const jsonMatch = raw.match(/\{[\s\S]*?\}/);
     if (jsonMatch) {

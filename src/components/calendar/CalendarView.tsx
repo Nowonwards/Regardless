@@ -2,14 +2,13 @@
 
 import { useState, useMemo } from 'react';
 import {
-  Calendar as CalendarIcon,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
   Clock,
   Plus,
-  Camera,
-  Pin,
-  Briefcase,
+  Instagram as InstagramIcon,
+  Linkedin as LinkedinIcon,
   CheckCircle2,
   ExternalLink,
   SlidersHorizontal,
@@ -50,33 +49,33 @@ interface CalendarViewProps {
 const PLATFORM_CONFIG: Record<Platform, { name: string; borderAccent: string; pillClass: string; icon: React.ReactNode }> = {
   INSTAGRAM: {
     name: 'Instagram',
-    borderAccent: 'border-l-[hsl(var(--instagram))]',
+    borderAccent: 'border-l-4 border-l-border',
     pillClass: 'badge-instagram',
-    icon: <Camera className="h-3 w-3" />,
+    icon: <InstagramIcon className="h-3 w-3" />,
   },
   PINTEREST: {
     name: 'Pinterest',
-    borderAccent: 'border-l-[hsl(var(--pinterest))]',
+    borderAccent: 'border-l-4 border-l-border',
     pillClass: 'badge-pinterest',
-    icon: <Pin className="h-3 w-3" />,
+    icon: <span className="inline-flex items-center justify-center w-3 h-3 border border-current font-mono font-bold text-[8px] leading-none">P</span>,
   },
   LINKEDIN: {
     name: 'LinkedIn',
-    borderAccent: 'border-l-[hsl(var(--linkedin))]',
+    borderAccent: 'border-l-4 border-l-border',
     pillClass: 'badge-linkedin',
-    icon: <Briefcase className="h-3 w-3" />,
+    icon: <LinkedinIcon className="h-3 w-3" />,
   },
 };
 
 const STATUS_BADGES: Record<PostStatus, { label: string; className: string }> = {
-  IDEA: { label: 'Idea', className: 'badge-idea' },
-  SELECTED: { label: 'Selected', className: 'badge-selected' },
-  DRAFTED: { label: 'Drafted', className: 'badge-drafted' },
-  IN_REVISION: { label: 'In Revision', className: 'badge-in_revision' },
-  APPROVED: { label: 'Approved', className: 'badge-approved' },
-  SCHEDULED: { label: 'Scheduled', className: 'badge-scheduled' },
-  POSTED: { label: 'Published', className: 'badge-posted' },
-  FAILED: { label: 'Failed', className: 'badge-failed' },
+  IDEA: { label: 'IDEA', className: 'badge-drafted' },
+  SELECTED: { label: 'SELECTED', className: 'badge-drafted' },
+  DRAFTED: { label: 'DRAFTED', className: 'badge-drafted' },
+  IN_REVISION: { label: 'IN REVISION', className: 'badge-in_revision' },
+  APPROVED: { label: 'APPROVED', className: 'badge-approved' },
+  SCHEDULED: { label: 'SCHEDULED', className: 'badge-scheduled' },
+  POSTED: { label: 'POSTED', className: 'badge-posted' },
+  FAILED: { label: 'FAILED', className: 'badge-failed' },
 };
 
 export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewProps) {
@@ -193,10 +192,10 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                     ? format(currentDate, 'MMMM yyyy')
                     : 'All Scheduled & Published Posts'}
                 </span>
-                <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 rounded-none border border-border" align="start">
+            <PopoverContent className="w-auto p-0 rounded-none border border-border shadow-[4px_4px_0_0_#0B0B0C] dark:shadow-[4px_4px_0_0_#F4F1EA]" align="start">
               <Calendar
                 mode="single"
                 selected={currentDate}
@@ -296,7 +295,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                               key={post.id}
                               onClick={() => setInspectingPost(post)}
                               className={cn(
-                                'p-2 rounded-none border border-border bg-card hover:border-primary cursor-pointer transition-all border-l-[3px] text-left group space-y-1',
+                                'p-2 rounded-none border border-border bg-card hover:shadow-[4px_4px_0_0_var(--border)] cursor-pointer transition-all duration-100 border-l-[4px] text-left group space-y-1',
                                 config.borderAccent
                               )}
                             >
@@ -351,7 +350,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                 </p>
               </div>
               {!isPastDate(currentDate) && (
-                <Button size="sm" onClick={() => onCreatePost(currentDate)} className="gap-1 rounded-none border border-primary bg-primary text-primary-foreground font-bold h-7 text-xs font-mono">
+                <Button size="sm" onClick={() => onCreatePost(currentDate)} className="gap-1 rounded-none border border-border bg-primary text-primary-foreground font-bold h-7 text-xs font-mono">
                   <Plus className="h-3.5 w-3.5" />
                   Create Post
                 </Button>
@@ -368,7 +367,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                     key={post.id}
                     onClick={() => setInspectingPost(post)}
                     className={cn(
-                      'p-3.5 rounded-none border border-border bg-card hover:border-primary cursor-pointer transition-all border-l-4 flex items-center justify-between gap-4',
+                      'p-3.5 rounded-none border border-border bg-card hover:shadow-[4px_4px_0_0_var(--border)] cursor-pointer transition-all duration-100 border-l-[4px] flex items-center justify-between gap-4',
                       config.borderAccent
                     )}
                   >
@@ -470,7 +469,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                                 setInspectingPost(post);
                               }}
                               className={cn(
-                                'px-1 py-0.5 rounded-none text-[9px] font-mono font-medium truncate cursor-pointer hover:border-primary border border-border bg-card border-l-[2px]',
+                                'px-1 py-0.5 rounded-none text-[9px] font-mono font-medium truncate cursor-pointer hover:shadow-[2px_2px_0_0_var(--border)] border border-border bg-card border-l-[2px]',
                                 config.borderAccent
                               )}
                             >
@@ -509,7 +508,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                       key={post.id}
                       onClick={() => setInspectingPost(post)}
                       className={cn(
-                        'p-3.5 rounded-none border border-border bg-card hover:border-primary cursor-pointer transition-all border-l-4 flex items-center justify-between gap-4',
+                        'p-3.5 rounded-none border border-border bg-card hover:shadow-[4px_4px_0_0_var(--border)] cursor-pointer transition-all duration-100 border-l-[4px] flex items-center justify-between gap-4',
                         config.borderAccent
                       )}
                     >
@@ -598,7 +597,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                       setInspectingPost(null);
                       onPostClick(post);
                     }}
-                    className="gap-1.5 rounded-none text-xs bg-primary text-primary-foreground font-mono font-bold border border-primary hover:opacity-90"
+                    className="gap-1.5 rounded-none text-xs bg-primary text-primary-foreground font-mono font-bold border border-border hover:opacity-90"
                   >
                     {inspectingPost.status === 'POSTED' ? (
                       <>
@@ -663,7 +662,7 @@ export function CalendarView({ posts, onPostClick, onCreatePost }: CalendarViewP
                   <Label className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">Hashtags</Label>
                   <div className="flex flex-wrap gap-1.5">
                     {inspectingPost.content.hashtags.map((tag, idx) => (
-                      <span key={idx} className="text-xs font-mono font-medium text-foreground dark:text-primary bg-surface border border-border dark:border-primary/40 px-2 py-0.5 rounded-none">
+                      <span key={idx} className="text-xs font-mono font-medium text-foreground dark:text-primary bg-surface border border-border px-2 py-0.5 rounded-none">
                         {tag.startsWith('#') ? tag : `#${tag}`}
                       </span>
                     ))}

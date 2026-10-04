@@ -1,22 +1,29 @@
 import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono, Space_Grotesk, Imperial_Script } from 'next/font/google';
+import { Archivo, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-display' });
-const jetBrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
-const imperialScript = Imperial_Script({
+const archivo = Archivo({
   subsets: ['latin'],
-  weight: '400',
-  variable: '--font-wordmark',
+  weight: ['400', '500', '700', '800'],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-mono',
   display: 'swap',
 });
 
 export const metadata: Metadata = {
   title: 'Regardless - AI Social Media Content Pipeline',
   description: 'Chat-driven social media content creation for Instagram, Pinterest, and LinkedIn',
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
@@ -26,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} ${imperialScript.variable} font-sans antialiased`}>
+      <body className={`${archivo.variable} ${jetBrainsMono.variable} font-sans antialiased`}>
         <ClerkProvider>
           <Providers>{children}</Providers>
         </ClerkProvider>

@@ -2,17 +2,15 @@ import { Ollama } from 'ollama';
 
 function resolveOllamaHost(): string {
   const envHost = process.env.OLLAMA_HOST || process.env.OLLAMA_BASE_URL;
-  // If undefined or mistakenly set to https://api.ollama.com (which redirects to landing page), default to local daemon
-  if (!envHost || envHost.includes('api.ollama.com')) {
+  if (!envHost) {
     return 'http://127.0.0.1:11434';
   }
-  return envHost;
+  // Trim trailing slashes
+  return envHost.replace(/\/+$/, '');
 }
 
 export const OLLAMA_HOST = resolveOllamaHost();
-export const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gemma4:31b-cloud';
-export const OLLAMA_FALLBACK_MODELS = ['gemma4:31b-cloud', 'qwen3.5:9b', 'llama3.2:latest'];
-
+export const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gemma4:31b';
 const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY;
 
 export const ollamaClient = new Ollama({
@@ -33,11 +31,57 @@ export interface OllamaOptions {
   stop?: string[];
 }
 
+export async function ensureOllamaRunning(): Promise<boolean> {
+  const host = OLLAMA_HOST;
+  try {
+    const headers: Record<string, string> = {};
+    if (OLLAMA_API_KEY) {
+      headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`;
+    }
+    const res = await fetch(`${host}/api/tags`, { headers, signal: AbortSignal.timeout(2000) });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+function getCandidateModels(): string[] {
+  const primary = OLLAMA_MODEL;
+  const candidates: string[] = [primary];
+
+  // If primary has ':cloud' or '-cloud', also add the base name (and vice versa)
+  if (primary.includes('-cloud')) {
+    candidates.push(primary.replace('-cloud', ''));
+  } else if (primary.includes(':cloud')) {
+    candidates.push(primary.replace(':cloud', ''));
+  } else {
+    candidates.push(`${primary}-cloud`);
+  }
+
+  // Only fall back to local models if host is local
+  const isLocal = OLLAMA_HOST.includes('127.0.0.1') || OLLAMA_HOST.includes('localhost');
+  if (isLocal) {
+    for (const m of ['qwen3.5:9b', 'llama3.2:latest']) {
+      if (!candidates.includes(m)) candidates.push(m);
+    }
+  }
+
+  return candidates;
+}
+
 export async function generateCompletion(
   messages: OllamaMessage[],
   options: OllamaOptions = {}
 ): Promise<string> {
-  const modelsToTry = [OLLAMA_MODEL, ...OLLAMA_FALLBACK_MODELS.filter((m) => m !== OLLAMA_MODEL)];
+  const isAvailable = await ensureOllamaRunning();
+  if (!isAvailable) {
+    const isLocal = OLLAMA_HOST.includes('127.0.0.1') || OLLAMA_HOST.includes('localhost');
+    throw new Error(
+      `Ollama is not reachable at ${OLLAMA_HOST}. Provide an OLLAMA_API_KEY or remote OLLAMA_HOST, or use Composio Gemini.`
+    );
+  }
+
+  const modelsToTry = getCandidateModels();
   let lastError: unknown;
 
   for (const model of modelsToTry) {
@@ -54,10 +98,23 @@ export async function generateCompletion(
         },
       });
       return response.message.content;
-    } catch (error) {
+    } catch (error: any) {
       console.warn(`Ollama completion failed with model ${model}, trying fallback...`, error);
       lastError = error;
+      if (error?.code === 'ECONNREFUSED' || error?.cause?.code === 'ECONNREFUSED') {
+        break;
+      }
     }
+  }
+
+  const isConnRefused =
+    (lastError as any)?.code === 'ECONNREFUSED' ||
+    (lastError as any)?.cause?.code === 'ECONNREFUSED';
+
+  if (isConnRefused) {
+    throw new Error(
+      `Cannot reach Ollama at ${OLLAMA_HOST}. Please verify your OLLAMA_API_KEY or OLLAMA_HOST.`
+    );
   }
 
   console.error('All Ollama models failed for completion:', lastError);
@@ -69,7 +126,14 @@ export async function generateStreamCompletion(
   options: OllamaOptions = {},
   onChunk: (chunk: string) => void
 ): Promise<string> {
-  const modelsToTry = [OLLAMA_MODEL, ...OLLAMA_FALLBACK_MODELS.filter((m) => m !== OLLAMA_MODEL)];
+  const isAvailable = await ensureOllamaRunning();
+  if (!isAvailable) {
+    throw new Error(
+      `Ollama is not reachable at ${OLLAMA_HOST}. Provide an OLLAMA_API_KEY or remote OLLAMA_HOST, or use Composio Gemini.`
+    );
+  }
+
+  const modelsToTry = getCandidateModels();
   let lastError: unknown;
 
   for (const model of modelsToTry) {
@@ -95,10 +159,23 @@ export async function generateStreamCompletion(
       }
 
       return fullContent;
-    } catch (error) {
+    } catch (error: any) {
       console.warn(`Ollama stream failed with model ${model}, trying fallback...`, error);
       lastError = error;
+      if (error?.code === 'ECONNREFUSED' || error?.cause?.code === 'ECONNREFUSED') {
+        break;
+      }
     }
+  }
+
+  const isConnRefused =
+    (lastError as any)?.code === 'ECONNREFUSED' ||
+    (lastError as any)?.cause?.code === 'ECONNREFUSED';
+
+  if (isConnRefused) {
+    throw new Error(
+      `Cannot reach Ollama at ${OLLAMA_HOST}. Please verify your OLLAMA_API_KEY or OLLAMA_HOST.`
+    );
   }
 
   console.error('All Ollama models failed for stream generation:', lastError);

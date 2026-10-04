@@ -9,10 +9,10 @@ const cardVariants = cva(
   {
     variants: {
       elevation: {
-        none: 'border-border',
-        low: 'border-border',
-        default: 'border-border',
-        raised: 'border-border',
+        none: 'shadow-none',
+        low: 'shadow-[2px_2px_0_0_var(--border)]',
+        default: 'shadow-[4px_4px_0_0_var(--border)]',
+        raised: 'shadow-[6px_6px_0_0_var(--border)]',
       },
       padding: {
         none: '',
@@ -22,7 +22,7 @@ const cardVariants = cva(
       },
     },
     defaultVariants: {
-      elevation: 'default',
+      elevation: 'none',
       padding: 'default',
     },
   }
@@ -70,7 +70,7 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn('text-lg font-semibold leading-tight tracking-tight', className)}
+    className={cn('text-lg font-extrabold leading-tight tracking-tight text-foreground', className)}
     {...props}
   />
 ));
@@ -80,7 +80,7 @@ const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn('text-sm text-muted-foreground', className)} {...props} />
+  <p ref={ref} className={cn('text-xs font-mono text-muted-foreground', className)} {...props} />
 ));
 CardDescription.displayName = 'CardDescription';
 

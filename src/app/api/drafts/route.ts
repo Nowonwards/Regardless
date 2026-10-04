@@ -3,9 +3,10 @@ import { getAuthUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { generateCompletion } from '@/lib/ollama';
 import { createDraftGenerationPrompt, createRevisionPrompt } from '@/lib/agents/prompts';
-import { generateSlideImage } from '@/lib/composio';
+import { generateSlideImage, generateGeminiText, generateReelWithGemini } from '@/lib/composio';
 import { buildSlideOgImageUrl } from '@/lib/og/slide-generator';
-import { Platform, PostStatus, PostContent } from '@/types';
+import { generateLocalReelVideo } from '@/lib/video/reel-generator';
+import { Platform, PostStatus, PostContent, PostFormat } from '@/types';
 import { Prisma } from '@prisma/client';
 import { createNotification } from '@/lib/notifications';
 
@@ -52,30 +53,53 @@ export async function GET(request: NextRequest) {
   }
 }
 
+function normalizeFormat(formatStr?: string, platform?: Platform): PostFormat {
+  if (!formatStr) return platform === 'PINTEREST' ? 'pin' : 'carousel';
+  const lower = String(formatStr).toLowerCase().replace(/_/g, '-');
+  if (lower.includes('single') || lower === 'image') return 'single-image';
+  if (lower.includes('reel') || lower.includes('video') || lower.includes('short')) return 'video';
+  if (lower.includes('pin')) return 'pin';
+  if (lower.includes('text')) return 'text';
+  return 'carousel';
+}
+
 function parseGeneratedDraft(
   response: string,
   idea: { title: string; description: string; hook?: string; angle?: string; keyPoints?: string[]; hashtags?: string[]; content?: Record<string, unknown> },
-  platform: Platform
+  platform: Platform,
+  targetFormat: PostFormat
 ): PostContent {
+  const isSingle = targetFormat === 'single-image';
+  const isReel = targetFormat === 'video';
+
   try {
     const jsonMatch = response.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || [null, response];
     const raw = (jsonMatch[1] || response).trim();
     const parsed = JSON.parse(raw);
-    if (parsed.slides && Array.isArray(parsed.slides)) {
+    if (parsed.slides && Array.isArray(parsed.slides) && parsed.slides.length > 0) {
+      let rawSlides = parsed.slides;
+      if (isSingle || isReel) {
+        // Enforce exactly 1 slide for single image or video cover
+        rawSlides = [rawSlides[0]];
+      }
+
+      const slides = rawSlides.map((s: any, idx: number) => ({
+        id: s.id || `slide-${idx + 1}`,
+        type: s.type || 'mixed',
+        imagePrompt: s.imagePrompt || `Clean modern minimalist graphic for ${idea.title}`,
+        text: s.text || s.body || '',
+        headline: s.headline || (idx === 0 ? idea.title : `Takeaway ${idx + 1}`),
+        body: s.body || s.text || idea.description || '',
+        order: idx + 1,
+      }));
+
       return {
-        slides: parsed.slides.map((s: any, idx: number) => ({
-          id: s.id || `slide-${idx + 1}`,
-          type: s.type || 'mixed',
-          imagePrompt: s.imagePrompt || `Clean modern minimalist 3D graphic for ${idea.title}`,
-          text: s.text || s.body || '',
-          headline: s.headline || `Key Point ${idx + 1}`,
-          body: s.body || s.text || '',
-          order: idx + 1,
-        })),
-        caption: parsed.caption || `${idea.title}\n\n${idea.hook || ''}`,
-        hashtags: Array.isArray(parsed.hashtags) ? parsed.hashtags : ['#tech', '#programming', '#coding'],
-        altTexts: Array.isArray(parsed.altTexts) ? parsed.altTexts : [`Slide visual for ${idea.title}`],
-        format: parsed.format || (platform === 'PINTEREST' ? 'pin' : 'carousel'),
+        slides,
+        caption: parsed.caption || `${idea.title}\n\n${idea.description || idea.hook || ''}`,
+        hashtags: Array.isArray(parsed.hashtags) && parsed.hashtags.length > 0 ? parsed.hashtags : (idea.hashtags || ['#tech', '#programming', '#softwareengineering']),
+        altTexts: Array.isArray(parsed.altTexts) ? parsed.altTexts : [slides[0]?.headline || idea.title],
+        format: targetFormat,
+        reel: isReel ? parsed.reel : undefined,
       };
     }
   } catch (err) {
@@ -87,6 +111,53 @@ function parseGeneratedDraft(
     : Array.isArray(idea.keyPoints)
     ? idea.keyPoints
     : [];
+
+  if (isSingle) {
+    const slides = [
+      {
+        id: 'slide-1',
+        type: 'mixed' as const,
+        imagePrompt: `Clean, high-tech informative graphic for "${idea.title}", sharp minimalist aesthetics, dark mode coding vibe`,
+        headline: idea.title,
+        body: idea.description || idea.hook || keyPoints.join(' • '),
+        text: idea.title,
+        order: 1,
+      },
+    ];
+    return {
+      slides,
+      caption: `${idea.title}\n\n${idea.description || ''}\n\nKey Highlights:\n${keyPoints.map((k) => `• ${k}`).join('\n')}\n\n${(idea.hashtags || ['#tech', '#programming']).join(' ')}`,
+      hashtags: idea.hashtags || ['#tech', '#programming'],
+      altTexts: [idea.title],
+      format: 'single-image',
+    };
+  }
+
+  if (isReel) {
+    const slides = [
+      {
+        id: 'slide-1',
+        type: 'mixed' as const,
+        imagePrompt: `Vertical 9:16 video cover for "${idea.title}", high-tech typography, dark mode`,
+        headline: idea.title,
+        body: 'Instagram Reel • Tech Briefing',
+        text: idea.title,
+        order: 1,
+      },
+    ];
+    return {
+      slides,
+      caption: `${idea.title}\n\n${idea.description || ''}\n\nKey Breakdown:\n${keyPoints.map((k) => `• ${k}`).join('\n')}\n\n${(idea.hashtags || ['#tech', '#developer', '#reel']).join(' ')}`,
+      hashtags: idea.hashtags || ['#tech', '#developer', '#coding'],
+      altTexts: [idea.title],
+      format: 'video',
+      reel: {
+        durationSeconds: 45,
+        scriptOverview: `Direct breakdown of ${idea.title}`,
+        scenes: [],
+      },
+    };
+  }
 
   const slides = [
     {
@@ -112,7 +183,7 @@ function parseGeneratedDraft(
   return {
     slides,
     caption: `${idea.title}\n\n${idea.hook || ''}\n\n${idea.angle || ''}\n\n${(idea.hashtags || ['#tech', '#programming']).join(' ')}`,
-    hashtags: idea.hashtags || ['#tech', '#programming', '#finance'],
+    hashtags: idea.hashtags || ['#tech', '#programming', '#softwareengineering'],
     altTexts: slides.map((s) => s.headline),
     format: platform === 'PINTEREST' ? 'pin' : 'carousel',
   };
@@ -187,7 +258,9 @@ export async function POST(request: NextRequest) {
         if (!ideaObj) return null;
 
         const platform = ideaObj.platform as Platform;
-        const ideaContent = typeof ideaObj.content === 'object' ? ideaObj.content : {};
+        const ideaContent = (typeof ideaObj.content === 'object' && ideaObj.content !== null ? ideaObj.content : {}) as Record<string, any>;
+        const rawFormat = (passedIdea?.suggestedFormat || ideaContent?.suggestedFormat || (ideaObj as any)?.suggestedFormat) as string | undefined;
+        const targetFormat = normalizeFormat(rawFormat, platform);
 
         const prompt = createDraftGenerationPrompt(
           {
@@ -196,30 +269,64 @@ export async function POST(request: NextRequest) {
             content: ideaContent as Record<string, unknown>,
             platform,
           },
-          platform
+          platform,
+          targetFormat
         );
 
         let draftContent: PostContent;
         try {
-          const response = await generateCompletion(prompt, { temperature: 0.7 });
-          draftContent = parseGeneratedDraft(response, ideaObj, platform);
+          // 1. Try Composio Gemini first
+          const systemMsg = prompt.find((p) => p.role === 'system')?.content;
+          const userMsg = prompt.find((p) => p.role === 'user')?.content || ideaObj.title;
+          const geminiResponse = await generateGeminiText(userMsg, systemMsg, userId);
+
+          if (geminiResponse) {
+            draftContent = parseGeneratedDraft(geminiResponse, ideaObj, platform, targetFormat);
+          } else {
+            const response = await generateCompletion(prompt, { temperature: 0.7 });
+            draftContent = parseGeneratedDraft(response, ideaObj, platform, targetFormat);
+          }
         } catch (genError) {
           console.warn('Draft generation LLM call failed, using structured fallback:', genError);
-          draftContent = parseGeneratedDraft('', ideaObj, platform);
+          draftContent = parseGeneratedDraft('', ideaObj, platform, targetFormat);
         }
 
-        // Generate code-rendered 1080x1350 slide template images with exact typography
+        // Generate AI visual images using Composio Google Gemini for each slide
         if (draftContent.slides && draftContent.slides.length > 0) {
-          draftContent.slides = draftContent.slides.map((slide, idx) => ({
-            ...slide,
-            imageUrl: buildSlideOgImageUrl({
-              headline: slide.headline || (idx === 0 ? ideaObj.title : `Takeaway ${idx + 1}`),
-              take: slide.body || slide.text || '',
-              slideNumber: idx + 1,
-              totalSlides: draftContent.slides.length,
-              handle: '@regardless.ai',
-            }),
-          }));
+          draftContent.slides = await Promise.all(
+            draftContent.slides.map(async (slide, idx) => {
+              const headline = slide.headline || (idx === 0 ? ideaObj.title : `Takeaway ${idx + 1}`);
+              const take = slide.body || slide.text || '';
+
+              // Try Composio Google Gemini image generation
+              let aiImageUrl: string | null = null;
+              try {
+                aiImageUrl = await generateSlideImage(
+                  {
+                    factLine: headline,
+                    takeLine: take,
+                    slideNumber: idx + 1,
+                    totalSlides: draftContent.slides.length,
+                  },
+                  userId,
+                  '4:5'
+                );
+              } catch (imgErr) {
+                console.warn(`[Drafts] Composio Gemini slide image error for slide ${idx + 1}:`, imgErr);
+              }
+
+              return {
+                ...slide,
+                imageUrl: aiImageUrl || buildSlideOgImageUrl({
+                  headline,
+                  take,
+                  slideNumber: idx + 1,
+                  totalSlides: draftContent.slides.length,
+                  handle: '@regardless.ai',
+                }),
+              };
+            })
+          );
         }
 
         const post = await prisma.post.create({
@@ -240,6 +347,40 @@ export async function POST(request: NextRequest) {
           },
           include: { versions: true },
         });
+
+        // If targetFormat is video / reel, create short video via Composio Gemini and store locally!
+        if (targetFormat === 'video') {
+          try {
+            const keyPoints = Array.isArray(ideaContent.keyPoints) ? ideaContent.keyPoints : [];
+            const reelResult = await generateReelWithGemini(
+              post.id,
+              ideaObj.title,
+              keyPoints,
+              userId,
+              draftContent.reel
+            );
+            draftContent.reel = {
+              durationSeconds: reelResult.durationSeconds,
+              videoUrl: reelResult.videoUrl,
+              localFilePath: reelResult.localFilePath,
+              scenes: reelResult.scenes || [],
+              scriptOverview: draftContent.reel?.scriptOverview || `Direct technical breakdown of ${ideaObj.title}`,
+            };
+            if (draftContent.slides?.[0]) {
+              draftContent.slides[0].imageUrl = reelResult.posterUrl;
+            }
+            await prisma.post.update({
+              where: { id: post.id },
+              data: { content: draftContent as unknown as Prisma.InputJsonValue },
+            });
+            await prisma.postVersion.updateMany({
+              where: { postId: post.id, version: 1 },
+              data: { content: draftContent as unknown as Prisma.InputJsonValue },
+            });
+          } catch (reelErr) {
+            console.error('[Reel] Generation error for post:', post.id, reelErr);
+          }
+        }
 
         await prisma.idea.update({
           where: { id: ideaObj.id },
@@ -320,6 +461,13 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
+    if (post.status === 'POSTED') {
+      return NextResponse.json(
+        { error: 'This post is already published live and cannot be edited as a draft.' },
+        { status: 400 }
+      );
+    }
+
     const newVersion = post.currentVersion + 1;
     const updateData: Record<string, unknown> = {
       currentVersion: newVersion,
@@ -378,6 +526,13 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
+    if (post.status === 'POSTED' && action !== 'publish') {
+      return NextResponse.json(
+        { error: 'This post is already published live and cannot be edited as a draft.' },
+        { status: 400 }
+      );
+    }
+
     if (action === 'generate') {
       const idea = post.idea;
       if (!idea) {
@@ -394,8 +549,16 @@ export async function PATCH(request: NextRequest) {
         platform || post.platform
       );
 
-      const response = await generateCompletion(prompt);
-      const draftContent = JSON.parse(response) as PostContent;
+      let draftContent: PostContent;
+      try {
+        const systemMsg = prompt.find((p) => p.role === 'system')?.content;
+        const userMsg = prompt.find((p) => p.role === 'user')?.content || idea.title;
+        const geminiText = await generateGeminiText(userMsg, systemMsg, userId);
+        const response = geminiText || (await generateCompletion(prompt));
+        draftContent = parseGeneratedDraft(response, idea as any, platform || post.platform, 'carousel');
+      } catch {
+        draftContent = parseGeneratedDraft('', idea as any, platform || post.platform, 'carousel');
+      }
 
       const updatedPost = await prisma.post.update({
         where: { id: postId },
@@ -571,7 +734,10 @@ Slides Context: ${JSON.stringify(currentContent.slides?.map((s) => ({ headline: 
       let generatedHashtags = currentContent.hashtags;
 
       try {
-        const response = await generateCompletion(prompt, { temperature: 0.8 });
+        const systemMsg = prompt.find((p) => p.role === 'system')?.content;
+        const userMsg = prompt.find((p) => p.role === 'user')?.content || post.title;
+        const geminiText = await generateGeminiText(userMsg, systemMsg, userId);
+        const response = geminiText || (await generateCompletion(prompt, { temperature: 0.8 }));
         const jsonMatch = response.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
