@@ -4,6 +4,8 @@ import { getAuthUser } from '@/lib/auth';
 import { ThemeToggle } from './ThemeToggle';
 import styles from './landing.module.css';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Regardless: turn tech news into carousels",
   description: "Regardless finds what's breaking in tech, drafts multi-slide posts, and keeps every one in a review queue until you approve it.",
@@ -14,8 +16,15 @@ export const metadata = {
 };
 
 export default async function LandingPage() {
-  const user = await getAuthUser();
-  const appHref = user ? '/overview' : '/sign-in';
+  let appHref = '/sign-in';
+  try {
+    const user = await getAuthUser();
+    if (user) {
+      appHref = '/overview';
+    }
+  } catch (err) {
+    console.error('Error resolving auth user on landing page:', err);
+  }
 
   return (
     <div className={styles.landing}>
