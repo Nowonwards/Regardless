@@ -45,9 +45,9 @@ A chat-driven social media content creation platform for Instagram, Pinterest, a
    yarn install
    ```
 
-2. **Start PostgreSQL**
+2. **Start PostgreSQL (Docker)**
    ```bash
-   docker-compose up -d
+   yarn db:up # or: docker compose up -d
    ```
 
 3. **Configure environment**
