@@ -2,20 +2,47 @@ import { Ollama } from 'ollama';
 
 function resolveOllamaHost(): string {
   const envHost = process.env.OLLAMA_HOST || process.env.OLLAMA_BASE_URL;
-  if (!envHost) {
+  if (!envHost || envHost.includes('[SENSITIVE]')) {
     return 'http://127.0.0.1:11434';
   }
-  // Trim trailing slashes
-  return envHost.replace(/\/+$/, '');
+  try {
+    const trimmed = envHost.replace(/\/+$/, '');
+    new URL(trimmed);
+    return trimmed;
+  } catch {
+    return 'http://127.0.0.1:11434';
+  }
 }
 
 export const OLLAMA_HOST = resolveOllamaHost();
 export const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gemma4:31b';
 const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY;
 
-export const ollamaClient = new Ollama({
-  host: OLLAMA_HOST,
-  headers: OLLAMA_API_KEY ? { Authorization: `Bearer ${OLLAMA_API_KEY}` } : undefined,
+let _ollamaClient: Ollama | null = null;
+
+export function getOllamaClient(): Ollama {
+  if (!_ollamaClient) {
+    const host = resolveOllamaHost();
+    const apiKey = process.env.OLLAMA_API_KEY;
+    _ollamaClient = new Ollama({
+      host,
+      headers: apiKey && !apiKey.includes('[SENSITIVE]')
+        ? { Authorization: `Bearer ${apiKey}` }
+        : undefined,
+    });
+  }
+  return _ollamaClient;
+}
+
+export const ollamaClient = new Proxy({} as Ollama, {
+  get(_target, prop) {
+    const client = getOllamaClient();
+    const val = (client as unknown as Record<string | symbol, unknown>)[prop];
+    if (typeof val === 'function') {
+      return val.bind(client);
+    }
+    return val;
+  },
 });
 
 export interface OllamaMessage {

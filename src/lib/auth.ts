@@ -3,6 +3,12 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 
+if (!process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL.includes('[SENSITIVE]')) {
+  process.env.NEXTAUTH_URL = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000';
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({

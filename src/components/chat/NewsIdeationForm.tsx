@@ -2,34 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Sparkles,
   Instagram as InstagramIcon,
   Linkedin as LinkedinIcon,
-  Lightbulb,
   Loader2,
-  CheckCircle2,
+  Minus,
+  Plus,
   Check,
-  Globe,
-  Sliders,
-  Cpu,
-  Layers,
-  ArrowRight,
-  TrendingUp,
-  AlertCircle,
-  ExternalLink,
-  RadioTower,
-  Radio,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
 import { Platform, IdeaContent } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -43,39 +24,39 @@ interface NewsIdeationFormProps {
   onSessionUpdate?: (title: string) => void;
 }
 
-const PLATFORM_OPTIONS: { id: Platform; label: string; icon: React.ReactNode; color: string; border: string; bg: string }[] = [
+const PLATFORM_CONFIG: {
+  id: Platform;
+  name: string;
+  desc: string;
+  icon: React.ReactNode;
+}[] = [
   {
     id: 'INSTAGRAM',
-    label: 'Instagram',
-    icon: <InstagramIcon className="h-4 w-4" />,
-    color: 'text-foreground',
-    border: 'border-border',
-    bg: 'bg-card',
+    name: 'Instagram',
+    desc: 'Carousels and posts',
+    icon: <InstagramIcon className="h-5 w-5" />,
   },
   {
     id: 'LINKEDIN',
-    label: 'LinkedIn',
-    icon: <LinkedinIcon className="h-4 w-4" />,
-    color: 'text-foreground',
-    border: 'border-border',
-    bg: 'bg-card',
+    name: 'LinkedIn',
+    desc: 'Articles and image posts',
+    icon: <LinkedinIcon className="h-5 w-5" />,
   },
   {
     id: 'PINTEREST',
-    label: 'Pinterest',
-    icon: <span className="inline-flex items-center justify-center w-4 h-4 border border-current font-mono font-bold text-[10px] leading-none">P</span>,
-    color: 'text-foreground',
-    border: 'border-border',
-    bg: 'bg-card',
+    name: 'Pinterest',
+    desc: 'Idea pins and visual cards',
+    icon: <span className="font-mono font-bold text-sm">P</span>,
   },
 ];
 
-const TOPIC_PRESETS = [
-  { value: 'all', label: 'All Tech Industry News (Product Launches, AI, Deals, Shifts)' },
-  { value: 'ai-models', label: 'AI & LLM Model Releases (Claude, OpenAI, DeepSeek, Gemini, Meta)' },
-  { value: 'dev-tools', label: 'Developer Tools, Open Source & Frameworks (Next.js, Python, Rust)' },
-  { value: 'startups-deals', label: 'Tech Startups, Funding Rounds, Layoffs & VC Moves' },
-  { value: 'big-tech', label: 'Big Tech Drama (Apple, Microsoft, Google, Nvidia, Meta)' },
+const FOCUS_CHIPS = [
+  { value: 'all', label: 'All tech news' },
+  { value: 'ai-models', label: 'AI and ML' },
+  { value: 'dev-tools', label: 'Dev tools' },
+  { value: 'cloud-devops', label: 'Cloud and DevOps' },
+  { value: 'startups-deals', label: 'Startups and funding' },
+  { value: 'fintech', label: 'Fintech' },
 ];
 
 export function NewsIdeationForm({
@@ -87,13 +68,8 @@ export function NewsIdeationForm({
   onIdeasGenerated,
   onSessionUpdate,
 }: NewsIdeationFormProps) {
-  const router = useRouter();
-
-  const effectiveConnected = connectedPlatforms !== undefined
-    ? connectedPlatforms
-    : initialPlatforms;
-
-  const visiblePlatforms = PLATFORM_OPTIONS.filter((plat) => effectiveConnected.includes(plat.id));
+  const effectiveConnected =
+    connectedPlatforms !== undefined ? connectedPlatforms : initialPlatforms;
 
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(() => {
     if (effectiveConnected.length > 0) {
@@ -115,20 +91,10 @@ export function NewsIdeationForm({
     }
   }, [connectedPlatforms, isLoadingPlatforms]);
 
-  const [newsFocus, setNewsFocus] = useState<string>('all');
+  const [focus, setFocus] = useState<string>('all');
+  const [ideaCount, setIdeaCount] = useState<number>(4);
   const [customKeyword, setCustomKeyword] = useState<string>('');
-  const [ideaCount, setIdeaCount] = useState<string>('4');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationStep, setGenerationStep] = useState<string>('');
-  const [lastSummary, setLastSummary] = useState<string | null>(null);
-
-  // Form generated ideas
-  const [generatedIdeas, setGeneratedIdeas] = useState<IdeaContent[]>([]);
-  const [selectedIdeaIds, setSelectedIdeaIds] = useState<string[]>([]);
-  const [isDrafting, setIsDrafting] = useState(false);
-  const [searchSources, setSearchSources] = useState<Array<{ title: string; url: string; content: string; publishedDate?: string }>>([]);
-  const [searchQueryUsed, setSearchQueryUsed] = useState<string>('');
-  const [searchAnswer, setSearchAnswer] = useState<string>('');
 
   const togglePlatform = (platform: Platform) => {
     const isConnected = effectiveConnected.includes(platform);
@@ -136,12 +102,19 @@ export function NewsIdeationForm({
 
     setSelectedPlatforms((prev) => {
       if (prev.includes(platform)) {
-        if (prev.length === 1) return prev;
         return prev.filter((p) => p !== platform);
       } else {
         return [...prev, platform];
       }
     });
+  };
+
+  const handleIncrement = () => {
+    setIdeaCount((prev) => Math.min(6, prev + 1));
+  };
+
+  const handleDecrement = () => {
+    setIdeaCount((prev) => Math.max(3, prev - 1));
   };
 
   const extractIdeasFromResponse = (content: string): IdeaContent[] => {
@@ -167,33 +140,25 @@ export function NewsIdeationForm({
               const platformUpper = (item.platform || selectedPlatforms[0] || 'INSTAGRAM').toUpperCase();
               const validPlatform: Platform = selectedPlatforms.includes(platformUpper as Platform)
                 ? (platformUpper as Platform)
-                : (selectedPlatforms[0] || 'INSTAGRAM');
+                : selectedPlatforms[0] || 'INSTAGRAM';
 
               parsedIdeas.push({
                 id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
                 title,
-                description: item.description || item.concept || item.content?.hook || item.hook || '',
+                description: item.description || item.concept || item.hook || '',
                 platform: validPlatform,
-                hook: item.hook || item.content?.hook || item.description || title,
-                angle: item.angle || item.content?.angle || '',
-                keyPoints: Array.isArray(item.keyPoints)
-                  ? item.keyPoints
-                  : Array.isArray(item.content?.keyPoints)
-                  ? item.content.keyPoints
-                  : [],
+                hook: item.hook || item.description || title,
+                angle: item.angle || '',
+                keyPoints: Array.isArray(item.keyPoints) ? item.keyPoints : [],
                 suggestedFormat: item.suggestedFormat || (validPlatform === 'PINTEREST' ? 'pin' : 'carousel'),
-                hashtags: Array.isArray(item.hashtags)
-                  ? item.hashtags
-                  : Array.isArray(item.content?.hashtags)
-                  ? item.content.hashtags
-                  : ['#tech'],
-                cta: item.cta || item.content?.cta,
+                hashtags: Array.isArray(item.hashtags) ? item.hashtags : ['#tech'],
+                cta: item.cta,
               });
             }
           }
         }
       } catch {
-        // Fallback
+        // Continue
       }
     }
 
@@ -204,17 +169,12 @@ export function NewsIdeationForm({
     if (selectedPlatforms.length === 0 || isGenerating) return;
 
     setIsGenerating(true);
-    setGenerationStep('Connecting to Tavily Live Search radar...');
-    setGeneratedIdeas([]);
-    setSelectedIdeaIds([]);
-    setSearchSources([]);
-    setSearchQueryUsed('');
-    setSearchAnswer('');
 
-    const topicLabel = TOPIC_PRESETS.find((t) => t.value === newsFocus)?.label || 'All Tech News';
+    const focusChip = FOCUS_CHIPS.find((f) => f.value === focus);
+    const focusLabel = focusChip ? focusChip.label : 'All Tech News';
     const messagePrompt = customKeyword.trim()
       ? `Generate ${ideaCount} tech news post ideas focusing on "${customKeyword.trim()}" for ${selectedPlatforms.join(', ')}.`
-      : `Generate ${ideaCount} tech news post ideas for ${selectedPlatforms.join(', ')} covering ${topicLabel}.`;
+      : `Generate ${ideaCount} tech news post ideas for ${selectedPlatforms.join(', ')} covering ${focusLabel}.`;
 
     try {
       const response = await fetch('/api/chat', {
@@ -246,18 +206,8 @@ export function NewsIdeationForm({
           for (const line of lines) {
             try {
               const data = JSON.parse(line.slice(6));
-              if (data.type === 'search_result') {
-                setSearchSources(data.sources || []);
-                setSearchQueryUsed(data.query || '');
-                setSearchAnswer(data.answer || '');
-                setGenerationStep(`Synthesizing hooks from ${data.sources?.length || 5} live articles...`);
-              } else if (data.chunk || data.type === 'chunk') {
-                fullContent += (data.chunk || '');
-              } else if (data.done || data.type === 'done') {
-                if (data.sources && (!searchSources || searchSources.length === 0)) {
-                  setSearchSources(data.sources);
-                }
-                break;
+              if (data.chunk || data.type === 'chunk') {
+                fullContent += data.chunk || '';
               }
             } catch {
               // Ignore
@@ -267,477 +217,295 @@ export function NewsIdeationForm({
       }
 
       const extractedIdeas = extractIdeasFromResponse(fullContent);
-      setLastSummary(fullContent.replace(/```(?:json)?\s*\[[\s\S]*?\]\s*```/g, '').trim());
 
       if (extractedIdeas.length > 0) {
-        setGeneratedIdeas(extractedIdeas);
-        setSelectedIdeaIds(extractedIdeas.map((i) => i.id));
         if (onIdeasGenerated) {
           onIdeasGenerated(extractedIdeas);
         }
         if (onSessionUpdate) {
-          onSessionUpdate(`Tech Ideation: ${customKeyword || topicLabel.slice(0, 30)}`);
+          onSessionUpdate(`Tech Ideation: ${customKeyword || focusLabel}`);
         }
       }
     } catch (error) {
       console.error('Ideation generation failed:', error);
     } finally {
       setIsGenerating(false);
-      setGenerationStep('');
     }
   };
 
-  const handleCreateDrafts = async () => {
-    const selectedObjects = generatedIdeas.filter((i) => selectedIdeaIds.includes(i.id));
-    if (selectedObjects.length === 0) return;
+  const selectedPlatformNames = selectedPlatforms
+    .map((p) => PLATFORM_CONFIG.find((c) => c.id === p)?.name || p)
+    .join(', ');
 
-    const currentSessionId = sessionId && sessionId !== 'new' ? sessionId : undefined;
-
-    setIsDrafting(true);
-    try {
-      const res = await fetch('/api/drafts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: currentSessionId,
-          ideaTitles: selectedObjects.map((i) => i.title),
-          ideas: selectedObjects,
-        }),
-      });
-
-      if (res.ok) {
-        router.push('/drafts');
-      }
-    } catch (err) {
-      console.error('Failed to create drafts:', err);
-    } finally {
-      setIsDrafting(false);
-    }
-  };
+  const currentFocusLabel = FOCUS_CHIPS.find((f) => f.value === focus)?.label || 'All tech news';
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 max-w-4xl mx-auto w-full">
-      {/* Studio Header */}
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-none border border-border bg-surface text-foreground dark:text-primary">
-            <RadioTower className="h-5 w-5 text-foreground dark:text-primary" />
-          </div>
+    <div className="flex flex-col min-[1080px]:flex-row items-start gap-8 w-full pb-12">
+      {/* Form on the Left (Flexible) */}
+      <div className="flex-1 w-full space-y-8 min-w-0">
+        {/* Section 1: Platforms */}
+        <section className="space-y-3">
           <div>
-            <h2 className="font-display text-xl font-bold tracking-tight">Tech News Ideation Studio</h2>
-            <p className="text-xs font-mono text-muted-foreground">
-              Configure parameters and run Tavily live news search to batch-generate data-backed post ideas.
+            <h2 className="font-sans font-bold text-lg text-foreground">Platforms</h2>
+            <p className="text-muted-foreground text-sm mt-0.5">
+              Pick where these ideas will be published.
             </p>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            {PLATFORM_CONFIG.map((platform) => {
+              const isConnected = effectiveConnected.includes(platform.id);
+              const isSelected = selectedPlatforms.includes(platform.id);
+
+              if (!isConnected) {
+                return (
+                  <div
+                    key={platform.id}
+                    className="border-2 border-border bg-card p-4 flex flex-col justify-between min-h-[120px] opacity-60 cursor-not-allowed select-none"
+                  >
+                    <div>
+                      <div className="w-[30px] h-[30px] border-2 border-border bg-muted flex items-center justify-center mb-2 text-foreground">
+                        {platform.icon}
+                      </div>
+                      <h3 className="font-sans font-bold text-sm text-foreground">
+                        {platform.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                        {platform.desc}
+                      </p>
+                    </div>
+                    <Link
+                      href="/settings"
+                      className="font-mono text-[11px] text-muted-foreground mt-3 hover:underline"
+                    >
+                      Connect in Settings
+                    </Link>
+                  </div>
+                );
+              }
+
+              return (
+                <button
+                  key={platform.id}
+                  type="button"
+                  onClick={() => togglePlatform(platform.id)}
+                  className={cn(
+                    'relative border-2 text-left p-4 flex flex-col justify-between min-h-[120px] transition-all bg-card cursor-pointer select-none',
+                    isSelected
+                      ? 'border-primary shadow-[5px_5px_0_0_#FF4B1F] -translate-x-[2px] -translate-y-[2px]'
+                      : 'border-border hover:shadow-[3px_3px_0_0_var(--border)]'
+                  )}
+                >
+                  {/* Selected check square */}
+                  {isSelected && (
+                    <div
+                      className="absolute top-2 right-2 w-[22px] h-[22px] bg-primary text-primary-foreground flex items-center justify-center select-none"
+                      aria-hidden="true"
+                    >
+                      <Check className="h-3.5 w-3.5 stroke-[3]" />
+                    </div>
+                  )}
+
+                  <div>
+                    <div className="w-[30px] h-[30px] border-2 border-border bg-background flex items-center justify-center mb-2 text-foreground">
+                      {platform.icon}
+                    </div>
+                    <h3 className="font-sans font-bold text-sm text-foreground">
+                      {platform.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                      {platform.desc}
+                    </p>
+                  </div>
+
+                  <span className="font-mono text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-3">
+                    Connected
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Section 2: Industry Focus */}
+        <section className="space-y-3">
+          <div>
+            <h2 className="font-sans font-bold text-lg text-foreground">Industry focus</h2>
+            <p className="text-muted-foreground text-sm mt-0.5">
+              Limits which headlines the live search looks at.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2.5">
+            {FOCUS_CHIPS.map((chip) => {
+              const isSelected = focus === chip.value;
+              return (
+                <button
+                  key={chip.value}
+                  type="button"
+                  onClick={() => setFocus(chip.value)}
+                  className={cn(
+                    'border-2 border-border px-3.5 py-1.5 font-mono text-[13px] font-medium transition-none select-none',
+                    isSelected
+                      ? 'bg-foreground text-background'
+                      : 'bg-card text-foreground hover:bg-muted'
+                  )}
+                >
+                  {chip.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Section 3: Number of ideas Stepper */}
+        <section className="space-y-3">
+          <div>
+            <h2 className="font-sans font-bold text-lg text-foreground">Number of ideas</h2>
+            <p className="text-muted-foreground text-sm mt-0.5">
+              Four is the best balance of variety and review time.
+            </p>
+          </div>
+
+          <div className="inline-flex items-center">
+            <button
+              type="button"
+              onClick={handleDecrement}
+              disabled={ideaCount <= 3}
+              className="w-10 h-10 border-2 border-border bg-card flex items-center justify-center text-foreground hover:bg-muted active:bg-muted disabled:opacity-40 disabled:cursor-not-allowed select-none"
+              aria-label="Decrease idea count"
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+
+            <div className="w-[56px] h-10 border-y-2 border-border bg-card flex items-center justify-center font-mono font-bold text-base text-foreground select-none">
+              {ideaCount}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleIncrement}
+              disabled={ideaCount >= 6}
+              className="w-10 h-10 border-2 border-border bg-card flex items-center justify-center text-foreground hover:bg-muted active:bg-muted disabled:opacity-40 disabled:cursor-not-allowed select-none"
+              aria-label="Increase idea count"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+        </section>
+
+        {/* Section 4: Topic or keyword */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <h2 className="font-sans font-bold text-lg text-foreground">Topic or keyword</h2>
+            <span className="font-mono text-[11px] text-muted-foreground uppercase border border-border px-1.5 py-0.5">
+              Optional
+            </span>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            Leave blank to use the top tech headlines.
+          </p>
+
+          <input
+            type="text"
+            value={customKeyword}
+            onChange={(e) => setCustomKeyword(e.target.value)}
+            placeholder="e.g. Claude Sonnet, Python 3.13, Nvidia earnings"
+            className="w-full h-11 px-3 border-2 border-border bg-card font-sans text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-accent"
+          />
+        </section>
+
+        {/* Voice Row */}
+        <div className="border-2 border-dashed border-border p-3.5 bg-card flex items-center justify-between gap-3 select-none">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Sparkles className="h-4 w-4 text-foreground shrink-0" aria-hidden="true" />
+            <span className="font-sans text-sm text-foreground truncate">
+              Voice: sarcastic, opinionated, no filter, for a coding and finance course
+            </span>
+          </div>
+
+          <span className="border border-border px-2 py-0.5 font-mono text-[11px] font-bold uppercase text-muted-foreground bg-muted shrink-0">
+            Locked
+          </span>
         </div>
       </div>
 
-      {/* Main Parameters Card */}
-      <Card className="rounded-none border border-border bg-card" elevation="none">
-        <CardHeader className="p-4 border-b border-border bg-surface">
-          <CardTitle className="text-sm font-mono font-bold uppercase tracking-wider flex items-center gap-2 text-foreground">
-            <Sliders className="h-4 w-4 text-foreground dark:text-primary" />
-            Ideation Parameters
-          </CardTitle>
-          <CardDescription className="text-xs font-mono text-muted-foreground">
-            Choose the target platforms, industry domain, and keyword focus for live news synthesis.
-          </CardDescription>
-        </CardHeader>
+      {/* Right Summary Panel (Sticky, 340px) */}
+      <div className="w-full min-[1080px]:w-[340px] shrink-0 min-[1080px]:sticky min-[1080px]:top-[20px]">
+        <div className="border-2 border-border bg-card p-[18px] flex flex-col gap-4 shadow-[4px_4px_0_0_var(--border)]">
+          <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            This run
+          </span>
 
-        <CardContent className="p-4 md:p-6 space-y-5">
-          {/* Target Platforms */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs font-mono font-bold uppercase tracking-wider">
-                Target Platforms (Click to Toggle)
-              </Label>
-              <span className="text-[11px] font-mono text-muted-foreground">
-                {selectedPlatforms.length} Platform(s) Selected
-              </span>
-            </div>
-
-            {isLoadingPlatforms ? (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground py-2 font-mono">
-                <Loader2 className="h-4 w-4 animate-spin text-foreground dark:text-primary" />
-                <span>Checking connected platforms...</span>
-              </div>
-            ) : visiblePlatforms.length === 0 ? (
-              <div className="rounded-none border border-border bg-surface p-4 text-center space-y-2">
-                <p className="text-xs font-mono text-muted-foreground">
-                  No social platforms connected yet.
-                </p>
-                <Link href="/settings">
-                  <Button variant="outline" size="sm" className="gap-1.5 rounded-none font-mono text-xs">
-                    <span>Connect Accounts in Settings</span>
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {visiblePlatforms.map((plat) => {
-                  const isSelected = selectedPlatforms.includes(plat.id);
-                  return (
-                    <div
-                      key={plat.id}
-                      onClick={() => togglePlatform(plat.id)}
-                      className={cn(
-                        'cursor-pointer rounded-none border p-3 flex flex-col justify-between gap-3 transition-all select-none',
-                        isSelected
-                          ? 'border-primary bg-surface ring-1 ring-primary'
-                          : 'border-border bg-background hover:border-primary/50 opacity-60'
-                      )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className={cn('p-1.5 rounded-none border border-border bg-background', plat.color)}>
-                          {plat.icon}
-                        </div>
-
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-mono text-emerald-400 bg-surface px-1.5 py-0.5 rounded-none border border-emerald-500/40">
-                            Connected
-                          </span>
-                          <div
-                            className={cn(
-                              'h-5 w-5 rounded-none flex items-center justify-center transition-colors',
-                              isSelected ? 'bg-primary text-primary-foreground border border-primary' : 'border border-border'
-                            )}
-                          >
-                            {isSelected && <Check className="h-3.5 w-3.5" />}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <p className="font-display font-bold text-sm">{plat.label}</p>
-                        <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
-                          {plat.id === 'INSTAGRAM' ? 'Carousels & Reels' : plat.id === 'LINKEDIN' ? 'Thought Leadership' : 'Infographic Pins'}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {visiblePlatforms.length > 0 && visiblePlatforms.length < PLATFORM_OPTIONS.length && (
-              <div className="pt-1">
-                <Link
-                  href="/settings"
-                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors font-mono"
-                >
-                  <span>+ Connect more social platforms in Settings</span>
-                  <ExternalLink className="h-3 w-3" />
-                </Link>
-              </div>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* News Focus & Category Select Boxes */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="news-focus" className="text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <Globe className="h-3.5 w-3.5 text-foreground dark:text-primary" />
-                Industry Focus
-              </Label>
-              <Select value={newsFocus} onValueChange={setNewsFocus} disabled={isGenerating}>
-                <SelectTrigger id="news-focus" className="h-10 text-xs font-mono rounded-none border-border bg-background">
-                  <SelectValue placeholder="Select topic focus" />
-                </SelectTrigger>
-                <SelectContent className="rounded-none border-border">
-                  {TOPIC_PRESETS.map((t) => (
-                    <SelectItem key={t.value} value={t.value} className="text-xs font-mono">
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="idea-count" className="text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <Layers className="h-3.5 w-3.5 text-foreground dark:text-primary" />
-                Number of Ideas
-              </Label>
-              <Select value={ideaCount} onValueChange={setIdeaCount} disabled={isGenerating}>
-                <SelectTrigger id="idea-count" className="h-10 text-xs font-mono rounded-none border-border bg-background">
-                  <SelectValue placeholder="Select count" />
-                </SelectTrigger>
-                <SelectContent className="rounded-none border-border">
-                  <SelectItem value="3" className="font-mono text-xs">3 Post Ideas</SelectItem>
-                  <SelectItem value="4" className="font-mono text-xs">4 Post Ideas (Recommended)</SelectItem>
-                  <SelectItem value="5" className="font-mono text-xs">5 Post Ideas</SelectItem>
-                  <SelectItem value="6" className="font-mono text-xs">6 Post Ideas</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Optional Custom Topic / Keyword */}
-          <div className="space-y-2">
-            <Label htmlFor="custom-topic" className="text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Cpu className="h-3.5 w-3.5 text-muted-foreground" />
-                Specific Tech Topic or Keyword (Optional)
-              </span>
-              <span className="text-[11px] font-mono text-muted-foreground font-normal">Leave blank for top tech headlines</span>
-            </Label>
-            <Input
-              id="custom-topic"
-              value={customKeyword}
-              onChange={(e) => setCustomKeyword(e.target.value)}
-              placeholder="e.g. Claude 3.7 Sonnet, Devin AI, Python 3.13, Nvidia earnings, YC W25 startups..."
-              className="h-10 text-xs font-mono rounded-none border-border bg-background"
-              disabled={isGenerating}
-            />
-          </div>
-
-          {/* Brand Voice Lock */}
-          <div className="flex items-center justify-between gap-3 rounded-none border border-border bg-surface p-3.5 text-xs font-mono">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <TrendingUp className="h-4 w-4 text-foreground dark:text-primary" />
-              <span>Voice & Tone: <strong className="text-foreground">Sarcastic, Opinionated, No-Filter (Coding & Finance Course)</strong></span>
-            </div>
-            <Badge variant="outline" className="shrink-0 bg-background text-[10px] rounded-none font-mono font-bold">Enforced</Badge>
-          </div>
-
-          {/* Generate Button */}
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating || selectedPlatforms.length === 0}
-            size="lg"
-            className="w-full h-11 text-xs font-mono font-bold uppercase tracking-wider gap-2 rounded-none bg-primary text-primary-foreground border border-primary hover:opacity-90 transition-all disabled:opacity-50 disabled:pointer-events-none"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span>Generating Tech Ideas...</span>
-              </>
-            ) : selectedPlatforms.length === 0 ? (
-              <>
-                <AlertCircle className="h-5 w-5" />
-                <span>Connect a Platform in Settings to Generate Ideas</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-5 w-5" />
-                <span>Generate {ideaCount} Tech Post Ideas ({selectedPlatforms.join(', ')})</span>
-              </>
-            )}
-          </Button>
-
-          {/* Progress / Step Feedback */}
-          {isGenerating && (
-            <div className="rounded-none border border-border dark:border-primary bg-surface p-4 text-center">
-              <p className="text-xs font-mono font-bold text-foreground dark:text-primary flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {generationStep || 'Scanning tech news & generating ideas...'}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Verified Tavily Search Sources Output Section */}
-      {searchSources.length > 0 && (
-        <Card className="rounded-none border border-border dark:border-primary/50 bg-card" elevation="none">
-          <CardHeader className="p-3 border-b border-border bg-surface flex flex-row items-center justify-between space-y-0">
-            <div className="flex items-center gap-2">
-              <Radio className="h-4 w-4 text-foreground dark:text-primary animate-pulse" />
-              <CardTitle className="text-xs font-mono font-bold uppercase tracking-wider text-foreground dark:text-primary">
-                Tavily Live Search Verified
-              </CardTitle>
-            </div>
-            {searchQueryUsed && (
-              <Badge variant="outline" className="text-[10px] font-mono rounded-none border-border bg-background">
-                Query: &quot;{searchQueryUsed}&quot;
-              </Badge>
-            )}
-          </CardHeader>
-          <CardContent className="p-4 space-y-2.5 font-mono text-xs">
-            {searchAnswer && (
-              <div className="p-2.5 bg-surface border border-border/80 text-foreground leading-relaxed">
-                <span className="text-foreground dark:text-primary font-bold">News Brief: </span>
-                {searchAnswer}
-              </div>
-            )}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Verified Articles ({searchSources.length}):
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {searchSources.map((source, idx) => {
-                  let hostname = '';
-                  try {
-                    hostname = new URL(source.url).hostname.replace('www.', '');
-                  } catch {
-                    hostname = 'Source';
-                  }
-                  return (
-                    <a
-                      key={idx}
-                      href={source.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2.5 bg-surface border border-border hover:border-foreground dark:hover:border-primary transition-colors block group"
-                    >
-                      <div className="flex items-start justify-between gap-1.5 mb-1">
-                        <span className="text-[10px] font-mono text-foreground/80 dark:text-primary font-bold uppercase">{hostname}</span>
-                        <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-foreground dark:group-hover:text-primary shrink-0" />
-                      </div>
-                      <p className="font-display font-semibold text-xs text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                        {source.title}
-                      </p>
-                      {source.publishedDate && (
-                        <p className="text-[9px] text-muted-foreground mt-1">
-                          Published: {source.publishedDate}
-                        </p>
-                      )}
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Generated Ideas Output Section */}
-      {generatedIdeas.length > 0 && (
-        <Card className="rounded-none border border-border bg-card" elevation="none">
-          <CardHeader className="p-4 border-b border-border bg-surface flex flex-row items-center justify-between space-y-0">
+          <dl className="space-y-3">
             <div>
-              <CardTitle className="text-sm font-mono font-bold uppercase tracking-wider flex items-center gap-2 text-foreground">
-                <CheckCircle2 className="h-4 w-4 text-foreground dark:text-primary" />
-                Generated Ideas ({generatedIdeas.length})
-              </CardTitle>
-              <CardDescription className="text-xs font-mono text-muted-foreground">
-                Select ideas below to generate complete slide copy and drafts.
-              </CardDescription>
+              <dt className="font-mono text-[11px] text-muted-foreground uppercase tracking-wider">
+                Publishing to
+              </dt>
+              <dd className="font-sans font-bold text-sm text-foreground mt-0.5">
+                {selectedPlatformNames || 'None selected'}
+              </dd>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (selectedIdeaIds.length === generatedIdeas.length) {
-                    setSelectedIdeaIds([]);
-                  } else {
-                    setSelectedIdeaIds(generatedIdeas.map((i) => i.id));
-                  }
-                }}
-                className="h-7 text-[11px] font-mono rounded-none border-border"
-              >
-                {selectedIdeaIds.length === generatedIdeas.length ? 'Deselect All' : 'Select All'}
-              </Button>
-
-              <Button
-                type="button"
-                size="sm"
-                disabled={isDrafting || selectedIdeaIds.length === 0}
-                onClick={handleCreateDrafts}
-                className="h-7 px-3 text-[11px] font-mono font-bold rounded-none bg-primary text-primary-foreground border border-primary"
-              >
-                {isDrafting ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <>
-                    Create Drafts ({selectedIdeaIds.length})
-                    <ArrowRight className="h-3 w-3 ml-1" />
-                  </>
-                )}
-              </Button>
+            <div>
+              <dt className="font-mono text-[11px] text-muted-foreground uppercase tracking-wider">
+                Focus
+              </dt>
+              <dd className="font-sans font-bold text-sm text-foreground mt-0.5">
+                {currentFocusLabel}
+              </dd>
             </div>
-          </CardHeader>
 
-          <CardContent className="p-4 space-y-3">
-            {generatedIdeas.map((idea) => {
-              const isSelected = selectedIdeaIds.includes(idea.id);
-              return (
-                <div
-                  key={idea.id}
-                  className={cn(
-                    'p-3.5 rounded-none border transition-all',
-                    isSelected
-                      ? 'bg-surface border-border dark:border-primary ring-1 ring-border dark:ring-primary'
-                      : 'bg-background border-border hover:border-border/80'
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      checked={isSelected}
-                      onCheckedChange={() =>
-                        setSelectedIdeaIds((prev) =>
-                          prev.includes(idea.id)
-                            ? prev.filter((id) => id !== idea.id)
-                            : [...prev, idea.id]
-                        )
-                      }
-                      className="mt-1 rounded-none border-border"
-                    />
-
-                    <div className="flex-1 space-y-1.5 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-[10px] font-mono rounded-none border-border">
-                          {idea.platform}
-                        </Badge>
-                        <Badge variant="outline" className="text-[10px] font-mono rounded-none border-border bg-surface">
-                          {idea.suggestedFormat}
-                        </Badge>
-                      </div>
-
-                      <h4 className="font-display font-bold text-sm text-foreground">
-                        {idea.title}
-                      </h4>
-
-                      {idea.hook && (
-                        <p className="text-xs font-mono text-muted-foreground">
-                          <span className="text-foreground dark:text-primary font-bold">Hook:</span> {idea.hook}
-                        </p>
-                      )}
-
-                      {idea.angle && (
-                        <p className="text-xs font-mono text-muted-foreground/80">
-                          <span className="text-foreground font-semibold">Angle:</span> {idea.angle}
-                        </p>
-                      )}
-
-                      {idea.keyPoints && idea.keyPoints.length > 0 && (
-                        <ul className="text-[11px] font-mono text-muted-foreground list-disc list-inside pt-1 space-y-0.5">
-                          {idea.keyPoints.map((pt, idx) => (
-                            <li key={idx} className="truncate">{pt}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* News Summary Card if available */}
-      {lastSummary && !isGenerating && (
-        <Card className="rounded-none border border-border bg-card/60" elevation="none">
-          <CardHeader className="p-3 border-b border-border bg-surface">
-            <CardTitle className="text-xs font-mono font-bold text-muted-foreground flex items-center gap-2 uppercase tracking-wider">
-              <Globe className="h-4 w-4 text-foreground dark:text-primary" />
-              Live News Context & Strategist Take
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="text-xs font-mono leading-relaxed whitespace-pre-wrap text-muted-foreground">
-              {lastSummary}
+            <div>
+              <dt className="font-mono text-[11px] text-muted-foreground uppercase tracking-wider">
+                Ideas
+              </dt>
+              <dd className="font-sans font-bold text-sm text-foreground mt-0.5">
+                {ideaCount} post ideas
+              </dd>
             </div>
-          </CardContent>
-        </Card>
-      )}
+
+            <div>
+              <dt className="font-mono text-[11px] text-muted-foreground uppercase tracking-wider">
+                Keyword
+              </dt>
+              <dd className="font-sans font-bold text-sm text-foreground mt-0.5">
+                {customKeyword.trim() ? customKeyword.trim() : 'Top headlines'}
+              </dd>
+            </div>
+          </dl>
+
+          <div className="border-t-2 border-border pt-4 space-y-4">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Each idea comes with a hook, an angle, key points and the news sources behind it.
+            </p>
+
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={selectedPlatforms.length === 0 || isGenerating}
+              className={cn(
+                'w-full py-3 px-4 font-sans font-bold text-sm border-2 border-border transition-transform flex items-center justify-center gap-2',
+                selectedPlatforms.length > 0 && !isGenerating
+                  ? 'bg-primary text-primary-foreground shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px]'
+                  : 'bg-primary text-primary-foreground opacity-40 cursor-not-allowed shadow-none'
+              )}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Generating ideas...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  <span>Generate {ideaCount} ideas</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

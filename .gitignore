@@ -55,3 +55,4 @@ public/reels/*
 *.njsproj
 *.sln
 *.sw?
+.vercel

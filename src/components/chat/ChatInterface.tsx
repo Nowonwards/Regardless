@@ -8,26 +8,16 @@ import {
   Instagram as InstagramIcon,
   Linkedin as LinkedinIcon,
   Loader2,
-  CheckCircle2,
-  Check,
   Send,
-  Globe,
-  Radio,
-  RefreshCw,
   Plus,
-  Layers,
-  ArrowRight,
   ExternalLink,
   ChevronRight,
-  AlertCircle,
-  Search,
-  Clock,
+  Check,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Toggle } from '@/components/ui/toggle-switch';
 import { Platform, IdeaContent } from '@/types';
 import { cn } from '@/lib/utils';
+import { ChatSessionSummary } from '@/app/(dashboard)/chat/page';
 
 export interface TavilySource {
   title: string;
@@ -63,21 +53,35 @@ interface ChatInterfaceProps {
   connectedPlatforms?: Platform[];
   isLoadingPlatforms?: boolean;
   dateRange?: { start: Date; end: Date };
+  sessions?: ChatSessionSummary[];
+  onSelectSession?: (id: string) => void;
+  onCreateNewChat?: () => void;
   onIdeasGenerated?: (ideas: IdeaContent[]) => void;
   onSessionUpdate?: (title: string, newSessionId?: string) => void;
+  injectedIdeas?: IdeaContent[];
 }
 
-const PLATFORM_CONFIG: Record<Platform, { name: string; icon: React.ReactNode; color: string }> = {
-  INSTAGRAM: { name: 'Instagram', icon: <InstagramIcon className="h-3.5 w-3.5" />, color: 'text-foreground' },
-  LINKEDIN: { name: 'LinkedIn', icon: <LinkedinIcon className="h-3.5 w-3.5" />, color: 'text-foreground' },
-  PINTEREST: { name: 'Pinterest', icon: <span className="inline-flex items-center justify-center w-3.5 h-3.5 border border-current font-mono font-bold text-[9px] leading-none">P</span>, color: 'text-foreground' },
-};
-
-const SUGGESTED_PROMPTS = [
-  'Scan today\'s top AI model releases & controversies',
-  '3 hot-take carousels about developer salaries vs AI tooling',
-  '4 practical Docker & Kubernetes optimization tips for engineers',
-  'Sarcastic breakdown of Big Tech return-to-office mandates',
+const SUGGESTION_CARDS = [
+  {
+    title: "Scan today's top AI model releases",
+    description: 'Pulls live headlines and finds the controversial angle.',
+    prompt: "Scan today's top AI model releases, controversies, and product launches.",
+  },
+  {
+    title: '3 hot-take carousels on developer salaries vs AI tooling',
+    description: 'Opinionated hooks, six slides each.',
+    prompt: 'Brainstorm 3 hot-take carousels on developer salaries vs AI tooling with 6 slides each.',
+  },
+  {
+    title: '4 practical Docker and Kubernetes tips',
+    description: 'Short, concrete, code-first slides.',
+    prompt: 'Create 4 practical Docker and Kubernetes tips as short, concrete, code-first slides.',
+  },
+  {
+    title: 'Turn a news URL into a carousel',
+    description: 'Paste a link and get a hook and slide outline.',
+    prompt: 'Help me turn a recent tech news article or URL into an engaging carousel deck.',
+  },
 ];
 
 export function ChatInterface({
@@ -86,11 +90,16 @@ export function ChatInterface({
   connectedPlatforms,
   isLoadingPlatforms = false,
   dateRange,
+  sessions = [],
+  onSelectSession,
+  onCreateNewChat,
   onIdeasGenerated,
   onSessionUpdate,
+  injectedIdeas,
 }: ChatInterfaceProps) {
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const effectiveConnected = connectedPlatforms !== undefined ? connectedPlatforms : initialPlatforms;
 
@@ -118,7 +127,6 @@ export function ChatInterface({
 
   // Selected ideas for drafting
   const [selectedIdeaIds, setSelectedIdeaIds] = useState<string[]>([]);
-  const [draftingIdeaIds, setDraftingIdeaIds] = useState<Record<string, boolean>>({});
   const [isDraftingBatch, setIsDraftingBatch] = useState(false);
   const [usedIdeas, setUsedIdeas] = useState<UsedIdeaInfo[]>([]);
 
@@ -131,7 +139,15 @@ export function ChatInterface({
     scrollToBottom();
   }, [messages, streamingContent, activeSearchSources]);
 
-  // Load session messages from DB using dedicated /api/chat/history endpoint
+  // Adjust textarea height dynamically
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.max(64, textareaRef.current.scrollHeight)}px`;
+    }
+  }, [inputMessage]);
+
+  // Load session messages from DB
   useEffect(() => {
     setStreamingContent('');
     setActiveSearchSources([]);
@@ -140,14 +156,7 @@ export function ChatInterface({
 
     if (!sessionId || sessionId === 'new') {
       setUsedIdeas([]);
-      setMessages([
-        {
-          id: 'welcome',
-          role: 'assistant',
-          content:
-            "Welcome to Regardless Ideation Studio. Ask me to brainstorm tech news hooks, propose multi-slide carousels, or explore controversial industry angles for your channels.\n\nLive Tech News Search via Tavily is active to verify current-event facts and breaking announcements.",
-        },
-      ]);
+      setMessages([]);
       return;
     }
 
@@ -184,20 +193,27 @@ export function ChatInterface({
         console.warn('Failed to fetch session history:', err);
       }
 
-      // Initial default welcome message if empty
       setUsedIdeas([]);
-      setMessages([
-        {
-          id: 'welcome',
-          role: 'assistant',
-          content:
-            "Welcome to Regardless Ideation Studio. Ask me to brainstorm tech news hooks, propose multi-slide carousels, or explore controversial industry angles for your channels.\n\nLive Tech News Search via Tavily is active to verify current-event facts and breaking announcements.",
-        },
-      ]);
+      setMessages([]);
     };
 
     fetchSessionHistory();
   }, [sessionId]);
+
+  // Listen to injected ideas from news form tab
+  useEffect(() => {
+    if (injectedIdeas && injectedIdeas.length > 0) {
+      const newMsg: ChatMessageItem = {
+        id: `ideas-${Date.now()}`,
+        role: 'assistant',
+        content: 'Here are the tech news post ideas generated for your selected channels:',
+        ideas: injectedIdeas,
+        createdAt: new Date(),
+      };
+      setMessages((prev) => [...prev, newMsg]);
+      setSelectedIdeaIds(injectedIdeas.map((i) => i.id));
+    }
+  }, [injectedIdeas]);
 
   const getIdeaUsage = (ideaTitle: string): UsedIdeaInfo | undefined => {
     if (!ideaTitle) return undefined;
@@ -205,7 +221,6 @@ export function ChatInterface({
     return usedIdeas.find((u) => u.title.trim().toLowerCase() === normalized);
   };
 
-  // Helper to extract ideas JSON from assistant response with deduplication
   const extractIdeasFromContent = (text: string): IdeaContent[] => {
     if (!text) return [];
     const ideas: IdeaContent[] = [];
@@ -242,13 +257,12 @@ export function ChatInterface({
           }
         }
       } catch {
-        // Continue to next code block if parse fails
+        // Continue
       }
     }
     return ideas;
   };
 
-  // Helper to strip raw JSON block cleanly from displayed conversational text
   const cleanAssistantContent = (text: string): string => {
     if (!text) return '';
     let cleaned = text.replace(/```(?:json)?\s*[\{\[][\s\S]*?[\}\]]\s*```/gi, '');
@@ -273,7 +287,6 @@ export function ChatInterface({
     );
   };
 
-  // Send conversational prompt
   const handleSendMessage = async (customPrompt?: string) => {
     const textToSend = (customPrompt || inputMessage).trim();
     if (!textToSend || isGenerating) return;
@@ -339,7 +352,7 @@ export function ChatInterface({
                 setActiveSearchSources(latestSources);
                 setActiveSearchQuery(latestQuery);
               } else if (data.chunk || data.type === 'chunk') {
-                fullContent += (data.chunk || '');
+                fullContent += data.chunk || '';
                 setStreamingContent(fullContent);
               } else if (data.done || data.type === 'done') {
                 if (data.sources && latestSources.length === 0) {
@@ -352,7 +365,7 @@ export function ChatInterface({
                 streamError = data.error;
               }
             } catch {
-              // Ignore parse errors on stream boundary
+              // Ignore boundary parse errors
             }
           }
         }
@@ -387,19 +400,12 @@ export function ChatInterface({
     } catch (err) {
       console.error('Chat error:', err);
       const errMsg = err instanceof Error ? err.message : 'Unknown error';
-      const isOllamaDown =
-        errMsg.includes('Ollama is not running') ||
-        errMsg.includes('ECONNREFUSED') ||
-        errMsg.includes('11434');
-
       setMessages((prev) => [
         ...prev,
         {
           id: `error-${Date.now()}`,
           role: 'assistant',
-          content: isOllamaDown
-            ? `**Ollama is not running on your machine.**\n\nPlease open the **Ollama** application or run \`ollama serve\` in your terminal, then try again.`
-            : `Sorry, I encountered an error while processing that request: ${errMsg}`,
+          content: `Sorry, I encountered an error while processing that request: ${errMsg}`,
         },
       ]);
     } finally {
@@ -410,21 +416,12 @@ export function ChatInterface({
     }
   };
 
-  // Generate drafts for selected ideas
-  const handleGenerateDrafts = async (specificIdea?: IdeaContent) => {
+  const handleGenerateDrafts = async () => {
     const allIdeas = messages.flatMap((m) => m.ideas || []);
-    const targetIdeas = specificIdea
-      ? [specificIdea]
-      : allIdeas.filter((i) => selectedIdeaIds.includes(i.id));
-
+    const targetIdeas = allIdeas.filter((i) => selectedIdeaIds.includes(i.id));
     if (targetIdeas.length === 0) return;
 
-    if (specificIdea) {
-      setDraftingIdeaIds((prev) => ({ ...prev, [specificIdea.id]: true }));
-    } else {
-      setIsDraftingBatch(true);
-    }
-
+    setIsDraftingBatch(true);
     const currentSessionId = sessionId && sessionId !== 'new' ? sessionId : undefined;
 
     try {
@@ -453,463 +450,428 @@ export function ChatInterface({
         });
         setSelectedIdeaIds((prev) => prev.filter((id) => !targetIdeas.some((t) => t.id === id)));
         router.push('/drafts');
-      } else {
-        const data = await res.json().catch(() => ({}));
-        console.error('Draft generation failed:', data);
       }
     } catch (err) {
       console.error('Draft generation error:', err);
     } finally {
       setIsDraftingBatch(false);
-      if (specificIdea) {
-        setDraftingIdeaIds((prev) => ({ ...prev, [specificIdea.id]: false }));
-      }
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const platformDisplayNames: Record<Platform, string> = {
+    INSTAGRAM: 'Instagram',
+    LINKEDIN: 'LinkedIn',
+    PINTEREST: 'Pinterest',
+  };
+
+  const platformSummary = selectedPlatforms.map((p) => platformDisplayNames[p]).join(', ');
+  const setupSummary = `${platformSummary || 'No channel'} · live news ${searchNews ? 'on' : 'off'}`;
+
+  const allAvailableIdeas = messages.flatMap((m) => m.ideas || []);
+  const selectedCount = selectedIdeaIds.length;
+
   return (
-    <div className="flex flex-col h-full w-full bg-background overflow-hidden relative">
-      {/* Top Controls Bar */}
-      <div className="border-b border-border bg-surface px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground mr-1">
-            Target Channels:
-          </span>
-          {(['INSTAGRAM', 'LINKEDIN', 'PINTEREST'] as Platform[]).map((p) => {
-            const isSelected = selectedPlatforms.includes(p);
-            const cfg = PLATFORM_CONFIG[p];
-            return (
-              <button
-                key={p}
-                type="button"
-                onClick={() => togglePlatform(p)}
-                className={cn(
-                  'h-7 px-2.5 rounded-none border text-[11px] font-mono font-semibold inline-flex items-center gap-1.5 transition-all',
-                  isSelected
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/50'
-                )}
-              >
-                {cfg.icon}
-                <span>{cfg.name}</span>
-                {isSelected && <Check className="h-3 w-3" />}
-              </button>
-            );
-          })}
+    <div className="flex flex-col min-[1080px]:flex-row gap-6 w-full min-h-[520px] min-[1080px]:h-[calc(100vh-170px)]">
+      {/* Thread on Left (Flex 1) */}
+      <div className="flex-1 flex flex-col min-w-0 max-[1079px]:order-2 max-[1079px]:h-[70vh] h-full">
+        {/* Scrolling Message Area */}
+        <div className="flex-1 overflow-y-auto space-y-5 pr-1 pb-4">
+          {messages.length === 0 ? (
+            /* Empty State */
+            <div className="flex flex-col justify-center h-full py-8 max-w-2xl mx-auto">
+              <h2 className="font-sans font-black text-[clamp(28px,4vw,44px)] leading-tight tracking-tight text-foreground">
+                What should we post about?
+              </h2>
+              <p className="text-muted-foreground text-sm mt-1">
+                Ask for ideas, paste a news link, or start from a suggestion.
+              </p>
+
+              {/* 2x2 Suggestion Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-6">
+                {SUGGESTION_CARDS.map((card, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSendMessage(card.prompt)}
+                    className="border-2 border-border bg-card p-[14px] text-left transition-transform hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[5px_5px_0_0_var(--border)] group"
+                  >
+                    <h3 className="font-sans font-bold text-[15px] text-foreground leading-snug">
+                      {card.title}
+                    </h3>
+                    <p className="text-muted-foreground text-[13px] mt-1 leading-normal">
+                      {card.description}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            /* Messages List */
+            <>
+              {messages.map((message) => {
+                const isUser = message.role === 'user';
+                return (
+                  <div
+                    key={message.id}
+                    className={cn(
+                      'flex flex-col',
+                      isUser ? 'items-end' : 'items-start'
+                    )}
+                  >
+                    {/* Message Bubble */}
+                    <div
+                      className={cn(
+                        'p-4 text-sm leading-relaxed border-2 border-border',
+                        isUser
+                          ? 'bg-[#0B0B0C] text-[#F4F1EA] max-w-[78%]'
+                          : 'bg-card text-foreground w-full'
+                      )}
+                    >
+                      <div className="whitespace-pre-wrap font-sans text-sm">
+                        {message.content}
+                      </div>
+
+                      {/* Search Sources Display */}
+                      {message.searchSources && message.searchSources.length > 0 && (
+                        <div className="mt-3 p-3 border-2 border-border bg-muted/30 space-y-2">
+                          <div className="flex items-center justify-between text-xs font-mono font-bold">
+                            <span className="text-foreground">Verified Tavily Live Sources ({message.searchSources.length})</span>
+                            {message.searchQuery && (
+                              <span className="text-muted-foreground text-[11px] truncate max-w-[200px]">
+                                &quot;{message.searchQuery}&quot;
+                              </span>
+                            )}
+                          </div>
+                          {message.searchAnswer && (
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              {message.searchAnswer}
+                            </p>
+                          )}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                            {message.searchSources.map((source, sIdx) => {
+                              let hostname = '';
+                              try {
+                                hostname = new URL(source.url).hostname.replace('www.', '');
+                              } catch {
+                                hostname = 'Source';
+                              }
+                              return (
+                                <a
+                                  key={sIdx}
+                                  href={source.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-between gap-1 p-1.5 border border-border bg-card text-[11px] hover:text-primary truncate"
+                                >
+                                  <span className="truncate">{source.title || hostname}</span>
+                                  <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
+                                </a>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Assistant Ideas Selectable Cards */}
+                      {message.ideas && message.ideas.length > 0 && (
+                        <div className="mt-4 pt-3 border-t-2 border-border space-y-3">
+                          <div className="grid grid-cols-1 gap-2.5">
+                            {message.ideas.map((idea) => {
+                              const usage = getIdeaUsage(idea.title);
+                              const isUsed = Boolean(usage && (usage.isPublished || usage.hasDraft || usage.isScheduled));
+                              const isSelected = selectedIdeaIds.includes(idea.id);
+
+                              return (
+                                <div
+                                  key={idea.id}
+                                  onClick={() => !isUsed && toggleIdeaSelection(idea.id)}
+                                  className={cn(
+                                    'p-3.5 border-2 transition-all cursor-pointer select-none',
+                                    isSelected
+                                      ? 'border-[#1F3DFF] shadow-[4px_4px_0_0_#1F3DFF] bg-card'
+                                      : 'border-border bg-card hover:border-[#1F3DFF]/60'
+                                  )}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      disabled={isUsed}
+                                      onChange={() => toggleIdeaSelection(idea.id)}
+                                      className="h-5 w-5 rounded-none border-2 border-border accent-[#1F3DFF] cursor-pointer mt-0.5 shrink-0"
+                                      aria-label={`Select ${idea.title}`}
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="font-sans font-bold text-[15px] text-foreground leading-snug">
+                                        {idea.title}
+                                      </h4>
+                                      {idea.hook && (
+                                        <p className="text-muted-foreground text-xs mt-1 leading-normal">
+                                          Hook: {idea.hook}
+                                        </p>
+                                      )}
+                                      <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground font-mono">
+                                        <span>{idea.keyPoints?.length || 6} slides</span>
+                                        <span>•</span>
+                                        <span className="uppercase">{idea.platform}</span>
+                                        {isUsed && (
+                                          <span className="text-primary font-bold">• Already drafted</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Draft N Selected Button */}
+                          <div className="pt-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={handleGenerateDrafts}
+                              disabled={selectedCount === 0 || isDraftingBatch}
+                              className={cn(
+                                'font-sans font-bold text-xs px-4 py-2 border-2 border-border transition-all flex items-center gap-2',
+                                selectedCount > 0
+                                  ? 'bg-primary text-primary-foreground shadow-[3px_3px_0_0_var(--border)] hover:translate-x-[1px] hover:translate-y-[1px]'
+                                  : 'bg-primary text-primary-foreground opacity-45 cursor-not-allowed shadow-none'
+                              )}
+                            >
+                              {isDraftingBatch ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  <span>Drafting ideas...</span>
+                                </>
+                              ) : (
+                                <span>Draft {selectedCount} selected</span>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Streaming Content */}
+              {isGenerating && streamingContent && (
+                <div className="flex flex-col items-start w-full">
+                  <div className="p-4 border-2 border-border bg-card text-foreground w-full">
+                    {activeSearchSources.length > 0 && (
+                      <div className="mb-2 text-xs font-mono text-muted-foreground">
+                        Found {activeSearchSources.length} live articles for &quot;{activeSearchQuery}&quot;
+                      </div>
+                    )}
+                    <div className="whitespace-pre-wrap font-sans text-sm">
+                      {cleanAssistantContent(streamingContent)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {isGenerating && !streamingContent && (
+                <div className="flex items-center gap-2 p-3 border-2 border-border bg-card text-xs font-mono text-muted-foreground w-fit">
+                  <Loader2 className="h-4 w-4 animate-spin text-foreground" />
+                  <span>
+                    {activeSearchQuery
+                      ? `Searching Tavily for "${activeSearchQuery}"...`
+                      : 'Searching live tech news via Tavily...'}
+                  </span>
+                </div>
+              )}
+            </>
+          )}
+
+          <div ref={messagesEndRef} />
         </div>
 
-        <button
-          type="button"
-          onClick={() => setSearchNews((prev) => !prev)}
-          className={cn(
-            'h-7 px-2.5 rounded-none border text-[11px] font-mono inline-flex items-center gap-1.5 transition-all',
-            searchNews
-              ? 'bg-foreground text-primary border-foreground dark:bg-surface dark:border-primary dark:text-primary font-bold'
-              : 'bg-surface border-border text-muted-foreground hover:text-foreground'
-          )}
-        >
-          <Radio className={cn('h-3.5 w-3.5', searchNews ? 'animate-pulse text-primary' : 'text-muted-foreground')} />
-          <span>Live Tech News Search (Tavily): {searchNews ? 'ON' : 'OFF'}</span>
-        </button>
+        {/* Pinned Composer */}
+        <div className="shrink-0 pt-2">
+          <div className="border-2 border-border bg-card shadow-[5px_5px_0_0_var(--border)]">
+            <textarea
+              ref={textareaRef}
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isGenerating}
+              placeholder="Ask for ideas, paste a news link, or start from a suggestion..."
+              className="w-full min-h-[64px] p-3 text-sm font-sans bg-transparent text-foreground placeholder:text-muted-foreground resize-none border-none outline-none focus:outline-none focus:ring-0 leading-relaxed"
+              rows={2}
+            />
+
+            <div className="border-t-2 border-border px-3 py-2 flex items-center justify-between gap-3 bg-card">
+              <span className="font-mono text-xs text-muted-foreground truncate">
+                {setupSummary}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => handleSendMessage()}
+                disabled={isGenerating || !inputMessage.trim()}
+                className={cn(
+                  'bg-primary text-primary-foreground border-2 border-border font-sans font-bold text-xs px-4 py-1.5 inline-flex items-center gap-1.5 transition-transform shrink-0',
+                  inputMessage.trim() && !isGenerating
+                    ? 'shadow-[3px_3px_0_0_var(--border)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px]'
+                    : 'opacity-40 cursor-not-allowed shadow-none'
+                )}
+                aria-label="Send message"
+              >
+                {isGenerating ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="h-3.5 w-3.5" />
+                    <span>Send</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Messages Stream */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-        {messages.map((message) => {
-          const isUser = message.role === 'user';
-          return (
-            <div
-              key={message.id}
-              className={cn(
-                'flex flex-col',
-                isUser ? 'items-end' : 'items-start'
-              )}
-            >
-              {/* Message Header */}
-              <div className="flex items-center gap-2 mb-1 px-1">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                  {isUser ? 'You' : 'Regardless AI'}
-                </span>
-                {message.createdAt && (
-                  <span className="text-[10px] font-mono text-muted-foreground/60">
-                    {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                )}
-              </div>
+      {/* Right Rail (300px wide, stacked, gap 18px) */}
+      <div className="w-full min-[1080px]:w-[300px] shrink-0 flex flex-col gap-[18px] overflow-y-auto max-[1079px]:order-1">
+        {/* Panel 1: Channels */}
+        <div className="border-2 border-border bg-card p-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between pb-2 border-b-2 border-border">
+            <h3 className="font-sans font-bold text-base text-foreground">Channels</h3>
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              {selectedPlatforms.length} on
+            </span>
+          </div>
 
-              {/* Message Bubble */}
-              <div
-                className={cn(
-                  'max-w-[90%] md:max-w-[85%] rounded-none p-4 text-sm leading-relaxed border border-border shadow-[4px_4px_0_0_var(--border)]',
-                  isUser
-                    ? 'bg-[#0B0B0C] text-[#F4F1EA]'
-                    : 'bg-card text-foreground'
-                )}
-              >
-                <div className="whitespace-pre-wrap font-sans text-[13px] md:text-sm">
-                  {message.content}
-                </div>
+          <div className="flex flex-col gap-3">
+            {(
+              [
+                {
+                  id: 'INSTAGRAM' as Platform,
+                  name: 'Instagram',
+                  icon: <InstagramIcon className="h-4 w-4" />,
+                },
+                {
+                  id: 'LINKEDIN' as Platform,
+                  name: 'LinkedIn',
+                  icon: <LinkedinIcon className="h-4 w-4" />,
+                },
+                {
+                  id: 'PINTEREST' as Platform,
+                  name: 'Pinterest',
+                  icon: <span className="font-mono font-bold text-xs">P</span>,
+                },
+              ] as const
+            ).map((item) => {
+              const isConnected = effectiveConnected.includes(item.id);
+              const isOn = selectedPlatforms.includes(item.id);
 
-                {/* Verified Tavily Live News Sources Display */}
-                {message.searchSources && message.searchSources.length > 0 && (
-                  <div className="mt-3.5 mb-2 p-3 rounded-none border border-border dark:border-primary/40 bg-surface/70 space-y-2.5 font-mono">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/80 pb-2">
-                      <div className="flex items-center gap-1.5 text-xs text-foreground dark:text-primary font-bold">
-                        <Radio className="h-3.5 w-3.5 text-foreground dark:text-primary animate-pulse" />
-                        <span>VERIFIED WITH TAVILY LIVE TECH SEARCH</span>
-                      </div>
-                      {message.searchQuery && (
-                        <span className="text-[10px] text-muted-foreground bg-background px-2 py-0.5 border border-border">
-                          Query: &quot;{message.searchQuery}&quot;
+              return (
+                <div key={item.id} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-[30px] h-[30px] border-2 border-border bg-background flex items-center justify-center shrink-0">
+                      {item.icon}
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-sans font-bold text-sm text-foreground truncate">
+                        {item.name}
+                      </span>
+                      {isConnected ? (
+                        <span className="font-mono text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                          Connected
+                        </span>
+                      ) : (
+                        <span className="font-mono text-[11px] text-muted-foreground">
+                          Not connected
                         </span>
                       )}
                     </div>
-
-                    {message.searchAnswer && (
-                      <p className="text-xs text-foreground/90 leading-relaxed bg-background/60 p-2 border border-border/50">
-                        <strong className="text-foreground dark:text-primary font-bold">News Brief:</strong> {message.searchAnswer}
-                      </p>
-                    )}
-
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                        Live News Sources Analyzed ({message.searchSources.length}):
-                      </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                        {message.searchSources.map((source, sIdx) => {
-                          let hostname = '';
-                          try {
-                            hostname = new URL(source.url).hostname.replace('www.', '');
-                          } catch {
-                            hostname = 'Source';
-                          }
-                          return (
-                            <a
-                              key={sIdx}
-                              href={source.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-start justify-between gap-2 p-2 bg-background border border-border hover:border-foreground dark:hover:border-primary/60 transition-colors text-xs group"
-                            >
-                              <div className="space-y-0.5 min-w-0">
-                                <p className="font-semibold text-foreground group-hover:text-foreground dark:group-hover:text-primary transition-colors truncate text-[11px]">
-                                  {source.title}
-                                </p>
-                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                                  <span className="text-foreground/80 dark:text-primary font-mono font-semibold">{hostname}</span>
-                                  {source.publishedDate && <span>• {source.publishedDate}</span>}
-                                </div>
-                              </div>
-                              <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-foreground dark:group-hover:text-primary shrink-0 mt-0.5" />
-                            </a>
-                          );
-                        })}
-                      </div>
-                    </div>
                   </div>
-                )}
 
-                {/* Embedded In-Stream Post Ideas Group */}
-                {message.ideas && message.ideas.length > 0 && (() => {
-                  const availableIdeasInMessage = message.ideas.filter((i) => {
-                    const u = getIdeaUsage(i.title);
-                    return !u || (!u.isPublished && !u.hasDraft && !u.isScheduled);
-                  });
-
-                  const allAvailableSelected =
-                    availableIdeasInMessage.length > 0 &&
-                    availableIdeasInMessage.every((i) => selectedIdeaIds.includes(i.id));
-
-                  return (
-                    <div className="mt-4 pt-4 border-t border-border space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <Badge className="badge-idea font-mono text-[10px]">
-                            {message.ideas.length} IDEAS PROPOSED
-                          </Badge>
-                          <span className="text-xs font-mono text-muted-foreground">
-                            {availableIdeasInMessage.length > 0
-                              ? `${availableIdeasInMessage.length} available to draft`
-                              : 'All ideas in this batch have been used'}
-                          </span>
-                        </div>
-
-                        {/* Select available in this message */}
-                        {availableIdeasInMessage.length > 0 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              const ids = availableIdeasInMessage.map((i) => i.id);
-                              if (allAvailableSelected) {
-                                setSelectedIdeaIds((prev) => prev.filter((id) => !ids.includes(id)));
-                              } else {
-                                setSelectedIdeaIds((prev) => Array.from(new Set([...prev, ...ids])));
-                              }
-                            }}
-                            className="h-6 px-2 text-[10px] font-mono rounded-none border border-border"
-                          >
-                            {allAvailableSelected
-                              ? 'Deselect Available'
-                              : `Select Available (${availableIdeasInMessage.length})`}
-                          </Button>
-                        )}
-                      </div>
-
-                      {/* Idea Cards List */}
-                      <div className="grid grid-cols-1 gap-2.5">
-                        {message.ideas.map((idea) => {
-                          const usage = getIdeaUsage(idea.title);
-                          const isUsed = Boolean(usage && (usage.isPublished || usage.hasDraft || usage.isScheduled));
-                          const isSelected = !isUsed && selectedIdeaIds.includes(idea.id);
-                          const isDrafting = draftingIdeaIds[idea.id];
-
-                          return (
-                            <div
-                              key={idea.id}
-                              className={cn(
-                                'p-3.5 rounded-none border transition-all',
-                                isUsed
-                                  ? 'bg-surface/30 opacity-75 border-border/60 hover:opacity-85'
-                                  : isSelected
-                                  ? 'bg-surface border-primary ring-1 ring-primary'
-                                  : 'bg-background border-border hover:border-border/80'
-                              )}
-                            >
-                              <div className="flex items-start gap-3">
-                                {isUsed ? (
-                                  <div
-                                    className="mt-1 h-4 w-4 rounded-none border border-border/60 bg-surface flex items-center justify-center text-muted-foreground shrink-0 select-none cursor-default"
-                                    title={
-                                      usage?.isPublished
-                                        ? 'Post published live on social media'
-                                        : usage?.isScheduled
-                                        ? 'Post scheduled'
-                                        : 'Draft already created'
-                                    }
-                                  >
-                                    <Check className={cn('h-3 w-3', usage?.isPublished ? 'text-emerald-500' : 'text-primary')} />
-                                  </div>
-                                ) : (
-                                  <Checkbox
-                                    checked={isSelected}
-                                    onCheckedChange={() => toggleIdeaSelection(idea.id)}
-                                    className="mt-1 rounded-none border-border"
-                                  />
-                                )}
-
-                                <div className="flex-1 space-y-1.5 min-w-0">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <Badge variant="outline" className="text-[10px] font-mono rounded-none border-border">
-                                      {idea.platform}
-                                    </Badge>
-                                    <Badge variant="outline" className="text-[10px] font-mono rounded-none border-border bg-surface">
-                                      {idea.suggestedFormat}
-                                    </Badge>
-                                    {isUsed && usage?.isPublished && (
-                                      <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-mono rounded-none gap-1 font-semibold">
-                                        <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                                        Published Live
-                                      </Badge>
-                                    )}
-                                    {isUsed && !usage?.isPublished && usage?.isScheduled && (
-                                      <Badge className="bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 text-[10px] font-mono rounded-none gap-1 font-semibold">
-                                        <Clock className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                                        Scheduled
-                                      </Badge>
-                                    )}
-                                    {isUsed && !usage?.isPublished && !usage?.isScheduled && (
-                                      <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-[10px] font-mono rounded-none gap-1 font-semibold">
-                                        <Check className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                                        Draft Created
-                                      </Badge>
-                                    )}
-                                  </div>
-
-                                  <h4 className={cn('font-display font-bold text-sm', isUsed ? 'text-foreground/80' : 'text-foreground')}>
-                                    {idea.title}
-                                  </h4>
-
-                                  {idea.hook && (
-                                    <p className="text-xs font-mono text-muted-foreground">
-                                      <span className="text-foreground dark:text-primary font-bold">Hook:</span> {idea.hook}
-                                    </p>
-                                  )}
-
-                                  {idea.angle && (
-                                    <p className="text-xs font-mono text-muted-foreground/80">
-                                      <span className="text-foreground font-semibold">Angle:</span> {idea.angle}
-                                    </p>
-                                  )}
-
-                                  {idea.keyPoints && idea.keyPoints.length > 0 && (
-                                    <ul className="text-[11px] font-mono text-muted-foreground list-disc list-inside pt-1 space-y-0.5">
-                                      {idea.keyPoints.map((pt, idx) => (
-                                        <li key={idx} className="truncate">{pt}</li>
-                                      ))}
-                                    </ul>
-                                  )}
-                                </div>
-
-                                {isUsed ? (
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="ghost"
-                                    asChild
-                                    className="h-8 text-[11px] font-mono rounded-none border border-border/70 text-muted-foreground hover:text-foreground shrink-0 self-start bg-surface/50"
-                                  >
-                                    <Link href={usage?.isPublished ? '/history' : '/drafts'}>
-                                      <span>{usage?.isPublished ? 'View in History' : 'View in Drafts'}</span>
-                                      <ChevronRight className="h-3 w-3 ml-1" />
-                                    </Link>
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={isDrafting}
-                                    onClick={() => handleGenerateDrafts(idea)}
-                                    className="h-8 text-[11px] font-mono rounded-none border-border bg-surface hover:border-primary shrink-0 self-start"
-                                  >
-                                    {isDrafting ? (
-                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                    ) : (
-                                      <>
-                                        <Sparkles className="h-3.5 w-3.5 mr-1 text-foreground dark:text-primary" />
-                                        Draft
-                                      </>
-                                    )}
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Batch Draft Button */}
-                      {availableIdeasInMessage.length > 0 && (
-                        <div className="flex items-center justify-end pt-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            disabled={isDraftingBatch || selectedIdeaIds.length === 0}
-                            onClick={() => handleGenerateDrafts()}
-                            className="h-9 px-4 rounded-none font-mono text-xs font-bold bg-primary text-primary-foreground border border-primary hover:opacity-90"
-                          >
-                            {isDraftingBatch ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
-                                Generating Drafts...
-                              </>
-                            ) : (
-                              <>
-                                Create Drafts ({selectedIdeaIds.length} selected)
-                                <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-          );
-        })}
-
-        {/* Live Streaming Message Bubble */}
-        {isGenerating && streamingContent && (
-          <div className="flex flex-col items-start">
-            <div className="flex items-center gap-2 mb-1 px-1">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-foreground dark:text-primary flex items-center gap-1.5">
-                <Loader2 className="h-3 w-3 animate-spin text-foreground dark:text-primary" />
-                Regardless AI (Grounded with Tavily News)
-              </span>
-            </div>
-            <div className="max-w-[90%] md:max-w-[85%] rounded-none p-4 text-sm bg-card border border-border dark:border-primary/50 text-foreground">
-              {activeSearchSources.length > 0 && (
-                <div className="mb-3 p-2 bg-surface border border-border text-xs font-mono text-muted-foreground flex items-center gap-2">
-                  <Radio className="h-3.5 w-3.5 text-foreground dark:text-primary animate-pulse" />
-                  <span>Found {activeSearchSources.length} live articles for &quot;{activeSearchQuery}&quot;</span>
+                  {isConnected ? (
+                    <Toggle
+                      checked={isOn}
+                      onCheckedChange={() => togglePlatform(item.id)}
+                      aria-label={`Toggle ${item.name}`}
+                    />
+                  ) : (
+                    <Link
+                      href="/settings"
+                      className="border-2 border-border bg-card px-2.5 py-1 text-xs font-sans font-bold hover:bg-muted shrink-0 text-foreground"
+                    >
+                      Connect
+                    </Link>
+                  )}
                 </div>
-              )}
-              <div className="whitespace-pre-wrap font-sans text-sm">
-                {cleanAssistantContent(streamingContent)}
-              </div>
-            </div>
+              );
+            })}
           </div>
-        )}
+        </div>
 
-        {isGenerating && !streamingContent && (
-          <div className="flex items-center gap-2 p-3 rounded-none bg-surface border border-border text-xs font-mono text-muted-foreground w-fit">
-            <Loader2 className="h-4 w-4 animate-spin text-foreground dark:text-primary" />
-            <span>
-              {activeSearchQuery
-                ? `Searching Tavily for "${activeSearchQuery}"...`
-                : 'Querying Tavily for verified real-time tech news...'}
-            </span>
+        {/* Panel 2: Live Tech News Search */}
+        <div className="border-2 border-border bg-card p-4 flex items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <h3 className="font-sans font-bold text-sm text-foreground">Live tech news search</h3>
+            <p className="text-xs text-muted-foreground leading-snug">
+              Checks facts with Tavily before drafting.
+            </p>
           </div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Suggested Prompt Chips */}
-      <div className="px-4 py-2 border-t border-border bg-surface/50 overflow-x-auto flex items-center gap-2 shrink-0">
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider shrink-0">
-          Try:
-        </span>
-        {SUGGESTED_PROMPTS.map((prompt, idx) => (
-          <button
-            key={idx}
-            type="button"
-            disabled={isGenerating}
-            onClick={() => handleSendMessage(prompt)}
-            className="text-[11px] font-mono px-2.5 py-1 rounded-none border border-border bg-card hover:bg-muted text-foreground whitespace-nowrap transition-none shadow-none font-bold"
-          >
-            {prompt}
-          </button>
-        ))}
-      </div>
-
-      {/* Pinned Input Form */}
-      <div className="p-4 border-t border-border bg-card shrink-0">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSendMessage();
-          }}
-          className="flex items-center gap-2"
-        >
-          <input
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            disabled={isGenerating}
-            placeholder="Ask for ideas, paste a tech news URL, or say 'regenerate idea 2 with a punchier hook'..."
-            className="flex-1 h-11 px-3 text-xs font-mono bg-card border border-border rounded-none text-foreground placeholder:text-muted-foreground focus:outline-2 focus:outline-accent focus:outline-offset-2"
+          <Toggle
+            checked={searchNews}
+            onCheckedChange={setSearchNews}
+            aria-label="Toggle Live tech news search"
           />
-          <Button
-            type="submit"
-            disabled={isGenerating || !inputMessage.trim()}
-            className="h-11 px-5 rounded-none font-mono text-xs font-bold uppercase shrink-0"
-          >
-            {isGenerating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+        </div>
+
+        {/* Panel 3: Recent Chats with "+ New Chat" Button */}
+        <div className="border-2 border-border bg-card p-4 flex flex-col">
+          <div className="flex items-center justify-between pb-3 border-b-2 border-border">
+            <h3 className="font-sans font-bold text-base text-foreground">Recent chats</h3>
+            <button
+              type="button"
+              onClick={onCreateNewChat}
+              className="bg-primary text-primary-foreground border-2 border-border shadow-[3px_3px_0_0_var(--border)] font-sans font-bold text-[13px] px-[11px] py-[5px] inline-flex items-center gap-1.5 transition-transform hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_0_var(--border)]"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>New chat</span>
+            </button>
+          </div>
+
+          <div className="flex flex-col divide-y-2 divide-border pt-1">
+            {sessions.length === 0 ? (
+              <p className="text-xs font-mono text-muted-foreground py-3">No recent chats yet</p>
             ) : (
-              <>
-                <Send className="h-4 w-4 mr-1.5" />
-                Send
-              </>
+              sessions.map((s) => {
+                const isActive = s.id === sessionId;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => onSelectSession && onSelectSession(s.id)}
+                    className={cn(
+                      'py-2.5 text-left w-full flex items-center justify-between gap-2 transition-none hover:text-primary',
+                      isActive ? 'font-bold text-foreground' : 'text-foreground/80'
+                    )}
+                  >
+                    <span className="truncate text-xs font-sans">
+                      {s.title || 'Tech News Ideation'}
+                    </span>
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  </button>
+                );
+              })
             )}
-          </Button>
-        </form>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+

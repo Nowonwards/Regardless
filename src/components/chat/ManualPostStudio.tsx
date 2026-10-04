@@ -3,32 +3,19 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { format } from 'date-fns';
 import {
-  Instagram,
-  Linkedin,
+  Instagram as InstagramIcon,
+  Linkedin as LinkedinIcon,
   Plus,
   Trash2,
   Upload,
-  Clock,
-  Check,
-  Calendar as CalendarIcon,
-  Sparkles,
-  Send,
-  Loader2,
-  CheckCircle2,
   ChevronUp,
   ChevronDown,
-  Layers,
+  Check,
+  Loader2,
   AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Calendar } from '@/components/ui/calendar';
 import { Platform } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -40,29 +27,38 @@ interface SlideDraft {
   imageFileName?: string;
 }
 
-const PLATFORM_CONFIG: Record<Platform, { name: string; icon: React.ReactNode; formatLabel: string }> = {
-  INSTAGRAM: { name: 'Instagram', icon: <Instagram className="h-4 w-4" />, formatLabel: 'Carousel Deck / Post' },
-  LINKEDIN: { name: 'LinkedIn', icon: <Linkedin className="h-4 w-4" />, formatLabel: 'Article / Image Post' },
-  PINTEREST: {
-    name: 'Pinterest',
-    icon: (
-      <span className="inline-flex items-center justify-center w-4 h-4 border border-current font-mono font-bold text-[10px] leading-none">
-        P
-      </span>
-    ),
-    formatLabel: 'Idea Pin / Visual Card',
+const PLATFORM_CONFIG: {
+  id: Platform;
+  name: string;
+  desc: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    id: 'INSTAGRAM',
+    name: 'Instagram',
+    desc: 'Carousels and posts',
+    icon: <InstagramIcon className="h-5 w-5" />,
   },
-};
+  {
+    id: 'LINKEDIN',
+    name: 'LinkedIn',
+    desc: 'Articles and image posts',
+    icon: <LinkedinIcon className="h-5 w-5" />,
+  },
+  {
+    id: 'PINTEREST',
+    name: 'Pinterest',
+    desc: 'Idea pins and visual cards',
+    icon: <span className="font-mono font-bold text-sm">P</span>,
+  },
+];
 
 export function ManualPostStudio() {
   const router = useRouter();
 
   const [platform, setPlatform] = useState<Platform>('INSTAGRAM');
   const [title, setTitle] = useState('');
-  const [caption, setCaption] = useState('');
-  const [hashtagInput, setHashtagInput] = useState('');
-  const [hashtags, setHashtags] = useState<string[]>(['#tech', '#buildinpublic']);
-
+  const [activeSlideId, setActiveSlideId] = useState<string>('slide-1');
   const [slides, setSlides] = useState<SlideDraft[]>([
     {
       id: 'slide-1',
@@ -71,20 +67,6 @@ export function ManualPostStudio() {
     },
   ]);
 
-  // Mode: 'APPROVED' (Save to approved queue), 'SCHEDULED' (Pick date/time), 'PUBLISH_NOW'
-  const [publishMode, setPublishMode] = useState<'APPROVED' | 'SCHEDULED' | 'PUBLISH_NOW'>('APPROVED');
-
-  // Scheduling state
-  const [selectedDay, setSelectedDay] = useState<Date>(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
-    return tomorrow;
-  });
-  const [selectedHour, setSelectedHour] = useState('09');
-  const [selectedMinute, setSelectedMinute] = useState('00');
-  const [selectedPeriod, setSelectedPeriod] = useState<'AM' | 'PM'>('AM');
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingSlideId, setUploadingSlideId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -92,21 +74,34 @@ export function ManualPostStudio() {
 
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  // Slide management
+  const activeIndex = Math.max(
+    0,
+    slides.findIndex((s) => s.id === activeSlideId)
+  );
+  const activeSlide = slides[activeIndex] || slides[0];
+
   const addSlide = () => {
+    const newId = `slide-${Date.now()}`;
     setSlides((prev) => [
       ...prev,
       {
-        id: `slide-${Date.now()}`,
+        id: newId,
         headline: '',
         body: '',
       },
     ]);
+    setActiveSlideId(newId);
   };
 
   const removeSlide = (id: string) => {
     if (slides.length <= 1) return;
-    setSlides((prev) => prev.filter((s) => s.id !== id));
+    setSlides((prev) => {
+      const filtered = prev.filter((s) => s.id !== id);
+      if (activeSlideId === id) {
+        setActiveSlideId(filtered[0]?.id || '');
+      }
+      return filtered;
+    });
   };
 
   const updateSlide = (id: string, field: keyof SlideDraft, value: string) => {
@@ -128,8 +123,10 @@ export function ManualPostStudio() {
     });
   };
 
-  // Image upload handling
-  const handleImageFileChange = async (slideId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = async (
+    slideId: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -148,7 +145,6 @@ export function ManualPostStudio() {
         updateSlide(slideId, 'imageUrl', data.dataUrl || data.url);
         updateSlide(slideId, 'imageFileName', file.name);
       } else {
-        // Fallback to local FileReader base64
         const reader = new FileReader();
         reader.onload = (event) => {
           if (event.target?.result) {
@@ -158,8 +154,7 @@ export function ManualPostStudio() {
         };
         reader.readAsDataURL(file);
       }
-    } catch (err) {
-      console.warn('Upload API failed, reading as data URL:', err);
+    } catch {
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
@@ -173,70 +168,69 @@ export function ManualPostStudio() {
     }
   };
 
-  // Hashtags
-  const handleAddHashtag = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      const raw = hashtagInput.trim().replace(/^#/, '');
-      if (raw && !hashtags.includes(`#${raw}`)) {
-        setHashtags((prev) => [...prev, `#${raw}`]);
-        setHashtagInput('');
-      }
-    }
-  };
-
-  const removeHashtag = (tag: string) => {
-    setHashtags((prev) => prev.filter((t) => t !== tag));
-  };
-
-  // Quick preset dates
-  const applyQuickPreset = (daysFromNow: number, hour: number, minute: number) => {
-    const target = new Date();
-    target.setDate(target.getDate() + daysFromNow);
-    target.setHours(hour, minute, 0, 0);
-
-    setSelectedDay(target);
-    const period: 'AM' | 'PM' = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-    setSelectedHour(String(displayHour).padStart(2, '0'));
-    setSelectedMinute(String(minute).padStart(2, '0'));
-    setSelectedPeriod(period);
-  };
-
-  // Compute scheduled target date
-  const computeTargetDate = (): Date => {
-    const date = new Date(selectedDay);
-    let hour = parseInt(selectedHour, 10);
-    if (selectedPeriod === 'PM' && hour !== 12) hour += 12;
-    if (selectedPeriod === 'AM' && hour === 12) hour = 0;
-    date.setHours(hour, parseInt(selectedMinute, 10), 0, 0);
-    return date;
-  };
-
-  // Submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveDraft = async () => {
     setErrorMessage(null);
     setSuccessMessage(null);
 
     if (!title.trim()) {
-      setErrorMessage('Please enter a title for this post.');
+      setErrorMessage('Please enter a post title to name your draft.');
       return;
     }
 
     setIsSubmitting(true);
-
     try {
-      let scheduledAt: string | undefined = undefined;
-      if (publishMode === 'SCHEDULED') {
-        const targetDate = computeTargetDate();
-        if (targetDate <= new Date()) {
-          setErrorMessage('Scheduled time must be in the future.');
-          setIsSubmitting(false);
-          return;
-        }
-        scheduledAt = targetDate.toISOString();
+      const payload = {
+        title: title.trim(),
+        platform,
+        slides: slides.map((s, idx) => ({
+          id: s.id,
+          type: s.imageUrl ? 'mixed' : 'text',
+          imageUrl: s.imageUrl,
+          headline: s.headline.trim() || `Slide ${idx + 1}`,
+          body: s.body.trim(),
+          text: s.body.trim(),
+          order: idx + 1,
+        })),
+        caption: title.trim(),
+        hashtags: ['#tech', '#software'],
+      };
+
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save draft');
       }
+
+      setSuccessMessage('Draft saved successfully! Redirecting to drafts...');
+      setTimeout(() => {
+        router.push('/drafts');
+      }, 1000);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to save draft');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSchedule = async () => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    if (!title.trim()) {
+      setErrorMessage('Please enter a post title before scheduling.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + 1);
+      targetDate.setHours(9, 0, 0, 0);
 
       const payload = {
         title: title.trim(),
@@ -250,10 +244,9 @@ export function ManualPostStudio() {
           text: s.body.trim(),
           order: idx + 1,
         })),
-        caption: caption.trim() || title.trim(),
-        hashtags,
-        scheduledAt,
-        publishImmediately: publishMode === 'PUBLISH_NOW',
+        caption: title.trim(),
+        hashtags: ['#tech', '#software'],
+        scheduledAt: targetDate.toISOString(),
       };
 
       const res = await fetch('/api/posts', {
@@ -264,554 +257,399 @@ export function ManualPostStudio() {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to create post');
+        throw new Error(errorData.error || 'Failed to schedule post');
       }
 
-      const data = await res.json();
-      const createdStatus = data.post?.status;
-
-      setSuccessMessage(
-        createdStatus === 'SCHEDULED'
-          ? 'Post scheduled successfully! Appears in Kanban "Scheduled".'
-          : createdStatus === 'POSTED'
-          ? 'Post published live successfully!'
-          : 'Post saved as Approved! Appears in Kanban "Approved".'
-      );
-
+      setSuccessMessage('Post scheduled for tomorrow 9:00 AM! Redirecting...');
       setTimeout(() => {
-        router.push('/kanban');
-      }, 1200);
+        router.push('/calendar');
+      }, 1000);
     } catch (err: any) {
-      setErrorMessage(err.message || 'An unexpected error occurred');
+      setErrorMessage(err.message || 'Failed to schedule post');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 max-w-4xl mx-auto w-full">
-      {/* Studio Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-none border border-border bg-surface text-xs font-mono text-muted-foreground mb-1">
-            <Layers className="h-3.5 w-3.5 text-foreground dark:text-primary" />
-            <span>Manual Production Studio</span>
+    <div className="flex flex-col min-[1080px]:flex-row items-start gap-8 w-full pb-12">
+      {/* Editor on the Left */}
+      <div className="flex-1 w-full space-y-8 min-w-0">
+        {errorMessage && (
+          <div className="p-3 bg-destructive text-white border-2 border-border font-sans text-xs flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{errorMessage}</span>
           </div>
-          <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">Create Post from Scratch</h2>
-          <p className="text-xs font-mono text-muted-foreground mt-0.5">
-            Craft custom carousels or single posts with images, captions, and direct scheduling.
+        )}
+
+        {successMessage && (
+          <div className="p-3 bg-surface border-2 border-border text-foreground font-sans text-xs flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <span>{successMessage}</span>
+          </div>
+        )}
+
+        {/* Step 1: Platform */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2.5">
+            <span className="font-mono text-[11px] font-bold border-2 border-border px-1.5 py-0.5 bg-muted text-foreground">
+              01
+            </span>
+            <h2 className="font-sans font-bold text-lg text-foreground">Platform</h2>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            This sets the slide format and caption limits.
           </p>
-        </div>
 
-        <Badge variant="outline" className="text-xs font-mono h-7 px-3 rounded-none border border-border text-foreground dark:text-primary font-bold self-start sm:self-auto">
-          Skip Ideation Flow
-        </Badge>
-      </div>
-
-      {errorMessage && (
-        <div className="p-3.5 bg-destructive text-white border border-border font-mono text-xs rounded-none flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          <span>{errorMessage}</span>
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="p-3.5 bg-surface border border-border text-foreground font-mono text-xs rounded-none flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-accent" />
-          <span>{successMessage}</span>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Platform Selection */}
-        <div className="space-y-2">
-          <Label className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
-            1. Target Platform
-          </Label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {(['INSTAGRAM', 'LINKEDIN', 'PINTEREST'] as Platform[]).map((p) => {
-              const cfg = PLATFORM_CONFIG[p];
-              const isSelected = platform === p;
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            {PLATFORM_CONFIG.map((plat) => {
+              const isSelected = platform === plat.id;
               return (
                 <button
-                  key={p}
+                  key={plat.id}
                   type="button"
-                  onClick={() => setPlatform(p)}
+                  onClick={() => setPlatform(plat.id)}
                   className={cn(
-                    'p-3.5 rounded-none border text-left flex items-center justify-between transition-all duration-100',
+                    'relative border-2 text-left p-4 flex flex-col justify-between min-h-[120px] transition-all bg-card cursor-pointer select-none',
                     isSelected
-                      ? 'bg-surface border-border shadow-[4px_4px_0_0_var(--border)]'
-                      : 'bg-card border-border hover:shadow-[4px_4px_0_0_var(--border)] text-muted-foreground hover:text-foreground'
+                      ? 'border-primary shadow-[5px_5px_0_0_#FF4B1F] -translate-x-[2px] -translate-y-[2px]'
+                      : 'border-border hover:shadow-[3px_3px_0_0_var(--border)]'
                   )}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className={cn('p-2 rounded-none border border-border bg-background', isSelected && 'text-foreground dark:text-primary')}>
-                      {cfg.icon}
+                  {isSelected && (
+                    <div
+                      className="absolute top-2 right-2 w-[22px] h-[22px] bg-primary text-primary-foreground flex items-center justify-center select-none"
+                      aria-hidden="true"
+                    >
+                      <Check className="h-3.5 w-3.5 stroke-[3]" />
                     </div>
-                    <div>
-                      <p className="font-display font-bold text-sm text-foreground">{cfg.name}</p>
-                      <p className="text-[10px] font-mono text-muted-foreground">{cfg.formatLabel}</p>
+                  )}
+
+                  <div>
+                    <div className="w-[30px] h-[30px] border-2 border-border bg-background flex items-center justify-center mb-2 text-foreground">
+                      {plat.icon}
                     </div>
+                    <h3 className="font-sans font-bold text-sm text-foreground">
+                      {plat.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                      {plat.desc}
+                    </p>
                   </div>
-                  {isSelected && <Check className="h-4 w-4 text-foreground dark:text-primary" />}
+
+                  <span className="font-mono text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-3">
+                    Connected
+                  </span>
                 </button>
               );
             })}
           </div>
-        </div>
+        </section>
 
-        {/* Post Title */}
-        <div className="space-y-2">
-          <Label htmlFor="post-title" className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
-            2. Post Title / Internal Identifier
-          </Label>
-          <Input
-            id="post-title"
+        {/* Step 2: Post title */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2.5">
+            <span className="font-mono text-[11px] font-bold border-2 border-border px-1.5 py-0.5 bg-muted text-foreground">
+              02
+            </span>
+            <h2 className="font-sans font-bold text-lg text-foreground">Post title</h2>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            Only you see this. It names the draft.
+          </p>
+
+          <input
+            type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. 5 Docker Optimization Tricks for Next.js Developers"
-            className="h-10 text-sm font-mono rounded-none border border-border"
-            required
+            placeholder="e.g. 5 Architecture Patterns for High-Throughput APIs"
+            className="w-full h-11 px-3 border-2 border-border bg-card font-sans text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-accent"
           />
-        </div>
+        </section>
 
-        {/* Slides & Media Manager */}
-        <div className="space-y-3">
+        {/* Step 3: Slides */}
+        <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
-              3. Visual Slides & Images ({slides.length})
-            </Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addSlide}
-              className="h-8 text-xs font-mono font-bold rounded-none border border-border bg-surface hover:bg-muted gap-1.5"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add Slide
-            </Button>
-          </div>
-
-          <div className="space-y-4">
-            {slides.map((slide, index) => (
-              <Card key={slide.id} className="rounded-none border border-border bg-card shadow-[4px_4px_0_0_var(--border)]" elevation="none">
-                <CardHeader className="p-3 border-b border-border bg-surface flex flex-row items-center justify-between space-y-0">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px] font-mono font-bold rounded-none border border-border bg-background">
-                      SLIDE {String(index + 1).padStart(2, '0')}
-                    </Badge>
-                    <span className="text-xs font-mono text-muted-foreground truncate">
-                      {slide.headline || `Slide ${index + 1}`}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 rounded-none border border-border"
-                      disabled={index === 0}
-                      onClick={() => moveSlide(index, 'up')}
-                    >
-                      <ChevronUp className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 rounded-none border border-border"
-                      disabled={index === slides.length - 1}
-                      onClick={() => moveSlide(index, 'down')}
-                    >
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    </Button>
-                    {slides.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 rounded-none border border-destructive text-destructive hover:bg-surface"
-                        onClick={() => removeSlide(slide.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-
-                <CardContent className="p-4 grid grid-cols-1 md:grid-cols-[180px_1fr] gap-4 items-start">
-                  {/* Image Upload Column */}
-                  <div className="space-y-2">
-                    <div className="relative aspect-[4/5] bg-surface rounded-none border border-border flex flex-col items-center justify-center overflow-hidden group">
-                      {slide.imageUrl ? (
-                        <>
-                          <Image
-                            src={slide.imageUrl}
-                            alt={slide.headline || `Slide ${index + 1}`}
-                            fill
-                            unoptimized
-                            className="object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2 text-center">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              className="h-7 text-[10px] font-mono rounded-none border border-border"
-                              onClick={() => fileInputRefs.current[slide.id]?.click()}
-                            >
-                              Replace Image
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="destructive"
-                              className="h-7 text-[10px] font-mono rounded-none border border-destructive"
-                              onClick={() => updateSlide(slide.id, 'imageUrl', '')}
-                            >
-                              Remove
-                            </Button>
-                          </div>
-                        </>
-                      ) : (
-                        <div
-                          className="flex flex-col items-center justify-center p-3 text-center cursor-pointer h-full w-full hover:bg-muted/30 transition-colors"
-                          onClick={() => fileInputRefs.current[slide.id]?.click()}
-                        >
-                          {uploadingSlideId === slide.id ? (
-                            <Loader2 className="h-6 w-6 animate-spin text-foreground dark:text-primary" />
-                          ) : (
-                            <>
-                              <Upload className="h-6 w-6 text-muted-foreground mb-1.5" />
-                              <span className="text-[11px] font-mono font-bold text-foreground">Upload Image</span>
-                              <span className="text-[9px] font-mono text-muted-foreground mt-0.5">PNG, JPG, WebP</span>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    <input
-                      type="file"
-                      ref={(el) => {
-                        fileInputRefs.current[slide.id] = el;
-                      }}
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e) => handleImageFileChange(slide.id, e)}
-                    />
-
-                    {slide.imageFileName && (
-                      <p className="text-[10px] font-mono text-muted-foreground truncate">
-                        {slide.imageFileName}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Text Details Column */}
-                  <div className="space-y-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-mono font-bold text-foreground">
-                        Slide Headline / Hook
-                      </Label>
-                      <Input
-                        value={slide.headline}
-                        onChange={(e) => updateSlide(slide.id, 'headline', e.target.value)}
-                        placeholder="e.g. 01. Build Multi-Stage Docker Images"
-                        className="h-9 text-xs font-mono rounded-none border border-border"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-mono font-bold text-foreground">
-                        Slide Body / Insight (Optional)
-                      </Label>
-                      <Textarea
-                        rows={3}
-                        value={slide.body}
-                        onChange={(e) => updateSlide(slide.id, 'body', e.target.value)}
-                        placeholder="Explain the technical detail, code snippet, or takeaway for this slide..."
-                        className="text-xs font-mono rounded-none border border-border resize-y bg-background"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Caption & Hashtags */}
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="post-caption" className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                4. Post Caption
-              </Label>
-              <span className="text-[11px] font-mono text-muted-foreground">
-                {caption.length} characters
+            <div className="flex items-center gap-2.5">
+              <span className="font-mono text-[11px] font-bold border-2 border-border px-1.5 py-0.5 bg-muted text-foreground">
+                03
+              </span>
+              <h2 className="font-sans font-bold text-lg text-foreground">Slides</h2>
+              <span className="font-mono text-xs text-muted-foreground ml-1">
+                {String(slides.length).padStart(2, '0')} slides
               </span>
             </div>
-            <Textarea
-              id="post-caption"
-              rows={5}
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              placeholder="Write the full post caption here..."
-              className="text-xs font-mono rounded-none border border-border resize-y bg-background"
-            />
+
+            <button
+              type="button"
+              onClick={addSlide}
+              className="border-2 border-border bg-card text-foreground shadow-[2px_2px_0_0_var(--border)] font-sans font-bold text-xs px-3 py-1.5 inline-flex items-center gap-1.5 hover:bg-muted active:translate-x-[1px] active:translate-y-[1px]"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Add slide</span>
+            </button>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
-              5. Hashtags
-            </Label>
-            <div className="flex flex-wrap gap-1.5 p-2.5 bg-surface border border-border rounded-none">
-              {hashtags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="secondary"
-                  className="text-xs font-mono rounded-none border border-border flex items-center gap-1"
+          {/* Slides List */}
+          <div className="space-y-3">
+            {slides.map((slide, index) => {
+              const isExpanded = slide.id === activeSlideId;
+              const slideNumber = String(index + 1).padStart(2, '0');
+
+              return (
+                <div
+                  key={slide.id}
+                  className={cn(
+                    'border-2 transition-all bg-card',
+                    isExpanded
+                      ? 'border-[#1F3DFF] shadow-[5px_5px_0_0_#1F3DFF]'
+                      : 'border-border'
+                  )}
                 >
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => removeHashtag(tag)}
-                    className="hover:text-destructive transition-colors ml-0.5"
+                  {/* Collapsible Header */}
+                  <div
+                    onClick={() => setActiveSlideId(slide.id)}
+                    className={cn(
+                      'p-3 flex items-center justify-between gap-3 cursor-pointer select-none bg-card',
+                      isExpanded && 'border-b-2 border-border'
+                    )}
                   >
-                    ×
-                  </button>
-                </Badge>
-              ))}
-              <input
-                type="text"
-                value={hashtagInput}
-                onChange={(e) => setHashtagInput(e.target.value)}
-                onKeyDown={handleAddHashtag}
-                placeholder="Type tag & press Enter..."
-                className="bg-transparent text-xs font-mono outline-none px-1 py-0.5 text-foreground placeholder:text-muted-foreground flex-1 min-w-[140px]"
-              />
-            </div>
-          </div>
-        </div>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="font-mono text-xs font-bold text-muted-foreground shrink-0">
+                        {slideNumber}
+                      </span>
+                      <span className="font-sans font-bold text-sm text-foreground truncate">
+                        {slide.headline.trim() || 'Untitled slide'}
+                      </span>
+                    </div>
 
-        {/* Scheduling & Publish Strategy */}
-        <div className="space-y-3 pt-2 border-t border-border">
-          <Label className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
-            6. Publishing & Scheduling Strategy
-          </Label>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <button
-              type="button"
-              onClick={() => setPublishMode('APPROVED')}
-              className={cn(
-                'p-3.5 rounded-none border text-left transition-all duration-100',
-                publishMode === 'APPROVED'
-                  ? 'bg-surface border-border shadow-[4px_4px_0_0_var(--border)]'
-                  : 'bg-card border-border hover:shadow-[4px_4px_0_0_var(--border)] text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-mono font-bold text-xs text-foreground">Save to Approved</span>
-                <Badge className="badge-approved border">Approved</Badge>
-              </div>
-              <p className="text-[11px] font-mono text-muted-foreground leading-relaxed">
-                Appears in Kanban &quot;Approved&quot; column ready for manual queueing.
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setPublishMode('SCHEDULED')}
-              className={cn(
-                'p-3.5 rounded-none border text-left transition-all duration-100',
-                publishMode === 'SCHEDULED'
-                  ? 'bg-surface border-border shadow-[4px_4px_0_0_var(--border)]'
-                  : 'bg-card border-border hover:shadow-[4px_4px_0_0_var(--border)] text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-mono font-bold text-xs text-foreground">Schedule Date & Time</span>
-                <Badge className="badge-scheduled border">Scheduled</Badge>
-              </div>
-              <p className="text-[11px] font-mono text-muted-foreground leading-relaxed">
-                Appears in Kanban &quot;Scheduled&quot; and publishes automatically via cron.
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setPublishMode('PUBLISH_NOW')}
-              className={cn(
-                'p-3.5 rounded-none border text-left transition-all duration-100',
-                publishMode === 'PUBLISH_NOW'
-                  ? 'bg-surface border-border shadow-[4px_4px_0_0_var(--border)]'
-                  : 'bg-card border-border hover:shadow-[4px_4px_0_0_var(--border)] text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-mono font-bold text-xs text-foreground">Publish Immediately</span>
-                <Badge className="badge-posted border">Live Now</Badge>
-              </div>
-              <p className="text-[11px] font-mono text-muted-foreground leading-relaxed">
-                Directly pushes to live social profile via Composio right now.
-              </p>
-            </button>
-          </div>
-
-          {/* Date & Time Picker when Scheduled */}
-          {publishMode === 'SCHEDULED' && (
-            <div className="p-4 bg-surface border border-border rounded-none space-y-4 animate-in fade-in-50">
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => applyQuickPreset(1, 9, 0)}
-                  className="h-8 text-xs font-mono rounded-none border border-border bg-background hover:bg-muted"
-                >
-                  Tomorrow 9:00 AM
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => applyQuickPreset(1, 18, 0)}
-                  className="h-8 text-xs font-mono rounded-none border border-border bg-background hover:bg-muted"
-                >
-                  Tomorrow 6:00 PM
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => applyQuickPreset(2, 11, 30)}
-                  className="h-8 text-xs font-mono rounded-none border border-border bg-background hover:bg-muted"
-                >
-                  In 2 Days (11:30 AM)
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 items-start">
-                <div className="rounded-none border border-border bg-background p-1 flex justify-center">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDay}
-                    onSelect={(d) => d && setSelectedDay(d)}
-                    disabled={{ before: new Date() }}
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <Label className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 text-foreground dark:text-primary" />
-                    Select Publishing Time
-                  </Label>
-
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={selectedHour}
-                      onChange={(e) => setSelectedHour(e.target.value)}
-                      className="w-24 h-10 px-3 rounded-none border border-border bg-background text-xs font-mono font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                    {/* Action Icon Buttons */}
+                    <div
+                      className="flex items-center gap-1 shrink-0"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map((h) => (
-                        <option key={h} value={h}>
-                          {h}
-                        </option>
-                      ))}
-                    </select>
-
-                    <span className="font-mono font-bold text-muted-foreground">:</span>
-
-                    <select
-                      value={selectedMinute}
-                      onChange={(e) => setSelectedMinute(e.target.value)}
-                      className="w-24 h-10 px-3 rounded-none border border-border bg-background text-xs font-mono font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
-                    >
-                      {['00', '15', '30', '45'].map((m) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-
-                    <div className="flex rounded-none border border-border bg-background p-0.5 h-10">
                       <button
                         type="button"
-                        onClick={() => setSelectedPeriod('AM')}
-                        className={cn(
-                          'px-3 py-1 text-xs font-mono font-bold rounded-none',
-                          selectedPeriod === 'AM' ? 'bg-primary text-primary-foreground border border-border' : 'text-muted-foreground'
-                        )}
+                        disabled={index === 0}
+                        onClick={() => moveSlide(index, 'up')}
+                        aria-label={`Move slide ${index + 1} up`}
+                        className="w-[30px] h-[30px] border-2 border-border bg-background flex items-center justify-center text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
                       >
-                        AM
+                        <ChevronUp className="h-4 w-4" />
                       </button>
+
                       <button
                         type="button"
-                        onClick={() => setSelectedPeriod('PM')}
-                        className={cn(
-                          'px-3 py-1 text-xs font-mono font-bold rounded-none',
-                          selectedPeriod === 'PM' ? 'bg-primary text-primary-foreground border border-border' : 'text-muted-foreground'
-                        )}
+                        disabled={index === slides.length - 1}
+                        onClick={() => moveSlide(index, 'down')}
+                        aria-label={`Move slide ${index + 1} down`}
+                        className="w-[30px] h-[30px] border-2 border-border bg-background flex items-center justify-center text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
                       >
-                        PM
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={slides.length <= 1}
+                        onClick={() => removeSlide(slide.id)}
+                        aria-label={`Delete slide ${index + 1}`}
+                        className="w-[30px] h-[30px] border-2 border-border bg-background flex items-center justify-center text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-background border border-border rounded-none text-xs font-mono">
-                    <span className="text-muted-foreground">Target Date: </span>
-                    <span className="font-bold text-foreground">
-                      {format(computeTargetDate(), 'EEEE, MMMM d, yyyy • h:mm a')}
-                    </span>
-                  </div>
+                  {/* Expanded Body */}
+                  {isExpanded && (
+                    <div className="p-4 grid grid-cols-1 sm:grid-cols-[150px_1fr] gap-4">
+                      {/* Left: Dashed 4:5 Upload Zone */}
+                      <div className="relative">
+                        <input
+                          type="file"
+                          ref={(el) => {
+                            fileInputRefs.current[slide.id] = el;
+                          }}
+                          accept="image/png,image/jpeg,image/webp"
+                          className="hidden"
+                          onChange={(e) => handleImageFileChange(slide.id, e)}
+                        />
+
+                        {slide.imageUrl ? (
+                          <div className="relative w-full aspect-[4/5] border-2 border-border overflow-hidden bg-black group">
+                            <Image
+                              src={slide.imageUrl}
+                              alt="Slide image"
+                              fill
+                              unoptimized
+                              className="object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center p-2 text-center transition-opacity">
+                              <button
+                                type="button"
+                                onClick={() => fileInputRefs.current[slide.id]?.click()}
+                                className="border border-white bg-white/20 text-white font-mono text-[10px] px-2 py-1 mb-1"
+                              >
+                                Replace
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => updateSlide(slide.id, 'imageUrl', '')}
+                                className="border border-white bg-destructive text-white font-mono text-[10px] px-2 py-1"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => fileInputRefs.current[slide.id]?.click()}
+                            className="w-full aspect-[4/5] border-2 border-dashed border-border bg-muted/20 hover:bg-muted/40 flex flex-col items-center justify-center p-3 text-center transition-colors select-none"
+                          >
+                            {uploadingSlideId === slide.id ? (
+                              <Loader2 className="h-5 w-5 animate-spin text-foreground mb-1" />
+                            ) : (
+                              <Upload className="h-5 w-5 text-muted-foreground mb-1" />
+                            )}
+                            <span className="font-sans font-bold text-[13px] text-foreground">
+                              Upload image
+                            </span>
+                            <span className="font-mono text-[10px] text-muted-foreground mt-0.5">
+                              PNG, JPG or WebP
+                            </span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Right: Headline & Body */}
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block font-mono text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                            Headline
+                          </label>
+                          <input
+                            type="text"
+                            value={slide.headline}
+                            onChange={(e) => updateSlide(slide.id, 'headline', e.target.value)}
+                            placeholder="e.g. Stop Using Microservices For Everything"
+                            className="w-full h-10 px-3 border-2 border-border bg-card font-sans text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-accent"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-mono text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                            Body (optional)
+                          </label>
+                          <textarea
+                            value={slide.body}
+                            onChange={(e) => updateSlide(slide.id, 'body', e.target.value)}
+                            placeholder="Explain the core takeaway, provide code snippets, or list bullet points..."
+                            rows={3}
+                            className="w-full min-h-[96px] p-2.5 border-2 border-border bg-card font-sans text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-accent resize-y"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+
+      {/* Sticky Preview Column on Right (340px, top 20px) */}
+      <div className="w-full min-[1080px]:w-[340px] shrink-0 min-[1080px]:sticky min-[1080px]:top-[20px]">
+        <div className="border-2 border-border bg-card p-4 shadow-[4px_4px_0_0_var(--border)] h-auto">
+          {/* Label row */}
+          <div className="flex items-center justify-between pb-2 border-b-2 border-border">
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              Live preview
+            </span>
+            <span className="font-mono text-[11px] font-bold uppercase text-foreground">
+              {platform}
+            </span>
+          </div>
+
+          {/* Preview frame (max 280px wide, centered, 4:5 slide about 350px tall) */}
+          <div className="max-w-[280px] w-full mx-auto border-2 border-border bg-[#0B0B0C] text-white mt-3 overflow-hidden shadow-[4px_4px_0_0_var(--border)]">
+            {/* Header (26px orange square avatar, regardless.dev) */}
+            <div className="h-9 px-3 border-b border-zinc-800 flex items-center gap-2 bg-[#0B0B0C]">
+              <div className="w-[26px] h-[26px] bg-[#FF4B1F] flex items-center justify-center font-bold text-xs text-black shrink-0 font-sans">
+                R
+              </div>
+              <span className="font-sans font-bold text-xs text-zinc-100 truncate">
+                regardless.dev
+              </span>
+            </div>
+
+            {/* The 4:5 Slide (~350px tall at 280px width) */}
+            <div className="w-full aspect-[4/5] bg-[#12141C] p-4 flex flex-col justify-between relative select-none overflow-hidden text-left">
+              {/* Top Accent & Counter */}
+              <div className="flex items-center justify-between w-full">
+                <div className="w-8 h-1 bg-[#FF4B1F]" />
+                <span className="font-mono text-[10px] text-zinc-400 bg-white/10 px-1.5 py-0.5 border border-white/20">
+                  {String(activeIndex + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
+                </span>
+              </div>
+
+              {/* Slide Content */}
+              <div className="my-auto space-y-2">
+                <h3 className="font-sans font-bold text-base leading-snug text-white">
+                  {activeSlide.headline.trim() || 'Your headline appears here'}
+                </h3>
+                {activeSlide.body.trim() && (
+                  <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap line-clamp-6">
+                    {activeSlide.body}
+                  </p>
+                )}
+              </div>
+
+              {/* Slide Footer */}
+              <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px] font-mono text-zinc-400">
+                <div className="flex items-center gap-1.5">
+                  {slides.map((s, idx) => (
+                    <span
+                      key={s.id}
+                      className={cn(
+                        'w-2 h-2 border border-zinc-600 block',
+                        idx === activeIndex
+                          ? 'bg-[#1F3DFF] border-[#1F3DFF]'
+                          : 'bg-transparent'
+                      )}
+                    />
+                  ))}
+                </div>
+                <span>
+                  {activeIndex + 1} of {slides.length}
+                </span>
               </div>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Action Button */}
-        <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className={cn(
-              'h-11 px-8 rounded-none font-mono font-bold uppercase tracking-wider text-xs transition-all duration-100 border border-border hover:shadow-[4px_4px_0_0_var(--border)] active:translate-x-[2px] active:translate-y-[2px]',
-              publishMode === 'PUBLISH_NOW'
-                ? 'bg-foreground text-background'
-                : publishMode === 'SCHEDULED'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-accent text-accent-foreground'
-            )}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Creating Post...
-              </>
-            ) : publishMode === 'PUBLISH_NOW' ? (
-              <>
-                <Send className="h-4 w-4 mr-2" />
-                Publish Live to {PLATFORM_CONFIG[platform].name}
-              </>
-            ) : publishMode === 'SCHEDULED' ? (
-              <>
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                Schedule Post
-              </>
-            ) : (
-              <>
-                <Check className="h-4 w-4 mr-2" />
-                Save as Approved Post
-              </>
-            )}
-          </Button>
+          {/* 2-column button grid (gap 12px, max 280px, centered, padding 9px 8px, 4px right/bottom padding for hard shadows) */}
+          <div className="grid grid-cols-2 gap-3 max-w-[280px] w-full mx-auto mt-4 pr-1 pb-1">
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleSaveDraft}
+              className="min-w-0 whitespace-nowrap px-2 py-[9px] text-xs font-sans font-bold border-2 border-border bg-card text-foreground shadow-[3px_3px_0_0_var(--border)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Save draft
+            </button>
+
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleSchedule}
+              className="min-w-0 whitespace-nowrap px-2 py-[9px] text-xs font-sans font-bold border-2 border-border bg-primary text-primary-foreground shadow-[3px_3px_0_0_var(--border)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Schedule
+            </button>
+          </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
