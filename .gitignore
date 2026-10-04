@@ -43,6 +43,8 @@ lerna-debug.log*
 *.pem
 Thumbs.db
 scratch/
+public/reels/*
+!public/reels/.gitkeep
 
 
 # IDE & Editor files

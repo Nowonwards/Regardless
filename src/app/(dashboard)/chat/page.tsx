@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Select,
@@ -14,7 +15,7 @@ import { ChatInterface } from '@/components/chat/ChatInterface';
 import { NewsIdeationForm } from '@/components/chat/NewsIdeationForm';
 import { ManualPostStudio } from '@/components/chat/ManualPostStudio';
 import { Platform, IdeaContent } from '@/types';
-import { Sparkles, Layers, RadioTower, Clock, Plus } from 'lucide-react';
+import { Sparkles, Layers, RadioTower, Clock, Plus, Loader2 } from 'lucide-react';
 
 interface ChatSessionSummary {
   id: string;
@@ -25,9 +26,13 @@ interface ChatSessionSummary {
   ideas?: IdeaContent[];
 }
 
-export default function ChatPage() {
+function ChatPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const querySessionId = searchParams.get('sessionId');
+
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
-  const [sessionId, setSessionId] = useState<string>('new');
+  const [sessionId, setSessionId] = useState<string>(querySessionId || 'new');
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [connectedPlatforms, setConnectedPlatforms] = useState<Platform[]>([]);
   const [isLoadingPlatforms, setIsLoadingPlatforms] = useState(true);
@@ -63,13 +68,11 @@ export default function ChatPage() {
         const fetchedSessions: ChatSessionSummary[] = data.sessions || [];
         setSessions(fetchedSessions);
 
-        if (preferSessionId === 'new') {
-          setSessionId('new');
-        } else if (preferSessionId && fetchedSessions.some((s) => s.id === preferSessionId)) {
-          setSessionId(preferSessionId);
-        } else if (fetchedSessions.length > 0) {
-          setSessionId(fetchedSessions[0].id);
+        const targetId = preferSessionId || querySessionId;
+        if (targetId && targetId !== 'new' && fetchedSessions.some((s) => s.id === targetId)) {
+          setSessionId(targetId);
         } else {
+          // Opening or refreshing /chat should open a brand-new chat interface
           setSessionId('new');
         }
       }
@@ -82,10 +85,28 @@ export default function ChatPage() {
     fetchSessions();
   }, []);
 
+  // Sync state when URL query parameter changes
+  useEffect(() => {
+    if (querySessionId && sessions.some((s) => s.id === querySessionId)) {
+      setSessionId(querySessionId);
+    } else if (!querySessionId) {
+      setSessionId('new');
+    }
+  }, [querySessionId, sessions]);
+
+  const handleSelectSession = (val: string) => {
+    setSessionId(val);
+    if (val === 'new') {
+      router.push('/chat');
+    } else {
+      router.push(`/chat?sessionId=${val}`);
+    }
+  };
+
   const handleCreateNewChat = () => {
-    // Lazy creation: start fresh in-memory session without creating empty DB record
     setSessionId('new');
     setActiveTab('chat');
+    router.push('/chat');
   };
 
   const handleIdeasGenerated = async (newIdeas: IdeaContent[]) => {
@@ -106,8 +127,14 @@ export default function ChatPage() {
   };
 
   const handleSessionUpdate = (_title?: string, newSessionId?: string) => {
-    // Refresh sessions list and stay locked to the current or newly initialized session
-    fetchSessions(newSessionId || sessionId);
+    const targetSessionId = newSessionId || sessionId;
+    if (targetSessionId && targetSessionId !== 'new') {
+      setSessionId(targetSessionId);
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', `/chat?sessionId=${targetSessionId}`);
+      }
+    }
+    fetchSessions(targetSessionId !== 'new' ? targetSessionId : undefined);
   };
 
   const formatSessionTimestamp = (dateStr: string | Date): string => {
@@ -132,27 +159,27 @@ export default function ChatPage() {
     <Tabs
       value={activeTab}
       onValueChange={(v) => setActiveTab(v as 'chat' | 'news-form' | 'manual')}
-      className="h-[calc(100vh-5.5rem)] flex flex-col w-full overflow-hidden rounded-none border border-border bg-background"
+      className="h-[calc(100vh-5.5rem)] flex flex-col w-full overflow-hidden rounded-none border border-border bg-background shadow-[4px_4px_0_0_#0B0B0C] dark:shadow-[4px_4px_0_0_#F4F1EA]"
     >
-      <div className="border-b border-border px-4 py-2.5 bg-surface shrink-0 flex flex-wrap items-center justify-between gap-3">
+      <div className="border-b border-border px-4 py-2.5 bg-card shrink-0 flex flex-wrap items-center justify-between gap-3">
         <TabsList className="grid h-9 w-full max-w-xl grid-cols-3 rounded-none border border-border bg-background p-0.5">
           <TabsTrigger
             value="chat"
-            className="font-mono text-xs font-bold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-none gap-1.5"
+            className="font-mono text-xs font-bold uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-none gap-1.5"
           >
             <Sparkles className="h-3.5 w-3.5" />
             AI Chat & Ideation
           </TabsTrigger>
           <TabsTrigger
             value="news-form"
-            className="font-mono text-xs font-bold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-none gap-1.5"
+            className="font-mono text-xs font-bold uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-none gap-1.5"
           >
             <RadioTower className="h-3.5 w-3.5" />
             News Ideation Form
           </TabsTrigger>
           <TabsTrigger
             value="manual"
-            className="font-mono text-xs font-bold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-none gap-1.5"
+            className="font-mono text-xs font-bold uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-none gap-1.5"
           >
             <Layers className="h-3.5 w-3.5" />
             Manual Post Studio
@@ -163,32 +190,32 @@ export default function ChatPage() {
         {activeTab === 'chat' && (
           <div className="flex items-center gap-2 shrink-0">
             <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-foreground dark:text-primary shrink-0" />
-              <Select value={sessionId} onValueChange={(val) => setSessionId(val)}>
-                <SelectTrigger className="h-8 min-w-[220px] max-w-[320px] rounded-none border-border bg-background text-[11px] font-mono">
+              <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+              <Select value={sessionId} onValueChange={handleSelectSession}>
+                <SelectTrigger className="h-8 min-w-[220px] max-w-[320px] rounded-none border border-border bg-background text-[11px] font-mono">
                   <div className="flex items-center gap-1.5 truncate">
                     {sessionId === 'new' || !currentSession ? (
-                      <span className="font-semibold text-foreground dark:text-primary">New Chat (Draft)</span>
+                      <span className="font-bold text-foreground uppercase tracking-wider">New Chat (Draft)</span>
                     ) : (
                       <div className="flex items-center gap-1.5 truncate">
-                        <span className="font-semibold text-foreground truncate">
+                        <span className="font-bold text-foreground truncate">
                           {currentSession.title || 'Tech News Ideation'}
                         </span>
-                        <span className="text-[10px] text-muted-foreground shrink-0">
+                        <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
                           • {formatSessionTimestamp(currentSession.updatedAt || currentSession.createdAt)}
                         </span>
                       </div>
                     )}
                   </div>
                 </SelectTrigger>
-                <SelectContent className="rounded-none border-border bg-card max-h-80 w-[340px]">
-                  <SelectItem value="new" className="text-[11px] font-mono cursor-pointer py-2 border-b border-border/50">
-                    <div className="flex items-center justify-between gap-2 w-full text-foreground dark:text-primary">
-                      <span className="font-bold flex items-center gap-1">
+                <SelectContent className="rounded-none border border-border bg-card max-h-80 w-[340px] shadow-[4px_4px_0_0_#0B0B0C] dark:shadow-[4px_4px_0_0_#F4F1EA]">
+                  <SelectItem value="new" className="text-[11px] font-mono cursor-pointer py-2 border-b border-border">
+                    <div className="flex items-center justify-between gap-2 w-full text-foreground">
+                      <span className="font-bold uppercase tracking-wider flex items-center gap-1 text-primary">
                         <Plus className="h-3 w-3" />
                         Start New Chat
                       </span>
-                      <span className="text-[9px] text-muted-foreground">Unsaved draft</span>
+                      <span className="text-[9px] text-muted-foreground uppercase">Unsaved draft</span>
                     </div>
                   </SelectItem>
 
@@ -199,11 +226,11 @@ export default function ChatPage() {
                           <span className="font-semibold text-foreground truncate max-w-[210px]">
                             {s.title || 'Tech News Ideation'}
                           </span>
-                          <span className="text-[9px] text-muted-foreground bg-surface px-1.5 py-0.2 border border-border/80 shrink-0">
+                          <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.2 border border-border shrink-0 font-mono font-bold">
                             {s.messages?.filter((m) => m.role === 'user').length || 1} msgs
                           </span>
                         </div>
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-[10px] text-muted-foreground font-mono">
                           {formatSessionTimestamp(s.updatedAt || s.createdAt)}
                         </span>
                       </div>
@@ -218,9 +245,9 @@ export default function ChatPage() {
               variant="outline"
               size="sm"
               onClick={handleCreateNewChat}
-              className="h-8 px-2.5 rounded-none border-border bg-surface hover:border-primary text-[11px] font-mono font-semibold gap-1 shrink-0"
+              className="h-8 px-2.5 rounded-none border border-border bg-muted hover:bg-card text-[11px] font-mono font-bold uppercase tracking-wider gap-1 shrink-0"
             >
-              <Plus className="h-3.5 w-3.5 text-foreground dark:text-primary" />
+              <Plus className="h-3.5 w-3.5 text-foreground" />
               <span>New Chat</span>
             </Button>
           </div>
@@ -257,5 +284,20 @@ export default function ChatPage() {
         </TabsContent>
       </div>
     </Tabs>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-[calc(100vh-5.5rem)] w-full items-center justify-center border border-border bg-background font-mono text-xs text-muted-foreground gap-2">
+          <Loader2 className="h-4 w-4 animate-spin text-foreground dark:text-primary" />
+          <span>Loading Ideation Studio...</span>
+        </div>
+      }
+    >
+      <ChatPageContent />
+    </Suspense>
   );
 }

@@ -85,13 +85,35 @@ export async function POST(request: NextRequest) {
     const userId = user.id;
     const body = await request.json();
 
+    // Validate sessionId against ChatSession table to prevent Foreign Key errors
+    let validSessionId: string | null = null;
+    if (body.sessionId && body.sessionId !== 'new') {
+      const sessionRecord = await prisma.chatSession.findFirst({
+        where: { id: body.sessionId, userId },
+        select: { id: true },
+      });
+      if (sessionRecord) {
+        validSessionId = sessionRecord.id;
+      }
+    }
+
     // 1. Batch creation of ideas
     if (Array.isArray(body.ideas) && body.ideas.length > 0) {
-      const { sessionId, ideas } = body;
+      const { ideas } = body;
       const createdIdeas = [];
 
       for (const item of ideas) {
         if (!item.title) continue;
+
+        // Check if an idea with this title already exists for this user
+        const existingIdea = await prisma.idea.findFirst({
+          where: { userId, title: item.title },
+        });
+        if (existingIdea) {
+          createdIdeas.push(existingIdea);
+          continue;
+        }
+
         const platform = (item.platform || 'INSTAGRAM') as Platform;
         const contentData = item.content || {
           hook: item.hook || '',
@@ -105,7 +127,7 @@ export async function POST(request: NextRequest) {
         const idea = await prisma.idea.create({
           data: {
             userId,
-            sessionId,
+            sessionId: validSessionId,
             platform,
             title: item.title,
             description: item.description || item.hook || '',
@@ -121,7 +143,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Single idea creation
-    const { sessionId, platform, title, description, content, selected } = body;
+    const { platform, title, description, content, selected } = body;
 
     if (!platform || !title || !description || !content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -130,7 +152,7 @@ export async function POST(request: NextRequest) {
     const idea = await prisma.idea.create({
       data: {
         userId,
-        sessionId,
+        sessionId: validSessionId,
         platform: platform as Platform,
         title,
         description,

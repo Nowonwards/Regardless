@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Sparkles,
-  Camera,
-  Pin,
-  Briefcase,
+  Instagram as InstagramIcon,
+  Linkedin as LinkedinIcon,
+  Lightbulb,
   Loader2,
   CheckCircle2,
   Check,
@@ -47,35 +47,35 @@ const PLATFORM_OPTIONS: { id: Platform; label: string; icon: React.ReactNode; co
   {
     id: 'INSTAGRAM',
     label: 'Instagram',
-    icon: <Camera className="h-4 w-4" />,
-    color: 'text-[hsl(var(--instagram))]',
-    border: 'border-[hsl(var(--instagram))]/30',
-    bg: 'bg-[hsl(var(--instagram-light))]',
+    icon: <InstagramIcon className="h-4 w-4" />,
+    color: 'text-foreground',
+    border: 'border-border',
+    bg: 'bg-card',
   },
   {
     id: 'LINKEDIN',
     label: 'LinkedIn',
-    icon: <Briefcase className="h-4 w-4" />,
-    color: 'text-[hsl(var(--linkedin))]',
-    border: 'border-[hsl(var(--linkedin))]/30',
-    bg: 'bg-[hsl(var(--linkedin-light))]',
+    icon: <LinkedinIcon className="h-4 w-4" />,
+    color: 'text-foreground',
+    border: 'border-border',
+    bg: 'bg-card',
   },
   {
     id: 'PINTEREST',
     label: 'Pinterest',
-    icon: <Pin className="h-4 w-4" />,
-    color: 'text-[hsl(var(--pinterest))]',
-    border: 'border-[hsl(var(--pinterest))]/30',
-    bg: 'bg-[hsl(var(--pinterest-light))]',
+    icon: <span className="inline-flex items-center justify-center w-4 h-4 border border-current font-mono font-bold text-[10px] leading-none">P</span>,
+    color: 'text-foreground',
+    border: 'border-border',
+    bg: 'bg-card',
   },
 ];
 
 const TOPIC_PRESETS = [
-  { value: 'all', label: '🌐 All Tech Industry News (Product Launches, AI, Deals, Shifts)' },
-  { value: 'ai-models', label: '🤖 AI & LLM Model Releases (Claude, OpenAI, DeepSeek, Gemini, Meta)' },
-  { value: 'dev-tools', label: '🛠️ Developer Tools, Open Source & Frameworks (Next.js, Python, Rust)' },
-  { value: 'startups-deals', label: '💰 Tech Startups, Funding Rounds, Layoffs & VC Moves' },
-  { value: 'big-tech', label: '🏢 Big Tech Drama (Apple, Microsoft, Google, Nvidia, Meta)' },
+  { value: 'all', label: 'All Tech Industry News (Product Launches, AI, Deals, Shifts)' },
+  { value: 'ai-models', label: 'AI & LLM Model Releases (Claude, OpenAI, DeepSeek, Gemini, Meta)' },
+  { value: 'dev-tools', label: 'Developer Tools, Open Source & Frameworks (Next.js, Python, Rust)' },
+  { value: 'startups-deals', label: 'Tech Startups, Funding Rounds, Layoffs & VC Moves' },
+  { value: 'big-tech', label: 'Big Tech Drama (Apple, Microsoft, Google, Nvidia, Meta)' },
 ];
 
 export function NewsIdeationForm({
@@ -147,6 +147,7 @@ export function NewsIdeationForm({
   const extractIdeasFromResponse = (content: string): IdeaContent[] => {
     if (!content) return [];
     const parsedIdeas: IdeaContent[] = [];
+    const seenTitles = new Set<string>();
 
     const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
     let match;
@@ -158,6 +159,11 @@ export function NewsIdeationForm({
           const list = Array.isArray(parsed) ? parsed : [parsed];
           for (const item of list) {
             if (item && (item.title || item.name)) {
+              const title = String(item.title || item.name || 'Untitled Idea').trim();
+              const normalized = title.toLowerCase();
+              if (seenTitles.has(normalized)) continue;
+              seenTitles.add(normalized);
+
               const platformUpper = (item.platform || selectedPlatforms[0] || 'INSTAGRAM').toUpperCase();
               const validPlatform: Platform = selectedPlatforms.includes(platformUpper as Platform)
                 ? (platformUpper as Platform)
@@ -165,10 +171,10 @@ export function NewsIdeationForm({
 
               parsedIdeas.push({
                 id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
-                title: item.title || item.name || 'Untitled Idea',
+                title,
                 description: item.description || item.concept || item.content?.hook || item.hook || '',
                 platform: validPlatform,
-                hook: item.hook || item.content?.hook || item.description || '',
+                hook: item.hook || item.content?.hook || item.description || title,
                 angle: item.angle || item.content?.angle || '',
                 keyPoints: Array.isArray(item.keyPoints)
                   ? item.keyPoints
@@ -198,7 +204,7 @@ export function NewsIdeationForm({
     if (selectedPlatforms.length === 0 || isGenerating) return;
 
     setIsGenerating(true);
-    setGenerationStep('🔍 Connecting to Tavily Live Search radar...');
+    setGenerationStep('Connecting to Tavily Live Search radar...');
     setGeneratedIdeas([]);
     setSelectedIdeaIds([]);
     setSearchSources([]);
@@ -244,7 +250,7 @@ export function NewsIdeationForm({
                 setSearchSources(data.sources || []);
                 setSearchQueryUsed(data.query || '');
                 setSearchAnswer(data.answer || '');
-                setGenerationStep(`💡 Synthesizing hooks from ${data.sources?.length || 5} live articles...`);
+                setGenerationStep(`Synthesizing hooks from ${data.sources?.length || 5} live articles...`);
               } else if (data.chunk || data.type === 'chunk') {
                 fullContent += (data.chunk || '');
               } else if (data.done || data.type === 'done') {
@@ -285,13 +291,15 @@ export function NewsIdeationForm({
     const selectedObjects = generatedIdeas.filter((i) => selectedIdeaIds.includes(i.id));
     if (selectedObjects.length === 0) return;
 
+    const currentSessionId = sessionId && sessionId !== 'new' ? sessionId : undefined;
+
     setIsDrafting(true);
     try {
       const res = await fetch('/api/drafts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionId,
+          sessionId: currentSessionId,
           ideaTitles: selectedObjects.map((i) => i.title),
           ideas: selectedObjects,
         }),

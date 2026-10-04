@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import {
-  Camera,
-  Briefcase,
-  Pin,
+  Instagram,
+  Linkedin,
   Plus,
   Trash2,
   Upload,
@@ -42,9 +41,17 @@ interface SlideDraft {
 }
 
 const PLATFORM_CONFIG: Record<Platform, { name: string; icon: React.ReactNode; formatLabel: string }> = {
-  INSTAGRAM: { name: 'Instagram', icon: <Camera className="h-4 w-4" />, formatLabel: 'Carousel Deck / Post' },
-  LINKEDIN: { name: 'LinkedIn', icon: <Briefcase className="h-4 w-4" />, formatLabel: 'Article / Image Post' },
-  PINTEREST: { name: 'Pinterest', icon: <Pin className="h-4 w-4" />, formatLabel: 'Idea Pin / Visual Card' },
+  INSTAGRAM: { name: 'Instagram', icon: <Instagram className="h-4 w-4" />, formatLabel: 'Carousel Deck / Post' },
+  LINKEDIN: { name: 'LinkedIn', icon: <Linkedin className="h-4 w-4" />, formatLabel: 'Article / Image Post' },
+  PINTEREST: {
+    name: 'Pinterest',
+    icon: (
+      <span className="inline-flex items-center justify-center w-4 h-4 border border-current font-mono font-bold text-[10px] leading-none">
+        P
+      </span>
+    ),
+    formatLabel: 'Idea Pin / Visual Card',
+  },
 };
 
 export function ManualPostStudio() {
@@ -296,21 +303,21 @@ export function ManualPostStudio() {
           </p>
         </div>
 
-        <Badge variant="outline" className="text-xs font-mono h-7 px-3 rounded-none border-border dark:border-primary text-foreground dark:text-primary font-bold self-start sm:self-auto">
+        <Badge variant="outline" className="text-xs font-mono h-7 px-3 rounded-none border border-border text-foreground dark:text-primary font-bold self-start sm:self-auto">
           Skip Ideation Flow
         </Badge>
       </div>
 
       {errorMessage && (
-        <div className="p-3.5 bg-surface border border-destructive text-destructive font-mono text-xs rounded-none flex items-center gap-2">
+        <div className="p-3.5 bg-destructive text-white border border-border font-mono text-xs rounded-none flex items-center gap-2">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="p-3.5 bg-surface border border-emerald-500 text-emerald-400 font-mono text-xs rounded-none flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
+        <div className="p-3.5 bg-surface border border-border text-foreground font-mono text-xs rounded-none flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-accent" />
           <span>{successMessage}</span>
         </div>
       )}
@@ -331,14 +338,14 @@ export function ManualPostStudio() {
                   type="button"
                   onClick={() => setPlatform(p)}
                   className={cn(
-                    'p-3.5 rounded-none border text-left flex items-center justify-between transition-all',
+                    'p-3.5 rounded-none border text-left flex items-center justify-between transition-all duration-100',
                     isSelected
-                      ? 'bg-surface border-border dark:border-primary ring-1 ring-border dark:ring-primary'
-                      : 'bg-card border-border hover:border-foreground/50 dark:hover:border-primary/60 text-muted-foreground hover:text-foreground'
+                      ? 'bg-surface border-border shadow-[4px_4px_0_0_var(--border)]'
+                      : 'bg-card border-border hover:shadow-[4px_4px_0_0_var(--border)] text-muted-foreground hover:text-foreground'
                   )}
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className={cn('p-2 rounded-none border border-border bg-background', isSelected && 'text-foreground dark:text-primary border-foreground dark:border-primary')}>
+                    <div className={cn('p-2 rounded-none border border-border bg-background', isSelected && 'text-foreground dark:text-primary')}>
                       {cfg.icon}
                     </div>
                     <div>
@@ -363,7 +370,7 @@ export function ManualPostStudio() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. 5 Docker Optimization Tricks for Next.js Developers"
-            className="h-10 text-sm font-mono rounded-none border-border"
+            className="h-10 text-sm font-mono rounded-none border border-border"
             required
           />
         </div>
@@ -379,7 +386,7 @@ export function ManualPostStudio() {
               variant="outline"
               size="sm"
               onClick={addSlide}
-              className="h-8 text-xs font-mono font-bold rounded-none border-border bg-surface hover:border-primary gap-1.5"
+              className="h-8 text-xs font-mono font-bold rounded-none border border-border bg-surface hover:bg-muted gap-1.5"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Slide
@@ -388,10 +395,10 @@ export function ManualPostStudio() {
 
           <div className="space-y-4">
             {slides.map((slide, index) => (
-              <Card key={slide.id} className="rounded-none border border-border bg-card" elevation="none">
+              <Card key={slide.id} className="rounded-none border border-border bg-card shadow-[4px_4px_0_0_var(--border)]" elevation="none">
                 <CardHeader className="p-3 border-b border-border bg-surface flex flex-row items-center justify-between space-y-0">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px] font-mono font-bold rounded-none border-border bg-background">
+                    <Badge variant="outline" className="text-[10px] font-mono font-bold rounded-none border border-border bg-background">
                       SLIDE {String(index + 1).padStart(2, '0')}
                     </Badge>
                     <span className="text-xs font-mono text-muted-foreground truncate">
@@ -452,7 +459,7 @@ export function ManualPostStudio() {
                               type="button"
                               size="sm"
                               variant="secondary"
-                              className="h-7 text-[10px] font-mono rounded-none"
+                              className="h-7 text-[10px] font-mono rounded-none border border-border"
                               onClick={() => fileInputRefs.current[slide.id]?.click()}
                             >
                               Replace Image
@@ -461,7 +468,7 @@ export function ManualPostStudio() {
                               type="button"
                               size="sm"
                               variant="destructive"
-                              className="h-7 text-[10px] font-mono rounded-none"
+                              className="h-7 text-[10px] font-mono rounded-none border border-destructive"
                               onClick={() => updateSlide(slide.id, 'imageUrl', '')}
                             >
                               Remove
@@ -470,7 +477,7 @@ export function ManualPostStudio() {
                         </>
                       ) : (
                         <div
-                          className="flex flex-col items-center justify-center p-3 text-center cursor-pointer h-full w-full hover:bg-muted/10 transition-colors"
+                          className="flex flex-col items-center justify-center p-3 text-center cursor-pointer h-full w-full hover:bg-muted/30 transition-colors"
                           onClick={() => fileInputRefs.current[slide.id]?.click()}
                         >
                           {uploadingSlideId === slide.id ? (
@@ -506,19 +513,19 @@ export function ManualPostStudio() {
                   {/* Text Details Column */}
                   <div className="space-y-3">
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-mono font-semibold text-foreground">
+                      <Label className="text-xs font-mono font-bold text-foreground">
                         Slide Headline / Hook
                       </Label>
                       <Input
                         value={slide.headline}
                         onChange={(e) => updateSlide(slide.id, 'headline', e.target.value)}
                         placeholder="e.g. 01. Build Multi-Stage Docker Images"
-                        className="h-9 text-xs font-mono rounded-none border-border"
+                        className="h-9 text-xs font-mono rounded-none border border-border"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-mono font-semibold text-foreground">
+                      <Label className="text-xs font-mono font-bold text-foreground">
                         Slide Body / Insight (Optional)
                       </Label>
                       <Textarea
@@ -526,7 +533,7 @@ export function ManualPostStudio() {
                         value={slide.body}
                         onChange={(e) => updateSlide(slide.id, 'body', e.target.value)}
                         placeholder="Explain the technical detail, code snippet, or takeaway for this slide..."
-                        className="text-xs font-mono rounded-none border-border resize-y bg-background"
+                        className="text-xs font-mono rounded-none border border-border resize-y bg-background"
                       />
                     </div>
                   </div>
@@ -553,7 +560,7 @@ export function ManualPostStudio() {
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Write the full post caption here..."
-              className="text-xs font-mono rounded-none border-border resize-y bg-background"
+              className="text-xs font-mono rounded-none border border-border resize-y bg-background"
             />
           </div>
 
@@ -566,7 +573,7 @@ export function ManualPostStudio() {
                 <Badge
                   key={tag}
                   variant="secondary"
-                  className="text-xs font-mono rounded-none border flex items-center gap-1"
+                  className="text-xs font-mono rounded-none border border-border flex items-center gap-1"
                 >
                   {tag}
                   <button
@@ -601,15 +608,15 @@ export function ManualPostStudio() {
               type="button"
               onClick={() => setPublishMode('APPROVED')}
               className={cn(
-                'p-3.5 rounded-none border text-left transition-all',
+                'p-3.5 rounded-none border text-left transition-all duration-100',
                 publishMode === 'APPROVED'
-                  ? 'bg-surface border-blue-500 ring-1 ring-blue-500'
-                  : 'bg-card border-border hover:border-border/80 text-muted-foreground'
+                  ? 'bg-surface border-border shadow-[4px_4px_0_0_var(--border)]'
+                  : 'bg-card border-border hover:shadow-[4px_4px_0_0_var(--border)] text-muted-foreground hover:text-foreground'
               )}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="font-mono font-bold text-xs text-foreground">Save to Approved</span>
-                <Badge className="badge-approved">Approved</Badge>
+                <Badge className="badge-approved border">Approved</Badge>
               </div>
               <p className="text-[11px] font-mono text-muted-foreground leading-relaxed">
                 Appears in Kanban &quot;Approved&quot; column ready for manual queueing.
@@ -620,15 +627,15 @@ export function ManualPostStudio() {
               type="button"
               onClick={() => setPublishMode('SCHEDULED')}
               className={cn(
-                'p-3.5 rounded-none border text-left transition-all',
+                'p-3.5 rounded-none border text-left transition-all duration-100',
                 publishMode === 'SCHEDULED'
-                  ? 'bg-surface border-border dark:border-primary ring-1 ring-border dark:ring-primary'
-                  : 'bg-card border-border hover:border-border/80 text-muted-foreground'
+                  ? 'bg-surface border-border shadow-[4px_4px_0_0_var(--border)]'
+                  : 'bg-card border-border hover:shadow-[4px_4px_0_0_var(--border)] text-muted-foreground hover:text-foreground'
               )}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="font-mono font-bold text-xs text-foreground">Schedule Date & Time</span>
-                <Badge className="badge-scheduled">Scheduled</Badge>
+                <Badge className="badge-scheduled border">Scheduled</Badge>
               </div>
               <p className="text-[11px] font-mono text-muted-foreground leading-relaxed">
                 Appears in Kanban &quot;Scheduled&quot; and publishes automatically via cron.
@@ -639,15 +646,15 @@ export function ManualPostStudio() {
               type="button"
               onClick={() => setPublishMode('PUBLISH_NOW')}
               className={cn(
-                'p-3.5 rounded-none border text-left transition-all',
+                'p-3.5 rounded-none border text-left transition-all duration-100',
                 publishMode === 'PUBLISH_NOW'
-                  ? 'bg-surface border-emerald-500 ring-1 ring-emerald-500'
-                  : 'bg-card border-border hover:border-border/80 text-muted-foreground'
+                  ? 'bg-surface border-border shadow-[4px_4px_0_0_var(--border)]'
+                  : 'bg-card border-border hover:shadow-[4px_4px_0_0_var(--border)] text-muted-foreground hover:text-foreground'
               )}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="font-mono font-bold text-xs text-foreground">Publish Immediately</span>
-                <Badge className="badge-posted">Live Now</Badge>
+                <Badge className="badge-posted border">Live Now</Badge>
               </div>
               <p className="text-[11px] font-mono text-muted-foreground leading-relaxed">
                 Directly pushes to live social profile via Composio right now.
@@ -664,7 +671,7 @@ export function ManualPostStudio() {
                   variant="outline"
                   size="sm"
                   onClick={() => applyQuickPreset(1, 9, 0)}
-                  className="h-8 text-xs font-mono rounded-none border-border bg-background hover:border-foreground/50 dark:hover:border-primary"
+                  className="h-8 text-xs font-mono rounded-none border border-border bg-background hover:bg-muted"
                 >
                   Tomorrow 9:00 AM
                 </Button>
@@ -673,7 +680,7 @@ export function ManualPostStudio() {
                   variant="outline"
                   size="sm"
                   onClick={() => applyQuickPreset(1, 18, 0)}
-                  className="h-8 text-xs font-mono rounded-none border-border bg-background hover:border-foreground/50 dark:hover:border-primary"
+                  className="h-8 text-xs font-mono rounded-none border border-border bg-background hover:bg-muted"
                 >
                   Tomorrow 6:00 PM
                 </Button>
@@ -682,7 +689,7 @@ export function ManualPostStudio() {
                   variant="outline"
                   size="sm"
                   onClick={() => applyQuickPreset(2, 11, 30)}
-                  className="h-8 text-xs font-mono rounded-none border-border bg-background hover:border-foreground/50 dark:hover:border-primary"
+                  className="h-8 text-xs font-mono rounded-none border border-border bg-background hover:bg-muted"
                 >
                   In 2 Days (11:30 AM)
                 </Button>
@@ -708,7 +715,7 @@ export function ManualPostStudio() {
                     <select
                       value={selectedHour}
                       onChange={(e) => setSelectedHour(e.target.value)}
-                      className="w-24 h-10 px-3 rounded-none border border-border bg-background text-xs font-mono font-semibold text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
+                      className="w-24 h-10 px-3 rounded-none border border-border bg-background text-xs font-mono font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
                     >
                       {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map((h) => (
                         <option key={h} value={h}>
@@ -722,7 +729,7 @@ export function ManualPostStudio() {
                     <select
                       value={selectedMinute}
                       onChange={(e) => setSelectedMinute(e.target.value)}
-                      className="w-24 h-10 px-3 rounded-none border border-border bg-background text-xs font-mono font-semibold text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
+                      className="w-24 h-10 px-3 rounded-none border border-border bg-background text-xs font-mono font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
                     >
                       {['00', '15', '30', '45'].map((m) => (
                         <option key={m} value={m}>
@@ -737,7 +744,7 @@ export function ManualPostStudio() {
                         onClick={() => setSelectedPeriod('AM')}
                         className={cn(
                           'px-3 py-1 text-xs font-mono font-bold rounded-none',
-                          selectedPeriod === 'AM' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
+                          selectedPeriod === 'AM' ? 'bg-primary text-primary-foreground border border-border' : 'text-muted-foreground'
                         )}
                       >
                         AM
@@ -747,7 +754,7 @@ export function ManualPostStudio() {
                         onClick={() => setSelectedPeriod('PM')}
                         className={cn(
                           'px-3 py-1 text-xs font-mono font-bold rounded-none',
-                          selectedPeriod === 'PM' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
+                          selectedPeriod === 'PM' ? 'bg-primary text-primary-foreground border border-border' : 'text-muted-foreground'
                         )}
                       >
                         PM
@@ -773,12 +780,12 @@ export function ManualPostStudio() {
             type="submit"
             disabled={isSubmitting}
             className={cn(
-              'h-11 px-8 rounded-none font-mono font-bold uppercase tracking-wider text-xs transition-all border',
+              'h-11 px-8 rounded-none font-mono font-bold uppercase tracking-wider text-xs transition-all duration-100 border border-border hover:shadow-[4px_4px_0_0_var(--border)] active:translate-x-[2px] active:translate-y-[2px]',
               publishMode === 'PUBLISH_NOW'
-                ? 'bg-emerald-500 text-black border-emerald-500 hover:opacity-90'
+                ? 'bg-foreground text-background'
                 : publishMode === 'SCHEDULED'
-                ? 'bg-primary text-primary-foreground border-primary hover:opacity-90'
-                : 'bg-blue-600 text-white border-blue-600 hover:opacity-90'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-accent text-accent-foreground'
             )}
           >
             {isSubmitting ? (

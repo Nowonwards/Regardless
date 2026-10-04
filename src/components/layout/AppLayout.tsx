@@ -16,7 +16,7 @@ export function AppLayout({ children, user }: AppLayoutProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-background flex">
+    <div className="h-screen w-full overflow-hidden bg-background text-foreground flex">
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -24,7 +24,7 @@ export function AppLayout({ children, user }: AppLayoutProps) {
 
       <div
         className={cn(
-          'flex-1 flex flex-col h-screen min-w-0 transition-all duration-200',
+          'flex-1 flex flex-col h-screen min-w-0 transition-all duration-100',
           'ml-0',
           sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
         )}
@@ -35,14 +35,14 @@ export function AppLayout({ children, user }: AppLayoutProps) {
           sidebarCollapsed={sidebarCollapsed}
         />
 
-        <main className="flex-1 min-h-0 overflow-hidden pt-16 flex flex-col">
-          <div className="flex-1 min-h-0 flex flex-col p-3 sm:p-4 lg:p-4.5 max-w-7xl mx-auto w-full overflow-y-auto no-scrollbar">{children}</div>
+        <main className="flex-1 min-h-0 overflow-hidden pt-16 flex flex-col bg-background">
+          <div className="flex-1 min-h-0 flex flex-col p-3 sm:p-4 lg:p-5 max-w-7xl mx-auto w-full overflow-y-auto no-scrollbar">{children}</div>
         </main>
       </div>
 
       {mobileSidebarOpen && (
         <div
-          className="fixed inset-0 z-50 lg:hidden bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 lg:hidden bg-black/60 animate-in fade-in duration-100"
           onClick={() => setMobileSidebarOpen(false)}
         >
           <div onClick={(e) => e.stopPropagation()}>

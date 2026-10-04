@@ -2,33 +2,21 @@
 
 import {
   Bell,
-  User,
-  LogOut,
   Menu,
   Search,
   X,
-  Settings as SettingsIcon,
   CheckCheck,
   Rocket,
   AlertTriangle,
-  Calendar as CalendarIcon,
+  CalendarDays,
   Info,
   Check,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { signOut } from 'next-auth/react';
 import { SignInButton, SignUpButton, Show, UserButton } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -63,7 +51,7 @@ function formatTimeAgo(dateString: string): string {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
+export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
   const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -147,25 +135,25 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
     switch (type) {
       case 'POST_PUBLISHED':
         return (
-          <div className="p-1.5 rounded-none border border-border bg-surface text-emerald-400 shrink-0">
+          <div className="p-1.5 rounded-none border border-border bg-foreground text-background shrink-0">
             <Rocket className="h-4 w-4" />
           </div>
         );
       case 'POST_FAILED':
         return (
-          <div className="p-1.5 rounded-none border border-destructive bg-surface text-destructive shrink-0">
+          <div className="p-1.5 rounded-none border border-border bg-destructive text-destructive-foreground shrink-0">
             <AlertTriangle className="h-4 w-4" />
           </div>
         );
       case 'POST_SCHEDULED':
         return (
-          <div className="p-1.5 rounded-none border border-border dark:border-primary bg-foreground dark:bg-surface text-primary shrink-0">
-            <CalendarIcon className="h-4 w-4" />
+          <div className="p-1.5 rounded-none border border-border bg-primary text-primary-foreground shrink-0">
+            <CalendarDays className="h-4 w-4" />
           </div>
         );
       default:
         return (
-          <div className="p-1.5 rounded-none border border-border bg-surface text-foreground shrink-0">
+          <div className="p-1.5 rounded-none border border-border bg-muted text-foreground shrink-0">
             <Info className="h-4 w-4" />
           </div>
         );
@@ -175,7 +163,7 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
   return (
     <header
       className={cn(
-        'fixed top-0 right-0 z-30 h-16 bg-background border-b border-border transition-all duration-200 left-0',
+        'fixed top-0 right-0 z-30 h-16 bg-background border-b border-border transition-all duration-100 left-0',
         sidebarCollapsed ? 'lg:left-16' : 'lg:left-64'
       )}
     >
@@ -185,7 +173,7 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
             variant="ghost"
             size="icon"
             onClick={onMenuClick}
-            className="lg:hidden rounded-none border border-border"
+            className="lg:hidden rounded-none border border-border bg-card"
             aria-label="Open navigation menu"
           >
             <Menu className="h-5 w-5" aria-hidden="true" />
@@ -195,12 +183,12 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="flex h-9.5 w-72 items-center gap-2.5 rounded-none border border-border bg-surface pl-10 text-xs font-mono text-muted-foreground transition-all hover:border-primary hover:text-foreground"
+              className="flex h-9.5 w-72 items-center gap-2.5 rounded-none border border-border bg-card pl-10 text-xs font-mono text-muted-foreground transition-none hover:border-accent hover:text-foreground"
               aria-label="Search (press / to focus)"
             >
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <span>Search drafts, ideas, posts...</span>
-              <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground bg-background border border-border rounded-none ml-auto mr-2.5">
+              <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground bg-muted border border-border rounded-none ml-auto mr-2.5">
                 <span className="text-[11px]">⌘</span>
                 <span>K</span>
               </kbd>
@@ -208,13 +196,13 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
           </div>
 
           {searchOpen && (
-            <div className="absolute left-3 right-3 top-full z-50 mt-1 rounded-none border border-border bg-card p-2 sm:left-4 sm:right-auto sm:w-96 animate-in slide-in-from-top-2 duration-150">
+            <div className="absolute left-3 right-3 top-full z-50 mt-1 rounded-none border border-border bg-card p-2 sm:left-4 sm:right-auto sm:w-96 shadow-[4px_4px_0_0_var(--border)] animate-in slide-in-from-top-2 duration-100">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
                   ref={searchInputRef}
                   placeholder="Search drafts, ideas, posts..."
-                  className="w-full pl-10 h-9 text-sm"
+                  className="w-full pl-10 h-9 text-xs font-mono"
                   autoFocus
                   onKeyDown={(e) => e.key === 'Escape' && setSearchOpen(false)}
                   onBlur={(e) => {
@@ -234,38 +222,38 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
               </div>
               <div className="pt-2 border-t border-border mt-2">
                 <p className="px-2 text-xs font-mono text-muted-foreground">
-                  Press <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-surface border border-border rounded-none">Esc</kbd> to exit
+                  Press <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted border border-border rounded-none">Esc</kbd> to exit
                 </p>
               </div>
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-3 ml-auto">
           {/* Notifications Popover */}
           <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger asChild>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
-                className="relative rounded-none border border-border hover:bg-surface transition-colors"
+                className="relative rounded-none border border-border bg-card hover:bg-muted shadow-none active:translate-x-0 active:translate-y-0"
                 aria-label="View notifications"
               >
-                <Bell className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" aria-hidden="true" />
+                <Bell className="h-4 w-4 text-foreground" aria-hidden="true" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-none bg-primary text-[10px] font-mono font-bold text-primary-foreground border border-primary">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-none bg-primary text-[10px] font-mono font-bold text-primary-foreground border border-border">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-88 sm:w-96 p-0 rounded-none border border-border bg-card" align="end">
-              <div className="p-3.5 border-b border-border flex items-center justify-between">
+            <PopoverContent className="w-88 sm:w-96 p-0 rounded-none border border-border bg-card shadow-[6px_6px_0_0_var(--border)]" align="end">
+              <div className="p-3.5 border-b border-border flex items-center justify-between bg-card">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm">Notifications</span>
+                  <span className="font-extrabold text-sm uppercase font-mono tracking-wider">Notifications</span>
                   {unreadCount > 0 && (
                     <Badge variant="default" className="text-[10px] h-5 px-1.5 font-mono font-bold">
-                      {unreadCount} new
+                      {unreadCount} NEW
                     </Badge>
                   )}
                 </div>
@@ -274,7 +262,7 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
                     variant="ghost"
                     size="sm"
                     onClick={handleMarkAllAsRead}
-                    className="h-7 text-xs text-muted-foreground hover:text-primary gap-1 px-2"
+                    className="h-7 text-xs text-muted-foreground hover:text-foreground gap-1 px-2 font-mono uppercase"
                   >
                     <CheckCheck className="h-3.5 w-3.5" />
                     Mark all read
@@ -282,36 +270,36 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
                 )}
               </div>
 
-              <ScrollArea className="max-h-[380px] divide-y divide-border/40">
+              <ScrollArea className="max-h-[380px] divide-y-2 divide-border">
                 {notifications.length === 0 ? (
                   <div className="p-8 text-center space-y-2">
-                    <div className="mx-auto w-10 h-10 rounded-none border border-border bg-surface flex items-center justify-center text-muted-foreground">
+                    <div className="mx-auto w-10 h-10 rounded-none border border-border bg-muted flex items-center justify-center text-muted-foreground">
                       <Bell className="h-5 w-5" />
                     </div>
-                    <p className="text-xs font-semibold text-foreground">No notifications yet</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      You'll receive notifications whenever a post publishes, schedules, or requires attention.
+                    <p className="text-xs font-bold uppercase font-mono text-foreground">No notifications yet</p>
+                    <p className="text-[11px] font-mono text-muted-foreground">
+                      You will receive notifications whenever a post publishes, schedules, or requires attention.
                     </p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-border">
+                  <div className="divide-y-2 divide-border">
                     {notifications.map((item) => (
                       <div
                         key={item.id}
                         onClick={() => handleNotificationClick(item)}
                         className={cn(
-                          'p-3.5 flex items-start gap-3 transition-colors cursor-pointer hover:bg-surface relative group',
-                          !item.read && 'bg-surface/60'
+                          'p-3.5 flex items-start gap-3 cursor-pointer hover:bg-muted relative group transition-none',
+                          !item.read && 'bg-muted/40'
                         )}
                       >
                         {getNotificationIcon(item.type)}
 
                         <div className="flex-1 min-w-0 space-y-1">
                           <div className="flex items-center justify-between gap-1">
-                            <p className={cn('text-xs line-clamp-1', !item.read ? 'font-semibold text-foreground' : 'font-medium text-foreground/80')}>
+                            <p className={cn('text-xs line-clamp-1', !item.read ? 'font-bold text-foreground font-sans' : 'font-medium text-foreground/80 font-sans')}>
                               {item.title}
                             </p>
-                            <span className="text-[10px] font-mono text-muted-foreground shrink-0 font-normal">
+                            <span className="text-[10px] font-mono text-muted-foreground shrink-0 font-medium">
                               {formatTimeAgo(item.createdAt)}
                             </span>
                           </div>
@@ -322,7 +310,7 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
 
                           {item.platform && (
                             <div className="pt-0.5">
-                              <Badge variant="outline" className="text-[9px] h-4 uppercase font-semibold px-1.5 py-0 tracking-wider">
+                              <Badge variant="outline" className="text-[9px] h-4 uppercase font-bold px-1.5 py-0 tracking-wider">
                                 {item.platform}
                               </Badge>
                             </div>
@@ -331,12 +319,12 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
 
                         {!item.read && (
                           <div className="flex flex-col items-center justify-center gap-1 shrink-0 self-center">
-                            <span className="h-2 w-2 rounded-none bg-primary" />
+                            <span className="h-2 w-2 rounded-none bg-primary border border-border" />
                             <button
                               type="button"
                               onClick={(e) => handleMarkAsRead(item.id, e)}
                               title="Mark as read"
-                              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity p-0.5 rounded-none"
+                              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground p-0.5 rounded-none"
                             >
                               <Check className="h-3 w-3" />
                             </button>
@@ -354,12 +342,12 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
           <Show when="signed-out">
             <div className="flex items-center gap-2">
               <SignInButton mode="modal">
-                <Button variant="outline" size="sm" className="rounded-none border-border text-xs font-mono">
+                <Button variant="outline" size="sm" className="rounded-none border border-border text-xs font-mono font-bold">
                   Sign In
                 </Button>
               </SignInButton>
               <SignUpButton mode="modal">
-                <Button size="sm" className="rounded-none bg-primary text-primary-foreground text-xs font-mono font-bold hover:bg-primary/90">
+                <Button size="sm" className="rounded-none bg-primary text-primary-foreground border border-border text-xs font-mono font-bold hover:opacity-90">
                   Sign Up
                 </Button>
               </SignUpButton>
@@ -369,7 +357,7 @@ export function Header({ user, onMenuClick, sidebarCollapsed }: HeaderProps) {
             <UserButton
               appearance={{
                 elements: {
-                  avatarBox: 'h-8 w-8 rounded-none border border-border',
+                  avatarBox: 'h-8 w-8 rounded-none border border-border shadow-[2px_2px_0_0_var(--border)]',
                 },
               }}
             />

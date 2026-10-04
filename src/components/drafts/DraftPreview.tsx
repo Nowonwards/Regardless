@@ -29,8 +29,15 @@ import {
   Target,
   TrendingDown,
   Camera,
-  Pin,
   Briefcase,
+  Pin,
+  Video,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Download,
+  Mic,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -108,6 +115,9 @@ export function DraftPreview({
   const [customHeadline, setCustomHeadline] = useState('');
   const [customTake, setCustomTake] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isReelPlaying, setIsReelPlaying] = useState(false);
+  const [isReelMuted, setIsReelMuted] = useState(false);
+  const [reelCurrentTime, setReelCurrentTime] = useState(0);
 
   // Caption Editing & AI Regeneration States
   const [isEditingCaption, setIsEditingCaption] = useState(false);
@@ -302,7 +312,7 @@ export function DraftPreview({
   const isCurrentSlideGenerating = generatingSlideId === 'ALL' || generatingSlideId === slides[activeSlide]?.id;
 
   const renderInstagramCarousel = () => (
-    <div className="w-full max-w-[380px] mx-auto bg-card text-card-foreground rounded-none border border-border overflow-hidden text-left">
+    <div className="w-full max-w-[380px] mx-auto bg-card text-card-foreground rounded-none border border-border shadow-[4px_4px_0_0_var(--border)] overflow-hidden text-left">
       {/* 1. Post Header */}
       <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border/40 bg-card">
         <div className="flex items-center gap-2.5">
@@ -434,8 +444,260 @@ export function DraftPreview({
     </div>
   );
 
+  const renderInstagramSingleImage = () => (
+    <div className="w-full max-w-[380px] mx-auto bg-card text-card-foreground rounded-none border border-border shadow-[4px_4px_0_0_var(--border)] overflow-hidden text-left">
+      {/* 1. Post Header */}
+      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border/40 bg-card">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 p-[1.5px] flex items-center justify-center shrink-0">
+            <div className="w-full h-full rounded-full bg-card flex items-center justify-center text-[10px] font-bold text-foreground">
+              RG
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[13px] font-bold leading-none tracking-tight">regardless.ai</span>
+            <span className="text-[10px] text-muted-foreground leading-tight mt-0.5">Single image post</span>
+          </div>
+        </div>
+        <button className="text-muted-foreground hover:text-foreground p-1 transition-colors">
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* 2. Media Area (4:5 Aspect Ratio Full Bleed) */}
+      <div className="relative w-full aspect-[4/5] bg-[#12141C] overflow-hidden">
+        {isCurrentSlideGenerating || imageLoading[slides[0]?.id || ''] ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#12141C]/95 text-white gap-2 z-10">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-xs text-muted-foreground animate-pulse">Rendering 1080x1350 card template...</p>
+          </div>
+        ) : slides[0]?.imageUrl ? (
+          <Image
+            src={slides[0].imageUrl!}
+            alt={altTexts[0] || post.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 380px"
+            className="object-cover"
+            onLoad={() => handleImageLoad(slides[0].id)}
+            onError={() => handleImageError(slides[0].id)}
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#12141C] text-muted-foreground p-6 text-center">
+            <ImageIcon className="h-10 w-10 text-muted-foreground/50 mb-2" />
+            <p className="text-xs font-medium text-muted-foreground mb-3">No post image generated yet</p>
+            <Button
+              size="sm"
+              onClick={() => handleGenerateImage(slides[0]?.id)}
+              disabled={generatingSlideId !== null}
+              className="gap-1.5 text-xs font-mono font-bold bg-primary text-primary-foreground border border-primary hover:opacity-90 rounded-none"
+            >
+              <ImageIcon className="h-3.5 w-3.5" />
+              Render Post Image PNG
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* 3. Action Row */}
+      <div className="flex items-center justify-between px-3.5 pt-3 pb-2 bg-card">
+        <div className="flex items-center gap-3.5">
+          <button className="text-foreground hover:text-red-500 transition-colors p-0.5">
+            <Heart className="h-5 w-5 stroke-[1.8]" />
+          </button>
+          <button className="text-foreground hover:text-primary transition-colors p-0.5">
+            <MessageCircle className="h-5 w-5 stroke-[1.8]" />
+          </button>
+          <button className="text-foreground hover:text-primary transition-colors p-0.5">
+            <Send className="h-5 w-5 stroke-[1.8]" />
+          </button>
+        </div>
+        <button className="text-foreground hover:text-primary transition-colors p-0.5">
+          <Bookmark className="h-5 w-5 stroke-[1.8]" />
+        </button>
+      </div>
+
+      {/* 4. Caption Area */}
+      <div className="px-3.5 pb-3.5 space-y-1.5 bg-card">
+        <div className="text-[13px] leading-relaxed text-foreground">
+          <span className="font-bold mr-1.5 text-foreground">regardless.ai</span>
+          <span className="text-foreground/90 whitespace-pre-line">{caption}</span>
+        </div>
+
+        {hashtags.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-0.5">
+            {hashtags.map((tag, idx) => (
+              <span key={idx} className="text-xs text-[#00376b] dark:text-[#3897f0] hover:underline cursor-pointer">
+                {tag.startsWith('#') ? tag : `#${tag}`}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <p className="text-[10px] text-muted-foreground uppercase pt-1 tracking-wider">
+          {post.scheduledAt ? new Date(post.scheduledAt).toLocaleDateString() : 'Just now'}
+        </p>
+      </div>
+    </div>
+  );
+
+  const renderInstagramReel = () => {
+    const reel = post.content?.reel;
+    const videoUrl = reel?.videoUrl;
+    const duration = reel?.durationSeconds || 45;
+
+    const handleTogglePlay = (e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
+      const vid = document.getElementById(`reel-video-${post.id}`) as HTMLVideoElement | null;
+      if (vid) {
+        if (vid.paused) {
+          // Unmute on explicit user interaction so sound plays clearly
+          vid.muted = false;
+          setIsReelMuted(false);
+          vid.play().then(() => setIsReelPlaying(true)).catch((err) => {
+            console.warn('Autoplay with audio blocked, fallback to muted:', err);
+            vid.muted = true;
+            setIsReelMuted(true);
+            vid.play();
+            setIsReelPlaying(true);
+          });
+        } else {
+          vid.pause();
+          setIsReelPlaying(false);
+        }
+      }
+    };
+
+    return (
+      <div className="w-full max-w-[320px] mx-auto bg-black text-white rounded-none border border-border overflow-hidden text-left shadow-[4px_4px_0_0_var(--border)] relative">
+        {/* 1. Reel Media Area (9:16 vertical full bleed) */}
+        <div className="relative w-full aspect-[9/16] bg-[#0A0B10] overflow-hidden flex flex-col justify-between">
+          {videoUrl ? (
+            <video
+              src={videoUrl}
+              poster={slides[0]?.imageUrl}
+              className="absolute inset-0 w-full h-full object-cover"
+              loop
+              playsInline
+              muted={isReelMuted}
+              autoPlay={false}
+              id={`reel-video-${post.id}`}
+              onTimeUpdate={(e) => setReelCurrentTime(Math.floor(e.currentTarget.currentTime))}
+              onClick={() => handleTogglePlay()}
+            />
+          ) : slides[0]?.imageUrl ? (
+            <Image
+              src={slides[0].imageUrl}
+              alt={post.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 320px"
+              className="object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
+              <Video className="h-10 w-10 text-primary mb-2 animate-pulse" />
+              <p className="text-xs font-semibold text-foreground">Instagram Reel</p>
+              <p className="text-[11px] text-muted-foreground mt-1">Generating local 9:16 MP4 video...</p>
+            </div>
+          )}
+
+          {/* Top Reels Header Overlay */}
+          <div className="relative z-10 flex items-center justify-between p-3.5 bg-gradient-to-b from-black/80 via-black/40 to-transparent">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold tracking-tight">Reels</span>
+              <Badge variant="outline" className="text-[9px] font-mono border-white/30 text-white/90 bg-black/40 px-1.5 py-0">
+                {reelCurrentTime > 0 ? `${reelCurrentTime}s / ${duration}s` : `${duration}s`}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const vid = document.getElementById(`reel-video-${post.id}`) as HTMLVideoElement | null;
+                  const nextMuted = !isReelMuted;
+                  setIsReelMuted(nextMuted);
+                  if (vid) vid.muted = nextMuted;
+                }}
+                className="px-2 py-1 rounded-full bg-black/60 border border-white/25 text-white hover:bg-black/80 transition-colors flex items-center gap-1.5 shadow-lg backdrop-blur-sm"
+                title={isReelMuted ? 'Turn Sound On' : 'Mute Sound'}
+              >
+                {isReelMuted ? (
+                  <>
+                    <VolumeX className="h-3.5 w-3.5 text-rose-400" />
+                    <span className="text-[9px] font-mono font-bold text-rose-300">MUTED</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
+                    <span className="text-[9px] font-mono font-bold text-emerald-300">SOUND ON</span>
+                  </>
+                )}
+              </button>
+              <Camera className="h-4 w-4 text-white/90" />
+            </div>
+          </div>
+
+          {/* Center Play Overlay Icon (when paused or clicking) */}
+          <div
+            onClick={(e) => handleTogglePlay(e)}
+            className="absolute inset-0 flex items-center justify-center cursor-pointer z-10"
+          >
+            {!isReelPlaying && (
+              <div className="w-16 h-16 rounded-full bg-black/70 border border-white/40 flex items-center justify-center shadow-2xl backdrop-blur-md transition-transform hover:scale-110 group">
+                <Play className="h-7 w-7 fill-white text-white ml-1 group-hover:scale-105 transition-transform" />
+              </div>
+            )}
+          </div>
+
+          {/* Right Floating Actions (Instagram style) */}
+          <div className="relative z-10 self-end mr-3 flex flex-col items-center gap-3.5 text-white mb-14">
+            <div className="flex flex-col items-center">
+              <Heart className="h-5 w-5 stroke-[1.8] drop-shadow" />
+              <span className="text-[9px] font-mono mt-0.5 font-medium">1.4k</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <MessageCircle className="h-5 w-5 stroke-[1.8] drop-shadow" />
+              <span className="text-[9px] font-mono mt-0.5 font-medium">84</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <Send className="h-5 w-5 stroke-[1.8] drop-shadow" />
+              <span className="text-[9px] font-mono mt-0.5 font-medium">210</span>
+            </div>
+            <MoreHorizontal className="h-5 w-5 drop-shadow" />
+            <div className="w-6 h-6 rounded-md border-2 border-white overflow-hidden bg-zinc-800 animate-spin-slow">
+              <div className="w-full h-full bg-primary/40 flex items-center justify-center text-[8px] font-bold">♪</div>
+            </div>
+          </div>
+
+          {/* Bottom Captions & Account Overlay */}
+          <div className="relative z-10 p-3 bg-gradient-to-t from-black/95 via-black/70 to-transparent space-y-1">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary flex items-center justify-center text-[9px] font-bold text-primary">
+                RG
+              </div>
+              <span className="text-xs font-bold">regardless.ai</span>
+              <span className="text-[9px] text-white/70 font-mono">• Follow</span>
+            </div>
+
+            <p className="text-[11px] leading-snug line-clamp-2 text-white/95 font-medium">
+              {caption}
+            </p>
+
+            <div className="flex items-center gap-1.5 text-[10px] text-white/85 font-mono pt-0.5">
+              <div className="flex items-end gap-0.5 h-3">
+                <div className={`w-0.5 bg-emerald-400 rounded-full ${isReelPlaying && !isReelMuted ? 'animate-bounce' : 'h-1.5'}`} style={{ height: isReelPlaying && !isReelMuted ? '10px' : '6px' }} />
+                <div className={`w-0.5 bg-emerald-400 rounded-full ${isReelPlaying && !isReelMuted ? 'animate-bounce' : 'h-2'}`} style={{ height: isReelPlaying && !isReelMuted ? '12px' : '8px' }} />
+                <div className={`w-0.5 bg-emerald-400 rounded-full ${isReelPlaying && !isReelMuted ? 'animate-bounce' : 'h-1'}`} style={{ height: isReelPlaying && !isReelMuted ? '8px' : '4px' }} />
+              </div>
+              <span className="truncate">Original audio - regardless.ai • Tech Briefing Beat</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderPinterestPin = () => (
-    <div className="relative max-w-xs mx-auto bg-card rounded-none border border-border overflow-hidden">
+    <div className="relative max-w-xs mx-auto bg-card rounded-none border border-border shadow-[4px_4px_0_0_var(--border)] overflow-hidden">
       {imageLoading[slides[0]?.id || ''] ? (
         <div className="aspect-[2/3] flex items-center justify-center bg-muted">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -468,7 +730,7 @@ export function DraftPreview({
   );
 
   const renderLinkedInPost = () => (
-    <div className="max-w-2xl mx-auto bg-card rounded-none border border-border overflow-hidden">
+    <div className="max-w-2xl mx-auto bg-card rounded-none border border-border shadow-[4px_4px_0_0_var(--border)] overflow-hidden">
       <div className="p-4 border-b border-border flex items-center gap-3">
         <div className="w-10 h-10 rounded-none border border-border bg-surface flex items-center justify-center font-mono">
           <span className="text-primary font-bold">U</span>
@@ -527,91 +789,125 @@ export function DraftPreview({
     </div>
   );
 
+  const isVideo = post.content?.format === 'video' || !!post.content?.reel;
+  const isSingleImage = post.content?.format === 'single-image' || (!isVideo && slides.length <= 1);
+
   const renderPreview = () => {
     return (
       <div className="flex flex-col items-center">
-        {post.platform === 'INSTAGRAM' && renderInstagramCarousel()}
+        {post.platform === 'INSTAGRAM' && (
+          isVideo ? renderInstagramReel() : isSingleImage ? renderInstagramSingleImage() : renderInstagramCarousel()
+        )}
         {post.platform === 'PINTEREST' && renderPinterestPin()}
         {post.platform === 'LINKEDIN' && renderLinkedInPost()}
 
-        {/* Action Controls to Regenerate Slide Image */}
-        <div className="mt-4 w-full max-w-sm flex flex-col gap-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleGenerateImage(slides[activeSlide]?.id, undefined, false, 'template')}
-              disabled={generatingSlideId !== null}
-              className="text-xs gap-1.5 flex-1 bg-muted/40 hover:bg-muted"
-            >
-              {generatingSlideId === slides[activeSlide]?.id ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="h-3.5 w-3.5" />
+        {/* Action Controls to Regenerate Slide Image / Download Reel */}
+        {isVideo ? (
+          <div className="mt-4 w-full max-w-sm flex flex-col gap-2.5">
+            <div className="flex items-center justify-between gap-2">
+              {post.content?.reel?.videoUrl && (
+                <a
+                  href={post.content.reel.videoUrl}
+                  download={`reel-${post.id}.mp4`}
+                  className="flex-1"
+                >
+                  <Button size="sm" className="w-full text-xs gap-1.5 bg-primary text-primary-foreground font-bold rounded-none">
+                    <Download className="h-3.5 w-3.5" />
+                    Download Reel (.mp4)
+                  </Button>
+                </a>
               )}
-              Regenerate Card
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleGenerateImage(slides[activeSlide]?.id, undefined, false, 'ai')}
-              disabled={generatingSlideId !== null}
-              className="text-xs gap-1.5 flex-1 border-border dark:border-primary/30 text-foreground dark:text-primary hover:bg-muted dark:hover:bg-primary/10"
-            >
-              {generatingSlideId === slides[activeSlide]?.id ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="h-3.5 w-3.5" />
-              )}
-              AI Graphic (Gemini)
-            </Button>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setShowEditSlide(!showEditSlide)}
-              className="text-xs gap-1 px-2.5 text-muted-foreground hover:text-foreground"
-            >
-              <Edit3 className="h-3.5 w-3.5" />
-              Edit Text
-            </Button>
-          </div>
-
-          {showEditSlide && (
-            <div className="p-3 bg-surface border border-border rounded-none space-y-2.5 text-left font-mono">
-              <div>
-                <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-muted-foreground">Slide {activeSlide + 1} Headline</label>
-                <input
-                  type="text"
-                  value={customHeadline}
-                  onChange={(e) => setCustomHeadline(e.target.value)}
-                  className="w-full mt-1 px-2.5 py-1.5 text-xs font-mono bg-background border border-border rounded-none focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="Headline..."
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-muted-foreground">Slide {activeSlide + 1} Take / Insight</label>
-                <textarea
-                  value={customTake}
-                  onChange={(e) => setCustomTake(e.target.value)}
-                  rows={2}
-                  className="w-full mt-1 px-2.5 py-1.5 text-xs font-mono bg-background border border-border rounded-none resize-none focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="Insight..."
-                />
-              </div>
               <Button
                 size="sm"
-                onClick={() => handleGenerateImage(slides[activeSlide]?.id, undefined, false, 'template', customHeadline, customTake)}
+                variant="outline"
+                onClick={() => handleGenerateImage(slides[0]?.id, undefined, false, 'template')}
                 disabled={generatingSlideId !== null}
-                className="w-full text-xs gap-1.5 bg-primary"
+                className="text-xs gap-1.5 flex-1 rounded-none border-border"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
-                Update Copy & Re-render Image
+                Regenerate Poster
               </Button>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="mt-4 w-full max-w-sm flex flex-col gap-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleGenerateImage(slides[activeSlide]?.id, undefined, false, 'template')}
+                disabled={generatingSlideId !== null}
+                className="text-xs gap-1.5 flex-1 bg-muted/40 hover:bg-muted"
+              >
+                {generatingSlideId === slides[activeSlide]?.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+                Regenerate Card
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleGenerateImage(slides[activeSlide]?.id, undefined, false, 'ai')}
+                disabled={generatingSlideId !== null}
+                className="text-xs gap-1.5 flex-1 border-border dark:border-primary/30 text-foreground dark:text-primary hover:bg-muted dark:hover:bg-primary/10"
+              >
+                {generatingSlideId === slides[activeSlide]?.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                AI Graphic (Gemini)
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowEditSlide(!showEditSlide)}
+                className="text-xs gap-1 px-2.5 text-muted-foreground hover:text-foreground"
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+                Edit Text
+              </Button>
+            </div>
+
+            {showEditSlide && (
+              <div className="p-3 bg-surface border border-border rounded-none space-y-2.5 text-left font-mono">
+                <div>
+                  <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-muted-foreground">Slide {activeSlide + 1} Headline</label>
+                  <input
+                    type="text"
+                    value={customHeadline}
+                    onChange={(e) => setCustomHeadline(e.target.value)}
+                    className="w-full mt-1 px-2.5 py-1.5 text-xs font-mono bg-background border border-border rounded-none focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Headline..."
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-muted-foreground">Slide {activeSlide + 1} Take / Insight</label>
+                  <textarea
+                    value={customTake}
+                    onChange={(e) => setCustomTake(e.target.value)}
+                    rows={2}
+                    className="w-full mt-1 px-2.5 py-1.5 text-xs font-mono bg-background border border-border rounded-none resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Insight..."
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => handleGenerateImage(slides[activeSlide]?.id, undefined, false, 'template', customHeadline, customTake)}
+                  disabled={generatingSlideId !== null}
+                  className="w-full text-xs gap-1.5 bg-primary"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Update Copy & Re-render Image
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   };
@@ -642,12 +938,19 @@ export function DraftPreview({
                     From: {post.ideaTitle}
                   </span>
                 )}
-                <span className="flex items-center gap-1 font-mono text-[11px]">
-                  <FileText className="h-3 w-3" />
-                  {slides.length} slide{slides.length !== 1 ? 's' : ''}
-                </span>
+                {isVideo ? (
+                  <span className="flex items-center gap-1 font-mono text-[11px] text-primary">
+                    <Video className="h-3 w-3" />
+                    Reel ({post.content?.reel?.durationSeconds || 45}s • max 1m)
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 font-mono text-[11px]">
+                    <FileText className="h-3 w-3" />
+                    {slides.length} slide{slides.length !== 1 ? 's' : ''}
+                  </span>
+                )}
                 <span className="flex items-center gap-1">
-                  <span className="capitalize">{format}</span>
+                  <span className="capitalize">{isVideo ? 'Reel' : isSingleImage ? 'Single Image' : format}</span>
                 </span>
               </div>
               {post.status === 'SCHEDULED' && scheduledDate ? (
@@ -688,8 +991,22 @@ export function DraftPreview({
                 Preview
               </TabsTrigger>
               <TabsTrigger value="slides" className="flex items-center gap-2 px-3 py-2 text-sm font-medium" data-orientation="horizontal">
-                <FileText className="h-4 w-4" />
-                Slides ({slides.length})
+                {isVideo ? (
+                  <>
+                    <Video className="h-4 w-4 text-primary" />
+                    Reel Script
+                  </>
+                ) : isSingleImage ? (
+                  <>
+                    <FileText className="h-4 w-4" />
+                    Slide (1)
+                  </>
+                ) : (
+                  <>
+                    <FileText className="h-4 w-4" />
+                    Slides ({slides.length})
+                  </>
+                )}
               </TabsTrigger>
               <TabsTrigger value="caption" className="flex items-center gap-2 px-3 py-2 text-sm font-medium" data-orientation="horizontal">
                 <Hash className="h-4 w-4" />
@@ -706,12 +1023,73 @@ export function DraftPreview({
             </TabsContent>
 
             <TabsContent value="slides" className="flex-1 p-4 overflow-auto">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b flex-wrap gap-2">
-                  <div>
-                    <h3 className="text-sm font-semibold">Post Slides ({slides.length})</h3>
-                    <p className="text-xs text-muted-foreground">Manage slide visuals and text copy</p>
+              {isVideo ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b flex-wrap gap-2">
+                    <div>
+                      <h3 className="text-sm font-semibold flex items-center gap-2">
+                        <Video className="h-4 w-4 text-primary" />
+                        Instagram Reel Breakdown ({post.content?.reel?.scenes?.length || 4} Scenes)
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Duration: {post.content?.reel?.durationSeconds || 45}s • Max 1 minute duration • Stored locally
+                      </p>
+                    </div>
+                    {post.content?.reel?.videoUrl && (
+                      <a href={post.content.reel.videoUrl} download={`reel-${post.id}.mp4`}>
+                        <Button size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground rounded-none">
+                          <Download className="h-3.5 w-3.5" />
+                          Download .MP4
+                        </Button>
+                      </a>
+                    )}
                   </div>
+
+                  {(post.content?.reel?.scenes || []).map((scene, idx) => (
+                    <Card key={idx} className="border border-border bg-card">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-bold text-primary">SCENE {scene.sceneNumber || idx + 1}</span>
+                            <Badge variant="outline" className="text-[10px] font-mono border-border">{scene.timeRange || `Beat ${idx + 1}`}</Badge>
+                          </div>
+                          <span className="text-xs font-semibold text-foreground">{scene.headline}</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                          <div className="p-3 bg-muted/40 border border-border rounded-none space-y-1">
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 font-bold">
+                              <Mic className="h-3 w-3 text-foreground" />
+                              Spoken Voiceover Narration
+                            </span>
+                            <p className="text-foreground leading-relaxed font-sans">{scene.spokenNarration}</p>
+                          </div>
+                          <div className="p-3 bg-muted/40 border border-border rounded-none space-y-1">
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 font-bold">
+                              <MessageSquare className="h-3 w-3 text-foreground" />
+                              On-Screen Subtitle Text
+                            </span>
+                            <p className="text-foreground leading-relaxed font-mono">{scene.onScreenText}</p>
+                          </div>
+                        </div>
+
+                        {scene.visualCue && (
+                          <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                            <span className="font-mono text-primary font-bold">Visual Cue:</span>
+                            <span>{scene.visualCue}</span>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b flex-wrap gap-2">
+                    <div>
+                      <h3 className="text-sm font-semibold">Post Slides ({slides.length})</h3>
+                      <p className="text-xs text-muted-foreground">Manage slide visuals and text copy</p>
+                    </div>
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
@@ -835,6 +1213,7 @@ export function DraftPreview({
                   </Card>
                 ))}
               </div>
+            )}
             </TabsContent>
 
             <TabsContent value="caption" className="flex-1 p-4 overflow-auto">

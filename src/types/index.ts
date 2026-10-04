@@ -70,12 +70,31 @@ export interface IdeaContent {
   hasDraft?: boolean;
 }
 
+export interface ReelScene {
+  sceneNumber: number;
+  timeRange: string;
+  headline: string;
+  visualCue: string;
+  spokenNarration: string;
+  onScreenText: string;
+  takeaway: string;
+}
+
+export interface ReelData {
+  durationSeconds: number;
+  videoUrl?: string;
+  localFilePath?: string;
+  scenes: ReelScene[];
+  scriptOverview?: string;
+}
+
 export interface PostContent {
   slides: Slide[];
   caption: string;
   hashtags: string[];
   altTexts: string[];
   format: PostFormat;
+  reel?: ReelData;
 }
 
 export interface Slide {

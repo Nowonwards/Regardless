@@ -49,8 +49,8 @@ export default function CalendarPage() {
     <div className="h-full min-h-0 flex flex-col gap-2.5 overflow-hidden">
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Calendar</h1>
-          <p className="text-xs text-muted-foreground">View and manage your scheduled posts</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">Calendar</h1>
+          <p className="text-sm text-muted-foreground">View and manage your scheduled posts</p>
         </div>
       </div>
 

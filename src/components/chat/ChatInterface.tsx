@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Sparkles,
-  Camera,
-  Pin,
-  Briefcase,
+  Instagram as InstagramIcon,
+  Linkedin as LinkedinIcon,
   Loader2,
   CheckCircle2,
   Check,
@@ -21,6 +21,7 @@ import {
   ChevronRight,
   AlertCircle,
   Search,
+  Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +35,15 @@ export interface TavilySource {
   content: string;
   publishedDate?: string;
   score?: number;
+}
+
+export interface UsedIdeaInfo {
+  title: string;
+  status: string;
+  isPublished: boolean;
+  isScheduled: boolean;
+  hasDraft: boolean;
+  postId?: string;
 }
 
 interface ChatMessageItem {
@@ -58,16 +68,16 @@ interface ChatInterfaceProps {
 }
 
 const PLATFORM_CONFIG: Record<Platform, { name: string; icon: React.ReactNode; color: string }> = {
-  INSTAGRAM: { name: 'Instagram', icon: <Camera className="h-3 w-3" />, color: 'text-pink-400' },
-  LINKEDIN: { name: 'LinkedIn', icon: <Briefcase className="h-3 w-3" />, color: 'text-blue-400' },
-  PINTEREST: { name: 'Pinterest', icon: <Pin className="h-3 w-3" />, color: 'text-red-400' },
+  INSTAGRAM: { name: 'Instagram', icon: <InstagramIcon className="h-3.5 w-3.5" />, color: 'text-foreground' },
+  LINKEDIN: { name: 'LinkedIn', icon: <LinkedinIcon className="h-3.5 w-3.5" />, color: 'text-foreground' },
+  PINTEREST: { name: 'Pinterest', icon: <span className="inline-flex items-center justify-center w-3.5 h-3.5 border border-current font-mono font-bold text-[9px] leading-none">P</span>, color: 'text-foreground' },
 };
 
 const SUGGESTED_PROMPTS = [
-  '⚡ Scan today\'s top AI model releases & controversies',
-  '🔥 3 hot-take carousels about developer salaries vs AI tooling',
-  '🛠️ 4 practical Docker & Kubernetes optimization tips for engineers',
-  '💡 Sarcastic breakdown of Big Tech return-to-office mandates',
+  'Scan today\'s top AI model releases & controversies',
+  '3 hot-take carousels about developer salaries vs AI tooling',
+  '4 practical Docker & Kubernetes optimization tips for engineers',
+  'Sarcastic breakdown of Big Tech return-to-office mandates',
 ];
 
 export function ChatInterface({
@@ -110,6 +120,7 @@ export function ChatInterface({
   const [selectedIdeaIds, setSelectedIdeaIds] = useState<string[]>([]);
   const [draftingIdeaIds, setDraftingIdeaIds] = useState<Record<string, boolean>>({});
   const [isDraftingBatch, setIsDraftingBatch] = useState(false);
+  const [usedIdeas, setUsedIdeas] = useState<UsedIdeaInfo[]>([]);
 
   // Auto-scroll to bottom of chat
   const scrollToBottom = () => {
@@ -120,7 +131,7 @@ export function ChatInterface({
     scrollToBottom();
   }, [messages, streamingContent, activeSearchSources]);
 
-  // Load session messages from DB
+  // Load session messages from DB using dedicated /api/chat/history endpoint
   useEffect(() => {
     setStreamingContent('');
     setActiveSearchSources([]);
@@ -128,12 +139,13 @@ export function ChatInterface({
     setSelectedIdeaIds([]);
 
     if (!sessionId || sessionId === 'new') {
+      setUsedIdeas([]);
       setMessages([
         {
           id: 'welcome',
           role: 'assistant',
           content:
-            "👋 Welcome to Regardless Ideation Studio. Ask me to brainstorm tech news hooks, propose multi-slide carousels, or explore controversial industry angles for your channels.\n\nLive Tech News Search via Tavily is active to verify current-event facts and breaking announcements.",
+            "Welcome to Regardless Ideation Studio. Ask me to brainstorm tech news hooks, propose multi-slide carousels, or explore controversial industry angles for your channels.\n\nLive Tech News Search via Tavily is active to verify current-event facts and breaking announcements.",
         },
       ]);
       return;
@@ -141,18 +153,22 @@ export function ChatInterface({
 
     const fetchSessionHistory = async () => {
       try {
-        const res = await fetch('/api/sessions');
+        const res = await fetch(`/api/chat/history?sessionId=${encodeURIComponent(sessionId)}`);
         if (res.ok) {
           const data = await res.json();
-          const current = (data.sessions || []).find((s: any) => s.id === sessionId);
-          if (current && current.messages && current.messages.length > 0) {
-            const mapped: ChatMessageItem[] = current.messages.map((m: any) => {
+          if (data.usedIdeas && Array.isArray(data.usedIdeas)) {
+            setUsedIdeas(data.usedIdeas);
+          } else {
+            setUsedIdeas([]);
+          }
+          if (data.messages && data.messages.length > 0) {
+            const mapped: ChatMessageItem[] = data.messages.map((m: any) => {
               const parsedIdeas = m.role === 'assistant' ? extractIdeasFromContent(m.content) : [];
               const meta = (m.metadata as any) || {};
               return {
                 id: m.id,
                 role: m.role,
-                content: cleanAssistantContent(m.content),
+                content: m.role === 'assistant' ? cleanAssistantContent(m.content) : m.content,
                 ideas: parsedIdeas,
                 searchSources: meta.searchSources || [],
                 searchQuery: meta.searchQuery,
@@ -169,12 +185,13 @@ export function ChatInterface({
       }
 
       // Initial default welcome message if empty
+      setUsedIdeas([]);
       setMessages([
         {
           id: 'welcome',
           role: 'assistant',
           content:
-            "👋 Welcome to Regardless Ideation Studio. Ask me to brainstorm tech news hooks, propose multi-slide carousels, or explore controversial industry angles for your channels.\n\nLive Tech News Search via Tavily is active to verify current-event facts and breaking announcements.",
+            "Welcome to Regardless Ideation Studio. Ask me to brainstorm tech news hooks, propose multi-slide carousels, or explore controversial industry angles for your channels.\n\nLive Tech News Search via Tavily is active to verify current-event facts and breaking announcements.",
         },
       ]);
     };
@@ -182,43 +199,61 @@ export function ChatInterface({
     fetchSessionHistory();
   }, [sessionId]);
 
-  // Helper to extract ideas JSON from assistant response
+  const getIdeaUsage = (ideaTitle: string): UsedIdeaInfo | undefined => {
+    if (!ideaTitle) return undefined;
+    const normalized = ideaTitle.trim().toLowerCase();
+    return usedIdeas.find((u) => u.title.trim().toLowerCase() === normalized);
+  };
+
+  // Helper to extract ideas JSON from assistant response with deduplication
   const extractIdeasFromContent = (text: string): IdeaContent[] => {
     if (!text) return [];
     const ideas: IdeaContent[] = [];
+    const seenTitles = new Set<string>();
 
-    const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/;
-    const jsonMatch = text.match(jsonBlockRegex);
-    if (jsonMatch && jsonMatch[1]) {
+    const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
+    let match;
+    while ((match = jsonBlockRegex.exec(text)) !== null) {
       try {
-        const parsed = JSON.parse(jsonMatch[1].trim());
-        const list = Array.isArray(parsed) ? parsed : [parsed];
-        for (const item of list) {
-          if (item && (item.title || item.name)) {
-            ideas.push({
-              id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
-              title: item.title || item.name || 'Untitled Idea',
-              description: item.description || item.concept || item.hook || '',
-              platform: (item.platform || selectedPlatforms[0] || 'INSTAGRAM').toUpperCase() as Platform,
-              hook: item.hook || item.title,
-              angle: item.angle || '',
-              keyPoints: Array.isArray(item.keyPoints) ? item.keyPoints : [],
-              suggestedFormat: item.suggestedFormat || 'carousel',
-              hashtags: Array.isArray(item.hashtags) ? item.hashtags : ['#tech'],
-              cta: item.cta,
-            });
+        const potentialJson = match[1].trim();
+        if (potentialJson.startsWith('[') || potentialJson.startsWith('{')) {
+          const parsed = JSON.parse(potentialJson);
+          const list = Array.isArray(parsed) ? parsed : [parsed];
+          for (const item of list) {
+            if (item && (item.title || item.name)) {
+              const title = String(item.title || item.name || 'Untitled Idea').trim();
+              const normalizedTitle = title.toLowerCase();
+              if (seenTitles.has(normalizedTitle)) continue;
+              seenTitles.add(normalizedTitle);
+
+              ideas.push({
+                id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
+                title,
+                description: item.description || item.concept || item.hook || '',
+                platform: (item.platform || selectedPlatforms[0] || 'INSTAGRAM').toUpperCase() as Platform,
+                hook: item.hook || title,
+                angle: item.angle || '',
+                keyPoints: Array.isArray(item.keyPoints) ? item.keyPoints : [],
+                suggestedFormat: item.suggestedFormat || 'carousel',
+                hashtags: Array.isArray(item.hashtags) ? item.hashtags : ['#tech'],
+                cta: item.cta,
+              });
+            }
           }
         }
       } catch {
-        // Fallback to empty if json block is malformed
+        // Continue to next code block if parse fails
       }
     }
     return ideas;
   };
 
-  // Helper to strip raw JSON block from displayed conversational text
+  // Helper to strip raw JSON block cleanly from displayed conversational text
   const cleanAssistantContent = (text: string): string => {
-    return text.replace(/```(?:json)?\s*\[[\s\S]*?\]\s*```/g, '').trim();
+    if (!text) return '';
+    let cleaned = text.replace(/```(?:json)?\s*[\{\[][\s\S]*?[\}\]]\s*```/gi, '');
+    cleaned = cleaned.replace(/```(?:json)?\s*[\s\S]*?```/gi, '');
+    return cleaned.trim();
   };
 
   const togglePlatform = (p: Platform) => {
@@ -349,17 +384,22 @@ export function ChatInterface({
       if (extractedIdeas.length > 0 && onIdeasGenerated) {
         onIdeasGenerated(extractedIdeas);
       }
-      if (onSessionUpdate) {
-        onSessionUpdate(latestQuery || 'Chat');
-      }
     } catch (err) {
       console.error('Chat error:', err);
+      const errMsg = err instanceof Error ? err.message : 'Unknown error';
+      const isOllamaDown =
+        errMsg.includes('Ollama is not running') ||
+        errMsg.includes('ECONNREFUSED') ||
+        errMsg.includes('11434');
+
       setMessages((prev) => [
         ...prev,
         {
           id: `error-${Date.now()}`,
           role: 'assistant',
-          content: 'Sorry, I encountered an error while processing that request. Please check your network or try again.',
+          content: isOllamaDown
+            ? `**Ollama is not running on your machine.**\n\nPlease open the **Ollama** application or run \`ollama serve\` in your terminal, then try again.`
+            : `Sorry, I encountered an error while processing that request: ${errMsg}`,
         },
       ]);
     } finally {
@@ -385,18 +425,33 @@ export function ChatInterface({
       setIsDraftingBatch(true);
     }
 
+    const currentSessionId = sessionId && sessionId !== 'new' ? sessionId : undefined;
+
     try {
       const res = await fetch('/api/drafts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionId,
+          sessionId: currentSessionId,
           ideaTitles: targetIdeas.map((i) => i.title),
           ideas: targetIdeas,
         }),
       });
 
       if (res.ok) {
+        const newlyUsed: UsedIdeaInfo[] = targetIdeas.map((i) => ({
+          title: i.title,
+          status: 'DRAFTED',
+          isPublished: false,
+          isScheduled: false,
+          hasDraft: true,
+        }));
+        setUsedIdeas((prev) => {
+          const map = new Map(prev.map((item) => [item.title.toLowerCase(), item]));
+          newlyUsed.forEach((item) => map.set(item.title.toLowerCase(), item));
+          return Array.from(map.values());
+        });
+        setSelectedIdeaIds((prev) => prev.filter((id) => !targetIdeas.some((t) => t.id === id)));
         router.push('/drafts');
       } else {
         const data = await res.json().catch(() => ({}));
@@ -485,10 +540,10 @@ export function ChatInterface({
               {/* Message Bubble */}
               <div
                 className={cn(
-                  'max-w-[90%] md:max-w-[85%] rounded-none p-4 text-sm leading-relaxed border',
+                  'max-w-[90%] md:max-w-[85%] rounded-none p-4 text-sm leading-relaxed border border-border shadow-[4px_4px_0_0_var(--border)]',
                   isUser
-                    ? 'bg-surface border-primary/50 text-foreground'
-                    : 'bg-card border-border text-foreground'
+                    ? 'bg-[#0B0B0C] text-[#F4F1EA]'
+                    : 'bg-card text-foreground'
                 )}
               >
                 <div className="whitespace-pre-wrap font-sans text-[13px] md:text-sm">
@@ -555,145 +610,213 @@ export function ChatInterface({
                 )}
 
                 {/* Embedded In-Stream Post Ideas Group */}
-                {message.ideas && message.ideas.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-border space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <Badge className="badge-idea font-mono text-[10px]">
-                          {message.ideas.length} IDEAS PROPOSED
-                        </Badge>
-                        <span className="text-xs font-mono text-muted-foreground">
-                          Select to generate complete drafts
-                        </span>
+                {message.ideas && message.ideas.length > 0 && (() => {
+                  const availableIdeasInMessage = message.ideas.filter((i) => {
+                    const u = getIdeaUsage(i.title);
+                    return !u || (!u.isPublished && !u.hasDraft && !u.isScheduled);
+                  });
+
+                  const allAvailableSelected =
+                    availableIdeasInMessage.length > 0 &&
+                    availableIdeasInMessage.every((i) => selectedIdeaIds.includes(i.id));
+
+                  return (
+                    <div className="mt-4 pt-4 border-t border-border space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className="badge-idea font-mono text-[10px]">
+                            {message.ideas.length} IDEAS PROPOSED
+                          </Badge>
+                          <span className="text-xs font-mono text-muted-foreground">
+                            {availableIdeasInMessage.length > 0
+                              ? `${availableIdeasInMessage.length} available to draft`
+                              : 'All ideas in this batch have been used'}
+                          </span>
+                        </div>
+
+                        {/* Select available in this message */}
+                        {availableIdeasInMessage.length > 0 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const ids = availableIdeasInMessage.map((i) => i.id);
+                              if (allAvailableSelected) {
+                                setSelectedIdeaIds((prev) => prev.filter((id) => !ids.includes(id)));
+                              } else {
+                                setSelectedIdeaIds((prev) => Array.from(new Set([...prev, ...ids])));
+                              }
+                            }}
+                            className="h-6 px-2 text-[10px] font-mono rounded-none border border-border"
+                          >
+                            {allAvailableSelected
+                              ? 'Deselect Available'
+                              : `Select Available (${availableIdeasInMessage.length})`}
+                          </Button>
+                        )}
                       </div>
 
-                      {/* Select all in this message */}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          const idsInMessage = message.ideas!.map((i) => i.id);
-                          const allSelected = idsInMessage.every((id) => selectedIdeaIds.includes(id));
-                          if (allSelected) {
-                            setSelectedIdeaIds((prev) => prev.filter((id) => !idsInMessage.includes(id)));
-                          } else {
-                            setSelectedIdeaIds((prev) => Array.from(new Set([...prev, ...idsInMessage])));
-                          }
-                        }}
-                        className="h-6 px-2 text-[10px] font-mono rounded-none border border-border"
-                      >
-                        {message.ideas.every((i) => selectedIdeaIds.includes(i.id))
-                          ? 'Deselect All'
-                          : 'Select All in Batch'}
-                      </Button>
-                    </div>
+                      {/* Idea Cards List */}
+                      <div className="grid grid-cols-1 gap-2.5">
+                        {message.ideas.map((idea) => {
+                          const usage = getIdeaUsage(idea.title);
+                          const isUsed = Boolean(usage && (usage.isPublished || usage.hasDraft || usage.isScheduled));
+                          const isSelected = !isUsed && selectedIdeaIds.includes(idea.id);
+                          const isDrafting = draftingIdeaIds[idea.id];
 
-                    {/* Idea Cards List */}
-                    <div className="grid grid-cols-1 gap-2.5">
-                      {message.ideas.map((idea) => {
-                        const isSelected = selectedIdeaIds.includes(idea.id);
-                        const isDrafting = draftingIdeaIds[idea.id];
+                          return (
+                            <div
+                              key={idea.id}
+                              className={cn(
+                                'p-3.5 rounded-none border transition-all',
+                                isUsed
+                                  ? 'bg-surface/30 opacity-75 border-border/60 hover:opacity-85'
+                                  : isSelected
+                                  ? 'bg-surface border-primary ring-1 ring-primary'
+                                  : 'bg-background border-border hover:border-border/80'
+                              )}
+                            >
+                              <div className="flex items-start gap-3">
+                                {isUsed ? (
+                                  <div
+                                    className="mt-1 h-4 w-4 rounded-none border border-border/60 bg-surface flex items-center justify-center text-muted-foreground shrink-0 select-none cursor-default"
+                                    title={
+                                      usage?.isPublished
+                                        ? 'Post published live on social media'
+                                        : usage?.isScheduled
+                                        ? 'Post scheduled'
+                                        : 'Draft already created'
+                                    }
+                                  >
+                                    <Check className={cn('h-3 w-3', usage?.isPublished ? 'text-emerald-500' : 'text-primary')} />
+                                  </div>
+                                ) : (
+                                  <Checkbox
+                                    checked={isSelected}
+                                    onCheckedChange={() => toggleIdeaSelection(idea.id)}
+                                    className="mt-1 rounded-none border-border"
+                                  />
+                                )}
 
-                        return (
-                          <div
-                            key={idea.id}
-                            className={cn(
-                              'p-3.5 rounded-none border transition-all',
-                              isSelected
-                                ? 'bg-surface border-primary ring-1 ring-primary'
-                                : 'bg-background border-border hover:border-border/80'
-                            )}
-                          >
-                            <div className="flex items-start gap-3">
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={() => toggleIdeaSelection(idea.id)}
-                                className="mt-1 rounded-none border-border"
-                              />
+                                <div className="flex-1 space-y-1.5 min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Badge variant="outline" className="text-[10px] font-mono rounded-none border-border">
+                                      {idea.platform}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-[10px] font-mono rounded-none border-border bg-surface">
+                                      {idea.suggestedFormat}
+                                    </Badge>
+                                    {isUsed && usage?.isPublished && (
+                                      <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-mono rounded-none gap-1 font-semibold">
+                                        <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                                        Published Live
+                                      </Badge>
+                                    )}
+                                    {isUsed && !usage?.isPublished && usage?.isScheduled && (
+                                      <Badge className="bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 text-[10px] font-mono rounded-none gap-1 font-semibold">
+                                        <Clock className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                                        Scheduled
+                                      </Badge>
+                                    )}
+                                    {isUsed && !usage?.isPublished && !usage?.isScheduled && (
+                                      <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-[10px] font-mono rounded-none gap-1 font-semibold">
+                                        <Check className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                                        Draft Created
+                                      </Badge>
+                                    )}
+                                  </div>
 
-                              <div className="flex-1 space-y-1.5 min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <Badge variant="outline" className="text-[10px] font-mono rounded-none border-border">
-                                    {idea.platform}
-                                  </Badge>
-                                  <Badge variant="outline" className="text-[10px] font-mono rounded-none border-border bg-surface">
-                                    {idea.suggestedFormat}
-                                  </Badge>
+                                  <h4 className={cn('font-display font-bold text-sm', isUsed ? 'text-foreground/80' : 'text-foreground')}>
+                                    {idea.title}
+                                  </h4>
+
+                                  {idea.hook && (
+                                    <p className="text-xs font-mono text-muted-foreground">
+                                      <span className="text-foreground dark:text-primary font-bold">Hook:</span> {idea.hook}
+                                    </p>
+                                  )}
+
+                                  {idea.angle && (
+                                    <p className="text-xs font-mono text-muted-foreground/80">
+                                      <span className="text-foreground font-semibold">Angle:</span> {idea.angle}
+                                    </p>
+                                  )}
+
+                                  {idea.keyPoints && idea.keyPoints.length > 0 && (
+                                    <ul className="text-[11px] font-mono text-muted-foreground list-disc list-inside pt-1 space-y-0.5">
+                                      {idea.keyPoints.map((pt, idx) => (
+                                        <li key={idx} className="truncate">{pt}</li>
+                                      ))}
+                                    </ul>
+                                  )}
                                 </div>
 
-                                <h4 className="font-display font-bold text-sm text-foreground">
-                                  {idea.title}
-                                </h4>
-
-                                {idea.hook && (
-                                  <p className="text-xs font-mono text-muted-foreground">
-                                    <span className="text-foreground dark:text-primary font-bold">Hook:</span> {idea.hook}
-                                  </p>
-                                )}
-
-                                {idea.angle && (
-                                  <p className="text-xs font-mono text-muted-foreground/80">
-                                    <span className="text-foreground font-semibold">Angle:</span> {idea.angle}
-                                  </p>
-                                )}
-
-                                {idea.keyPoints && idea.keyPoints.length > 0 && (
-                                  <ul className="text-[11px] font-mono text-muted-foreground list-disc list-inside pt-1 space-y-0.5">
-                                    {idea.keyPoints.map((pt, idx) => (
-                                      <li key={idx} className="truncate">{pt}</li>
-                                    ))}
-                                  </ul>
+                                {isUsed ? (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    asChild
+                                    className="h-8 text-[11px] font-mono rounded-none border border-border/70 text-muted-foreground hover:text-foreground shrink-0 self-start bg-surface/50"
+                                  >
+                                    <Link href={usage?.isPublished ? '/history' : '/drafts'}>
+                                      <span>{usage?.isPublished ? 'View in History' : 'View in Drafts'}</span>
+                                      <ChevronRight className="h-3 w-3 ml-1" />
+                                    </Link>
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={isDrafting}
+                                    onClick={() => handleGenerateDrafts(idea)}
+                                    className="h-8 text-[11px] font-mono rounded-none border-border bg-surface hover:border-primary shrink-0 self-start"
+                                  >
+                                    {isDrafting ? (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                      <>
+                                        <Sparkles className="h-3.5 w-3.5 mr-1 text-foreground dark:text-primary" />
+                                        Draft
+                                      </>
+                                    )}
+                                  </Button>
                                 )}
                               </div>
-
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                disabled={isDrafting}
-                                onClick={() => handleGenerateDrafts(idea)}
-                                className="h-8 text-[11px] font-mono rounded-none border-border bg-surface hover:border-primary shrink-0 self-start"
-                              >
-                                {isDrafting ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : (
-                                  <>
-                                    <Sparkles className="h-3.5 w-3.5 mr-1 text-foreground dark:text-primary" />
-                                    Draft
-                                  </>
-                                )}
-                              </Button>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
 
-                    {/* Batch Draft Button */}
-                    <div className="flex items-center justify-end pt-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={isDraftingBatch || selectedIdeaIds.length === 0}
-                        onClick={() => handleGenerateDrafts()}
-                        className="h-9 px-4 rounded-none font-mono text-xs font-bold bg-primary text-primary-foreground border border-primary hover:opacity-90"
-                      >
-                        {isDraftingBatch ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
-                            Generating Drafts...
-                          </>
-                        ) : (
-                          <>
-                            Create Drafts ({selectedIdeaIds.length} selected)
-                            <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                          </>
-                        )}
-                      </Button>
+                      {/* Batch Draft Button */}
+                      {availableIdeasInMessage.length > 0 && (
+                        <div className="flex items-center justify-end pt-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={isDraftingBatch || selectedIdeaIds.length === 0}
+                            onClick={() => handleGenerateDrafts()}
+                            className="h-9 px-4 rounded-none font-mono text-xs font-bold bg-primary text-primary-foreground border border-primary hover:opacity-90"
+                          >
+                            {isDraftingBatch ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                                Generating Drafts...
+                              </>
+                            ) : (
+                              <>
+                                Create Drafts ({selectedIdeaIds.length} selected)
+                                <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             </div>
           );
@@ -747,7 +870,7 @@ export function ChatInterface({
             type="button"
             disabled={isGenerating}
             onClick={() => handleSendMessage(prompt)}
-            className="text-[11px] font-mono px-2.5 py-1 rounded-none border border-border bg-card hover:border-primary text-muted-foreground hover:text-foreground whitespace-nowrap transition-colors"
+            className="text-[11px] font-mono px-2.5 py-1 rounded-none border border-border bg-card hover:bg-muted text-foreground whitespace-nowrap transition-none shadow-none font-bold"
           >
             {prompt}
           </button>
@@ -769,12 +892,12 @@ export function ChatInterface({
             onChange={(e) => setInputMessage(e.target.value)}
             disabled={isGenerating}
             placeholder="Ask for ideas, paste a tech news URL, or say 'regenerate idea 2 with a punchier hook'..."
-            className="flex-1 h-11 px-3 text-xs font-mono bg-surface border border-border rounded-none text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-primary focus:outline-none"
+            className="flex-1 h-11 px-3 text-xs font-mono bg-card border border-border rounded-none text-foreground placeholder:text-muted-foreground focus:outline-2 focus:outline-accent focus:outline-offset-2"
           />
           <Button
             type="submit"
             disabled={isGenerating || !inputMessage.trim()}
-            className="h-11 px-5 rounded-none font-mono text-xs font-bold bg-primary text-primary-foreground border border-primary hover:opacity-90 shrink-0"
+            className="h-11 px-5 rounded-none font-mono text-xs font-bold uppercase shrink-0"
           >
             {isGenerating ? (
               <Loader2 className="h-4 w-4 animate-spin" />

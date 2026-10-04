@@ -31,14 +31,103 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ messages: [] });
     }
 
-    const messages = await prisma.chatMessage.findMany({
-      where: { sessionId },
-      orderBy: { createdAt: 'asc' },
-    });
+    const [messages, sessionIdeas, userPosts] = await Promise.all([
+      prisma.chatMessage.findMany({
+        where: { sessionId },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.idea.findMany({
+        where: {
+          userId,
+          OR: [
+            { sessionId },
+            { selected: true },
+            { status: { not: 'IDEA' } },
+          ],
+        },
+        include: {
+          posts: {
+            select: {
+              id: true,
+              status: true,
+              title: true,
+              publishedAt: true,
+              scheduledAt: true,
+            },
+          },
+        },
+      }),
+      prisma.post.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          publishedAt: true,
+          scheduledAt: true,
+          ideaId: true,
+        },
+      }),
+    ]);
 
-    return NextResponse.json({ messages });
+    const usedIdeasMap = new Map<
+      string,
+      {
+        title: string;
+        status: string;
+        isPublished: boolean;
+        isScheduled: boolean;
+        hasDraft: boolean;
+        postId?: string;
+      }
+    >();
+
+    for (const idea of sessionIdeas) {
+      const normalizedTitle = idea.title.trim().toLowerCase();
+      const isPublished = idea.status === 'POSTED' || idea.posts.some((p) => p.status === 'POSTED');
+      const isScheduled = idea.status === 'SCHEDULED' || idea.posts.some((p) => p.status === 'SCHEDULED');
+      const hasDraft = idea.selected || idea.status !== 'IDEA' || idea.posts.length > 0;
+      const primaryPost = idea.posts[0];
+      const status = isPublished ? 'POSTED' : isScheduled ? 'SCHEDULED' : primaryPost ? primaryPost.status : idea.status;
+
+      if (hasDraft || isPublished || isScheduled) {
+        usedIdeasMap.set(normalizedTitle, {
+          title: idea.title,
+          status,
+          isPublished,
+          isScheduled,
+          hasDraft,
+          postId: primaryPost?.id,
+        });
+      }
+    }
+
+    for (const post of userPosts) {
+      const normalizedTitle = post.title.trim().toLowerCase();
+      const existing = usedIdeasMap.get(normalizedTitle);
+      const isPublished = post.status === 'POSTED' || Boolean(post.publishedAt);
+      const isScheduled = post.status === 'SCHEDULED';
+      const status = isPublished ? 'POSTED' : isScheduled ? 'SCHEDULED' : post.status;
+
+      if (!existing || isPublished) {
+        usedIdeasMap.set(normalizedTitle, {
+          title: post.title,
+          status,
+          isPublished,
+          isScheduled,
+          hasDraft: true,
+          postId: post.id,
+        });
+      }
+    }
+
+    return NextResponse.json({
+      messages,
+      usedIdeas: Array.from(usedIdeasMap.values()),
+    });
   } catch (error) {
     console.error('Chat history fetch error:', error);
     return NextResponse.json({ error: 'Failed to fetch chat history' }, { status: 500 });
   }
 }
+

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -384,6 +385,19 @@ TEXT RULES
 }
 
 /**
+ * Builds a prompt for Gemini AI image generation for a carousel or post slide
+ */
+export function buildGeminiImagePrompt(data: {
+  headline: string;
+  theme?: string;
+  topic?: string;
+}): string {
+  const theme = data.theme || 'sleek modern high-tech developer aesthetic, clean dark mode';
+  const topic = data.topic || data.headline;
+  return `A visually stunning, high-resolution aesthetic editorial tech visual illustrating: "${topic} - ${data.headline}". Theme: ${theme}. Style: clean cinematic digital artwork, elegant glowing neon accents in cyan and violet, obsidian dark background, crisp minimalism, studio lighting, high contrast, 8k resolution, suitable for a professional tech carousel slide.`;
+}
+
+/**
  * Generates an image for post slides using Composio's Google Gemini image tool.
  *
  * @param promptOrData - Visual description string or structured typography data
@@ -399,7 +413,10 @@ export async function generateSlideImage(
   try {
     const finalPrompt = typeof promptOrData === 'string'
       ? promptOrData
-      : formatSlideTypographyPrompt(promptOrData);
+      : buildGeminiImagePrompt({
+          headline: promptOrData.factLine,
+          topic: promptOrData.takeLine,
+        });
 
     const session = await composioClient.create(userId);
     const result = await session.execute('GEMINI_GENERATE_IMAGE', {
@@ -420,4 +437,166 @@ export async function generateSlideImage(
     console.error('[Composio Gemini Image] Failed to generate image:', error);
     return null;
   }
+}
+
+/**
+ * Generates an AI video using Google Veo via Composio's GEMINI_GENERATE_VIDEOS tool.
+ *
+ * @param prompt - Text prompt describing the cinematic video
+ * @param durationSeconds - Video duration: 4, 6, or 8 seconds (Google Veo requirement)
+ * @param aspectRatio - Target aspect ratio: '9:16' | '16:9'
+ * @param userId - Stable user ID
+ * @returns Public URL of the generated video file or null
+ */
+export async function generateVeoVideo(
+  prompt: string,
+  durationSeconds: 4 | 6 | 8 = 4,
+  aspectRatio: '9:16' | '16:9' = '9:16',
+  userId: string = 'default-user'
+): Promise<string | null> {
+  try {
+    const session = await composioClient.create(userId);
+    console.log(`[Composio Veo] Initiating video generation (${durationSeconds}s, ${aspectRatio})...`);
+    
+    const result = await session.execute('GEMINI_GENERATE_VIDEOS', {
+      prompt,
+      duration_seconds: durationSeconds,
+      aspect_ratio: aspectRatio,
+    });
+
+    const opName = (result.data as any)?.operation_name;
+    if (result.error || !opName) {
+      console.warn('[Composio Veo] Video initiate error:', result.error || result.data);
+      return null;
+    }
+
+    console.log(`[Composio Veo] Operation: ${opName}. Polling for completion...`);
+
+    // Poll using GEMINI_WAIT_FOR_VIDEO
+    const pollResult = await session.execute('GEMINI_WAIT_FOR_VIDEO', {
+      operation_name: opName,
+      poll_interval_seconds: 5,
+      max_wait_seconds: 90,
+    });
+
+    const videoUrl = (pollResult.data as any)?.video_file?.s3url;
+    if (pollResult.error || !videoUrl) {
+      console.warn('[Composio Veo] Poll returned error or missing file:', pollResult.error || pollResult.data);
+      return null;
+    }
+
+    console.log('[Composio Veo] Video successfully generated:', videoUrl);
+    return videoUrl;
+  } catch (error) {
+    console.error('[Composio Veo] Video generation failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Generates text or structured draft content using Composio's GEMINI_GENERATE_CONTENT tool.
+ */
+export async function generateGeminiText(
+  prompt: string,
+  systemInstruction?: string,
+  userId: string = 'default-user'
+): Promise<string | null> {
+  try {
+    const session = await composioClient.create(userId);
+    const result = await session.execute('GEMINI_GENERATE_CONTENT', {
+      prompt,
+      model: 'gemini-2.5-flash',
+      system_instruction: systemInstruction,
+    });
+
+    if (result.error) {
+      console.warn('[Composio Gemini Text] Execution error:', result.error);
+      return null;
+    }
+
+    const data = result.data as any;
+    const text =
+      data?.text ||
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      data?.results?.[0]?.response?.data?.text ||
+      (typeof data === 'string' ? data : null);
+
+    return text || null;
+  } catch (error) {
+    console.error('[Composio Gemini Text] Failed to generate text:', error);
+    return null;
+  }
+}
+
+/**
+ * Downloads a video from a remote URL (e.g. S3 from Google Veo) and stores it locally in public/reels/
+ */
+export async function downloadAndStoreVideoLocally(
+  remoteUrl: string,
+  fileName: string
+): Promise<{ videoUrl: string; localFilePath: string } | null> {
+  try {
+    const dir = path.join(process.cwd(), 'public', 'reels');
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    const localFilePath = path.join(dir, fileName);
+    const res = await fetch(remoteUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status} fetching video from ${remoteUrl}`);
+    const buffer = Buffer.from(await res.arrayBuffer());
+    await fs.promises.writeFile(localFilePath, buffer);
+    return {
+      videoUrl: `/reels/${fileName}`,
+      localFilePath: `public/reels/${fileName}`,
+    };
+  } catch (err) {
+    console.error('[Composio Video] Failed to download and store video locally:', err);
+    return null;
+  }
+}
+
+/**
+ * Generates a short video using Composio Google Veo/Gemini, and stores it locally in public/reels/.
+ * If remote generation fails or is unsupported, falls back to the local motion Reel compiler.
+ */
+export async function generateReelWithGemini(
+  postId: string,
+  title: string,
+  keyPoints: string[] = [],
+  userId: string = 'default-user',
+  reelData?: any
+): Promise<{
+  videoUrl: string;
+  localFilePath: string;
+  posterUrl: string;
+  durationSeconds: number;
+  scenes?: any[];
+}> {
+  const videoFileName = `reel-${postId}.mp4`;
+  const posterFileName = `poster-${postId}.png`;
+  const videoPrompt = `Vertical 9:16 high-tech cinematic motion visual for social media video: "${title}". Key insights: ${keyPoints.slice(0, 3).join(', ')}. Aesthetic: sharp, high contrast, clean cyberpunk developer studio, sleek animations, premium editorial style.`;
+
+  try {
+    console.log(`[Composio Gemini Video] Generating Veo video for post ${postId}...`);
+    const remoteUrl = await generateVeoVideo(videoPrompt, 6, '9:16', userId);
+    if (remoteUrl) {
+      const localResult = await downloadAndStoreVideoLocally(remoteUrl, videoFileName);
+      if (localResult) {
+        console.log(`[Composio Gemini Video] Successfully saved local video to ${localResult.localFilePath}`);
+        return {
+          videoUrl: localResult.videoUrl,
+          localFilePath: localResult.localFilePath,
+          posterUrl: `/reels/${posterFileName}`,
+          durationSeconds: 6,
+          scenes: reelData?.scenes || [],
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[Composio Gemini Video] Remote generation failed, using local generator fallback:', err);
+  }
+
+  // Fallback to local reel generator so the user always has a functioning video
+  const { generateLocalReelVideo } = await import('./video/reel-generator');
+  return generateLocalReelVideo(postId, reelData, title, keyPoints);
 }

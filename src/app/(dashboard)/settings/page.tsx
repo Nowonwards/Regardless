@@ -109,8 +109,8 @@ function SettingsPageInner() {
   return (
     <div className="max-w-4xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and preferences</p>
+        <h1 className="text-3xl font-extrabold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground">Manage your account and preferences</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

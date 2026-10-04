@@ -90,10 +90,10 @@ export function ScheduleModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/70 transition-opacity" onClick={onClose} />
 
       {/* Modal Container */}
-      <div className="relative z-10 w-full max-w-2xl rounded-none border border-border bg-card p-6 space-y-6 animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative z-10 w-full max-w-2xl rounded-none border border-border bg-card p-6 space-y-6 shadow-[4px_4px_0_0_#0B0B0C] animate-in fade-in duration-100">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-border pb-4">
           <div className="space-y-1">
@@ -131,7 +131,7 @@ export function ScheduleModal({
               variant="outline"
               size="sm"
               onClick={() => applyQuickPreset(1, 9, 0)}
-              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-foreground/50 dark:hover:border-primary"
+              className="h-8 text-xs font-mono rounded-none border border-border bg-surface hover:bg-muted"
             >
               Tomorrow 9:00 AM
             </Button>
@@ -140,7 +140,7 @@ export function ScheduleModal({
               variant="outline"
               size="sm"
               onClick={() => applyQuickPreset(1, 18, 0)}
-              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-foreground/50 dark:hover:border-primary"
+              className="h-8 text-xs font-mono rounded-none border border-border bg-surface hover:bg-muted"
             >
               Tomorrow 6:00 PM
             </Button>
@@ -149,7 +149,7 @@ export function ScheduleModal({
               variant="outline"
               size="sm"
               onClick={() => applyQuickPreset(2, 11, 30)}
-              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-foreground/50 dark:hover:border-primary"
+              className="h-8 text-xs font-mono rounded-none border border-border bg-surface hover:bg-muted"
             >
               In 2 Days (11:30 AM)
             </Button>
@@ -158,7 +158,7 @@ export function ScheduleModal({
               variant="outline"
               size="sm"
               onClick={() => applyQuickPreset(3, 15, 0)}
-              className="h-8 text-xs font-mono rounded-none border-border bg-surface hover:border-foreground/50 dark:hover:border-primary"
+              className="h-8 text-xs font-mono rounded-none border border-border bg-surface hover:bg-muted"
             >
               In 3 Days (3:00 PM)
             </Button>
@@ -192,7 +192,7 @@ export function ScheduleModal({
                   <select
                     value={selectedHour}
                     onChange={(e) => setSelectedHour(e.target.value)}
-                    className="w-full h-10 px-3 rounded-none border border-border bg-background text-xs font-mono font-semibold text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
+                    className="w-full h-10 px-3 rounded-none border border-border bg-background text-xs font-mono font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
                   >
                     {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((h) => (
                       <option key={h} value={h}>
@@ -209,7 +209,7 @@ export function ScheduleModal({
                   <select
                     value={selectedMinute}
                     onChange={(e) => setSelectedMinute(e.target.value)}
-                    className="w-full h-10 px-3 rounded-none border border-border bg-background text-xs font-mono font-semibold text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
+                    className="w-full h-10 px-3 rounded-none border border-border bg-background text-xs font-mono font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
                   >
                     {['00', '15', '30', '45'].map((m) => (
                       <option key={m} value={m}>
@@ -227,7 +227,7 @@ export function ScheduleModal({
                     className={cn(
                       'px-3 py-1 text-xs font-mono font-bold rounded-none transition-all',
                       selectedPeriod === 'AM'
-                        ? 'bg-primary text-primary-foreground border border-primary'
+                        ? 'bg-primary text-primary-foreground border border-border'
                         : 'text-muted-foreground hover:text-foreground'
                     )}
                   >
@@ -239,7 +239,7 @@ export function ScheduleModal({
                     className={cn(
                       'px-3 py-1 text-xs font-mono font-bold rounded-none transition-all',
                       selectedPeriod === 'PM'
-                        ? 'bg-primary text-primary-foreground border border-primary'
+                        ? 'bg-primary text-primary-foreground border border-border'
                         : 'text-muted-foreground hover:text-foreground'
                     )}
                   >
@@ -262,8 +262,8 @@ export function ScheduleModal({
                     className={cn(
                       'text-[10px] font-mono px-2 py-0.5 rounded-none border transition-colors',
                       selectedHour === t.hour && selectedMinute === t.minute && selectedPeriod === t.period
-                        ? 'bg-primary text-primary-foreground border-primary font-bold'
-                        : 'bg-surface border-border text-muted-foreground hover:text-foreground hover:border-primary'
+                        ? 'bg-primary text-primary-foreground border-border font-bold'
+                        : 'bg-surface border-border text-muted-foreground hover:text-foreground'
                     )}
                   >
                     {t.label}
@@ -286,7 +286,7 @@ export function ScheduleModal({
                   Target Auto-Publish Date
                 </span>
                 {!isTargetInPast && (
-                  <Badge variant="outline" className="text-[10px] font-mono h-5 bg-primary text-primary-foreground border-primary font-bold rounded-none gap-1">
+                  <Badge variant="outline" className="text-[10px] font-mono h-5 bg-primary text-primary-foreground border border-border font-bold rounded-none gap-1">
                     <Check className="h-2.5 w-2.5" /> Ready
                   </Badge>
                 )}
@@ -320,7 +320,7 @@ export function ScheduleModal({
               size="sm"
               onClick={handleConfirm}
               disabled={isTargetInPast}
-              className="rounded-none text-xs font-mono font-bold uppercase tracking-wider gap-1.5 bg-primary hover:opacity-90 text-primary-foreground border border-primary h-9 px-5 disabled:opacity-50"
+              className="rounded-none text-xs font-mono font-bold uppercase tracking-wider gap-1.5 bg-primary hover:opacity-90 text-primary-foreground border border-border h-9 px-5 disabled:opacity-50"
             >
               <Check className="h-3.5 w-3.5" />
               Confirm Schedule

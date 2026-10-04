@@ -26,7 +26,6 @@ export function SlideOver({
   className,
   width = 'lg',
 }: SlideOverProps) {
-  // Handle Escape key
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && open) {
@@ -37,7 +36,6 @@ export function SlideOver({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, onClose]);
 
-  // Lock body scroll when open
   React.useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
@@ -60,9 +58,9 @@ export function SlideOver({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true">
-      {/* Backdrop */}
+      {/* Backdrop without blur */}
       <div
-        className="fixed inset-0 bg-background/60 backdrop-blur-sm transition-opacity duration-200 animate-in fade-in"
+        className="fixed inset-0 bg-black/60 transition-opacity duration-100 animate-in fade-in"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -70,21 +68,21 @@ export function SlideOver({
       <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
         <div
           className={cn(
-            'w-screen transform transition-all duration-200 ease-out animate-in slide-in-from-right sm:duration-250',
+            'w-screen transform transition-all duration-150 ease-out animate-in slide-in-from-right',
             widthClasses[width]
           )}
         >
           <div className="flex h-full flex-col overflow-y-auto border-l border-border bg-card">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-border px-6 py-4 bg-surface">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4 bg-card">
               <div className="space-y-1 min-w-0 pr-4">
                 {typeof title === 'string' ? (
-                  <h2 className="text-base font-semibold text-foreground truncate">{title}</h2>
+                  <h2 className="text-base font-extrabold text-foreground truncate">{title}</h2>
                 ) : (
                   title
                 )}
                 {description && (
-                  <p className="text-xs text-muted-foreground line-clamp-1">{description}</p>
+                  <p className="text-xs font-mono text-muted-foreground line-clamp-1">{description}</p>
                 )}
               </div>
               <Button
@@ -105,7 +103,7 @@ export function SlideOver({
 
             {/* Footer */}
             {footer && (
-              <div className="border-t border-border px-6 py-3.5 bg-surface flex items-center justify-end gap-2">
+              <div className="border-t border-border px-6 py-3.5 bg-card flex items-center justify-end gap-2">
                 {footer}
               </div>
             )}
