@@ -164,7 +164,7 @@ export default function SignUpPage() {
 
           {/* Right Column: Seamless Brutalist Clerk SignUp */}
           <section className="lg:col-span-6 p-6 sm:p-10 lg:p-12 flex flex-col items-center justify-center bg-muted/30">
-            <SignUp appearance={clerkAppearance} />
+            <SignUp appearance={clerkAppearance} fallbackRedirectUrl="/overview" />
           </section>
         </div>
       </main>

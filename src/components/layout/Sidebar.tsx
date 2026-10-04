@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  Home,
   MessageSquare,
   Lightbulb,
   FileText,
@@ -21,6 +22,7 @@ import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
+  { href: '/overview', label: 'Overview', icon: Home },
   { href: '/chat', label: 'Chat', icon: MessageSquare },
   { href: '/ideas', label: 'Ideas', icon: Lightbulb },
   { href: '/drafts', label: 'Drafts', icon: FileText },
