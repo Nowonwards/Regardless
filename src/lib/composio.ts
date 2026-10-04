@@ -6,15 +6,31 @@ import sharp from 'sharp';
 import { Composio } from '@composio/core';
 
 /**
- * Composio Platform client — singleton.
- * Reads COMPOSIO_API_KEY from the environment automatically.
- *
- * Credential must be an `ak_*` project key from:
- * dashboard.composio.dev → Platform → your project → Getting Started
+ * Composio Platform client — lazy singleton.
+ * Reads COMPOSIO_API_KEY from the environment.
+ * Lazily initialized to prevent Next.js build-time crashes when env vars are absent.
  */
-export const composioClient = new Composio({
-  apiKey: process.env.COMPOSIO_API_KEY,
-  baseURL: 'https://backend.composio.dev',
+let _composioClient: Composio | null = null;
+
+export function getComposioClient(): Composio {
+  if (!_composioClient) {
+    _composioClient = new Composio({
+      apiKey: process.env.COMPOSIO_API_KEY || 'dummy_api_key_for_build',
+      baseURL: 'https://backend.composio.dev',
+    });
+  }
+  return _composioClient;
+}
+
+export const composioClient = new Proxy({} as Composio, {
+  get(_target, prop) {
+    const client = getComposioClient();
+    const val = (client as unknown as Record<string | symbol, unknown>)[prop];
+    if (typeof val === 'function') {
+      return val.bind(client);
+    }
+    return val;
+  },
 });
 
 /**
