@@ -1,0 +1,11 @@
+# Project-Specific Rules: Regardless
+
+## Git & Version Control Workflow
+1. Never commit or push directly to `main`.
+2. All feature, bug fix, and task changes must be committed and pushed to the `develop` branch (`origin/develop`).
+3. After making changes and verifying them:
+   - Commit using Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`).
+   - Push commits to `origin/develop`.
+   - Check if an open Pull Request from `develop` to `main` exists (`gh pr list --base main --head develop --state open`).
+   - If an open PR already exists, notify the user that the PR has been updated with the new commits.
+   - If no open PR exists, automatically create a new PR from `develop` to `main` using `gh pr create` and provide the PR link to the user.

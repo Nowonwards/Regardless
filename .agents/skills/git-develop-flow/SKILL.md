@@ -9,6 +9,10 @@ This skill defines and guides the branching and release workflow for the reposit
 1. **Never commit or push directly to `main`**.
 2. **All changes are pushed upstream via the `develop` branch** (or scoped feature branches targeting `develop`).
 3. **Merging to `main` happens from `develop`** once changes are verified and ready for production.
+4. **Automated PR Management**:
+   - Whenever code changes are made and pushed to `develop`, check if an open PR from `develop` to `main` already exists.
+   - If an open PR exists, the push to `develop` automatically updates it. Inform the user with the PR URL.
+   - If no open PR exists, create one immediately via `gh pr create --base main --head develop` and provide the PR URL.
 
 ---
 
@@ -78,13 +82,32 @@ Push the commits to the remote `develop` branch:
 git push -u origin develop
 ```
 
-### 5. Merge into `main`
-Once the changes on `develop` are validated, merge `develop` into `main`:
+### 5. Check and Manage Pull Request to `main`
+Check if an open pull request already exists from `develop` to `main`:
+```bash
+gh pr list --base main --head develop --state open
+```
 
-#### Option A: Pull Request on GitHub (Recommended)
-1. Navigate to the GitHub repository.
-2. Open a Pull Request from `develop` into `main`.
-3. Review changes and complete the merge.
+- **If an open PR exists**:
+  The push to `origin/develop` will automatically update the PR. Retrieve and share the URL:
+  ```bash
+  gh pr view --web
+  ```
+- **If no open PR exists**:
+  Create one immediately:
+  ```bash
+  gh pr create --base main --head develop --title "feat: <summary>" --body "<description>"
+  ```
+  Share the newly opened PR URL with the user.
+
+### 6. Merge into `main`
+Once the changes on `develop` are approved/validated, merge `develop` into `main`:
+
+#### Option A: GitHub Pull Request (Recommended)
+Merge via GitHub UI or CLI:
+```bash
+gh pr merge <PR_NUMBER> --merge
+```
 
 #### Option B: Local Fast-Forward / Merge
 ```bash
