@@ -2,22 +2,14 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { NewsIdeationForm } from '@/components/chat/NewsIdeationForm';
 import { ManualPostStudio } from '@/components/chat/ManualPostStudio';
 import { Platform, IdeaContent } from '@/types';
-import { Sparkles, Layers, RadioTower, Clock, Plus, Loader2 } from 'lucide-react';
+import { Sparkles, Radio, Layers, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface ChatSessionSummary {
+export interface ChatSessionSummary {
   id: string;
   title?: string | null;
   createdAt: string | Date;
@@ -38,6 +30,7 @@ function ChatPageContent() {
   const [isLoadingPlatforms, setIsLoadingPlatforms] = useState(true);
   const [dateRange, setDateRange] = useState<{ start: Date; end: Date } | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<'chat' | 'news-form' | 'manual'>('chat');
+  const [injectedIdeas, setInjectedIdeas] = useState<IdeaContent[]>([]);
 
   useEffect(() => {
     const fetchPlatforms = async () => {
@@ -71,8 +64,7 @@ function ChatPageContent() {
         const targetId = preferSessionId || querySessionId;
         if (targetId && targetId !== 'new' && fetchedSessions.some((s) => s.id === targetId)) {
           setSessionId(targetId);
-        } else {
-          // Opening or refreshing /chat should open a brand-new chat interface
+        } else if (!targetId || targetId === 'new') {
           setSessionId('new');
         }
       }
@@ -126,6 +118,12 @@ function ChatPageContent() {
     }
   };
 
+  const handleNewsIdeasSuccess = (ideas: IdeaContent[]) => {
+    setInjectedIdeas(ideas);
+    setActiveTab('chat');
+    handleIdeasGenerated(ideas);
+  };
+
   const handleSessionUpdate = (_title?: string, newSessionId?: string) => {
     const targetSessionId = newSessionId || sessionId;
     if (targetSessionId && targetSessionId !== 'new') {
@@ -137,153 +135,105 @@ function ChatPageContent() {
     fetchSessions(targetSessionId !== 'new' ? targetSessionId : undefined);
   };
 
-  const formatSessionTimestamp = (dateStr: string | Date): string => {
-    try {
-      const d = new Date(dateStr);
-      const now = new Date();
-      const isToday = d.toDateString() === now.toDateString();
-      const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      if (isToday) {
-        return `Today, ${timeStr}`;
-      }
-      const datePart = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-      return `${datePart}, ${timeStr}`;
-    } catch {
-      return String(dateStr);
-    }
-  };
-
-  const currentSession = sessions.find((s) => s.id === sessionId);
-
   return (
-    <Tabs
-      value={activeTab}
-      onValueChange={(v) => setActiveTab(v as 'chat' | 'news-form' | 'manual')}
-      className="h-[calc(100vh-5.5rem)] flex flex-col w-full overflow-hidden rounded-none border border-border bg-background shadow-[4px_4px_0_0_#0B0B0C] dark:shadow-[4px_4px_0_0_#F4F1EA]"
-    >
-      <div className="border-b border-border px-4 py-2.5 bg-card shrink-0 flex flex-wrap items-center justify-between gap-3">
-        <TabsList className="grid h-9 w-full max-w-xl grid-cols-3 rounded-none border border-border bg-background p-0.5">
-          <TabsTrigger
-            value="chat"
-            className="font-mono text-xs font-bold uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-none gap-1.5"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            AI Chat & Ideation
-          </TabsTrigger>
-          <TabsTrigger
-            value="news-form"
-            className="font-mono text-xs font-bold uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-none gap-1.5"
-          >
-            <RadioTower className="h-3.5 w-3.5" />
-            News Ideation Form
-          </TabsTrigger>
-          <TabsTrigger
-            value="manual"
-            className="font-mono text-xs font-bold uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-none gap-1.5"
-          >
-            <Layers className="h-3.5 w-3.5" />
-            Manual Post Studio
-          </TabsTrigger>
-        </TabsList>
+    <div className="w-full min-h-screen bg-background text-foreground flex flex-col space-y-6">
+      {/* Header row under top bar: page title "Create" and segmented control */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h1 className="font-sans font-black text-[34px] leading-tight tracking-tight text-foreground select-none">
+          Create
+        </h1>
 
-        {/* Chat History Dropdown & New Chat Button */}
-        {activeTab === 'chat' && (
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
-              <Select value={sessionId} onValueChange={handleSelectSession}>
-                <SelectTrigger className="h-8 min-w-[220px] max-w-[320px] rounded-none border border-border bg-background text-[11px] font-mono">
-                  <div className="flex items-center gap-1.5 truncate">
-                    {sessionId === 'new' || !currentSession ? (
-                      <span className="font-bold text-foreground uppercase tracking-wider">New Chat (Draft)</span>
-                    ) : (
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="font-bold text-foreground truncate">
-                          {currentSession.title || 'Tech News Ideation'}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
-                          • {formatSessionTimestamp(currentSession.updatedAt || currentSession.createdAt)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="rounded-none border border-border bg-card max-h-80 w-[340px] shadow-[4px_4px_0_0_#0B0B0C] dark:shadow-[4px_4px_0_0_#F4F1EA]">
-                  <SelectItem value="new" className="text-[11px] font-mono cursor-pointer py-2 border-b border-border">
-                    <div className="flex items-center justify-between gap-2 w-full text-foreground">
-                      <span className="font-bold uppercase tracking-wider flex items-center gap-1 text-primary">
-                        <Plus className="h-3 w-3" />
-                        Start New Chat
-                      </span>
-                      <span className="text-[9px] text-muted-foreground uppercase">Unsaved draft</span>
-                    </div>
-                  </SelectItem>
+        {/* Segmented Control */}
+        <div
+          role="tablist"
+          aria-label="Create mode"
+          className="inline-flex w-full sm:w-auto items-stretch border-2 border-border bg-card p-0 select-none"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'chat'}
+            onClick={() => setActiveTab('chat')}
+            className={cn(
+              'flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-sm font-sans font-bold transition-none',
+              'border-r-2 border-border',
+              activeTab === 'chat'
+                ? 'bg-foreground text-background'
+                : 'bg-card text-foreground hover:bg-muted'
+            )}
+          >
+            <Sparkles className="hidden sm:inline-block h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>AI chat</span>
+          </button>
 
-                  {sessions.map((s) => (
-                    <SelectItem key={s.id} value={s.id} className="text-[11px] font-mono cursor-pointer py-2">
-                      <div className="flex flex-col gap-0.5 w-full text-left">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-semibold text-foreground truncate max-w-[210px]">
-                            {s.title || 'Tech News Ideation'}
-                          </span>
-                          <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.2 border border-border shrink-0 font-mono font-bold">
-                            {s.messages?.filter((m) => m.role === 'user').length || 1} msgs
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          {formatSessionTimestamp(s.updatedAt || s.createdAt)}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'news-form'}
+            onClick={() => setActiveTab('news-form')}
+            className={cn(
+              'flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-sm font-sans font-bold transition-none',
+              'border-r-2 border-border',
+              activeTab === 'news-form'
+                ? 'bg-foreground text-background'
+                : 'bg-card text-foreground hover:bg-muted'
+            )}
+          >
+            <Radio className="hidden sm:inline-block h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>News ideation</span>
+          </button>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleCreateNewChat}
-              className="h-8 px-2.5 rounded-none border border-border bg-muted hover:bg-card text-[11px] font-mono font-bold uppercase tracking-wider gap-1 shrink-0"
-            >
-              <Plus className="h-3.5 w-3.5 text-foreground" />
-              <span>New Chat</span>
-            </Button>
-          </div>
-        )}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'manual'}
+            onClick={() => setActiveTab('manual')}
+            className={cn(
+              'flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-sm font-sans font-bold transition-none',
+              activeTab === 'manual'
+                ? 'bg-foreground text-background'
+                : 'bg-card text-foreground hover:bg-muted'
+            )}
+          >
+            <Layers className="hidden sm:inline-block h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>Manual post</span>
+          </button>
+        </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        <TabsContent value="chat" className="flex-1 m-0 h-full data-[state=active]:flex data-[state=active]:flex-col overflow-hidden">
+      {/* Main Tab Presentation */}
+      <div className="w-full flex-1">
+        {activeTab === 'chat' && (
           <ChatInterface
             sessionId={sessionId}
             platforms={platforms}
             connectedPlatforms={connectedPlatforms}
             isLoadingPlatforms={isLoadingPlatforms}
             dateRange={dateRange}
+            sessions={sessions}
+            onSelectSession={handleSelectSession}
+            onCreateNewChat={handleCreateNewChat}
             onIdeasGenerated={handleIdeasGenerated}
             onSessionUpdate={handleSessionUpdate}
+            injectedIdeas={injectedIdeas}
           />
-        </TabsContent>
+        )}
 
-        <TabsContent value="news-form" className="flex-1 m-0 h-full data-[state=active]:flex data-[state=active]:flex-col overflow-hidden">
+        {activeTab === 'news-form' && (
           <NewsIdeationForm
             sessionId={sessionId}
             platforms={platforms}
             connectedPlatforms={connectedPlatforms}
             isLoadingPlatforms={isLoadingPlatforms}
             dateRange={dateRange}
-            onIdeasGenerated={handleIdeasGenerated}
+            onIdeasGenerated={handleNewsIdeasSuccess}
             onSessionUpdate={handleSessionUpdate}
           />
-        </TabsContent>
+        )}
 
-        <TabsContent value="manual" className="flex-1 m-0 h-full data-[state=active]:flex data-[state=active]:flex-col overflow-hidden">
-          <ManualPostStudio />
-        </TabsContent>
+        {activeTab === 'manual' && <ManualPostStudio />}
       </div>
-    </Tabs>
+    </div>
   );
 }
 
@@ -291,9 +241,9 @@ export default function ChatPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-[calc(100vh-5.5rem)] w-full items-center justify-center border border-border bg-background font-mono text-xs text-muted-foreground gap-2">
-          <Loader2 className="h-4 w-4 animate-spin text-foreground dark:text-primary" />
-          <span>Loading Ideation Studio...</span>
+        <div className="flex h-64 w-full items-center justify-center border-2 border-border bg-card font-mono text-xs text-muted-foreground gap-2">
+          <Loader2 className="h-4 w-4 animate-spin text-foreground" />
+          <span>Loading Create Studio...</span>
         </div>
       }
     >
@@ -301,3 +251,4 @@ export default function ChatPage() {
     </Suspense>
   );
 }
+

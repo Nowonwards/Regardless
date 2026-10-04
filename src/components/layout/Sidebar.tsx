@@ -43,8 +43,9 @@ export function Sidebar({ collapsed = false, onToggleCollapse, isMobile = false,
 
   return (
     <aside
+      data-sidebar="true"
       className={cn(
-        'fixed left-0 top-0 z-40 h-screen bg-[#0B0B0C] text-[#F4F1EA] border-r border-border transition-all duration-100 flex flex-col',
+        'sidebar-component fixed left-0 top-0 z-40 h-screen bg-[#0B0B0C] text-[#F4F1EA] border-r border-border transition-all duration-100 flex flex-col',
         isMobile ? 'w-64 z-50' : collapsed ? 'w-16 hidden lg:flex' : 'w-64 hidden lg:flex'
       )}
     >

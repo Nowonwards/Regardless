@@ -183,12 +183,12 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="flex h-9.5 w-72 items-center gap-2.5 rounded-none border border-border bg-card pl-10 text-xs font-mono text-muted-foreground transition-none hover:border-accent hover:text-foreground"
+              className="flex h-9.5 w-72 max-w-full items-center gap-2.5 rounded-none border border-border bg-card px-3 text-xs font-mono text-muted-foreground transition-none hover:border-accent hover:text-foreground whitespace-nowrap overflow-hidden"
               aria-label="Search (press / to focus)"
             >
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              <span>Search drafts, ideas, posts...</span>
-              <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground bg-muted border border-border rounded-none ml-auto mr-2.5">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <span className="truncate flex-1 text-left min-w-0">Search drafts, ideas, posts</span>
+              <kbd className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground bg-muted border border-border rounded-none ml-auto">
                 <span className="text-[11px]">⌘</span>
                 <span>K</span>
               </kbd>
@@ -201,8 +201,8 @@ export function Header({ onMenuClick, sidebarCollapsed }: HeaderProps) {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
                   ref={searchInputRef}
-                  placeholder="Search drafts, ideas, posts..."
-                  className="w-full pl-10 h-9 text-xs font-mono"
+                  placeholder="Search drafts, ideas, posts"
+                  className="w-full pl-10 pr-8 h-9 text-xs font-mono truncate whitespace-nowrap"
                   autoFocus
                   onKeyDown={(e) => e.key === 'Escape' && setSearchOpen(false)}
                   onBlur={(e) => {
