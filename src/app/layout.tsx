@@ -34,7 +34,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${archivo.variable} ${jetBrainsMono.variable} font-sans antialiased`}>
-        <ClerkProvider>
+        <ClerkProvider
+          publishableKey={
+            process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+            'pk_test_Y2xlcmsuZXhhbXBsZS5jb20k'
+          }
+        >
           <Providers>{children}</Providers>
         </ClerkProvider>
       </body>
