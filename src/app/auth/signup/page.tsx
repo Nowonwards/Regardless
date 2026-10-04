@@ -50,7 +50,7 @@ export default function SignUpPage() {
       if (signInResult?.error) {
         window.location.href = '/auth/signin';
       } else {
-        window.location.href = '/chat';
+        window.location.href = '/overview';
       }
     } catch (err: any) {
       setError(err?.message || 'An error occurred during registration. Please try again.');

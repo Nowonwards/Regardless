@@ -78,7 +78,7 @@ export default function SignOutPage() {
 
             <Button
               variant="outline"
-              onClick={() => router.push('/chat')}
+              onClick={() => router.push('/overview')}
               disabled={signingOut}
               className="w-full rounded-none border-border font-mono text-xs h-10 hover:bg-surface"
             >

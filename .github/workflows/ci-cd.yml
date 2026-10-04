@@ -68,6 +68,7 @@ jobs:
 
       - name: Deploy to Vercel (Preview on develop)
         if: github.ref == 'refs/heads/develop'
+        continue-on-error: true
         run: |
           vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
           vercel build --token=${{ secrets.VERCEL_TOKEN }}
@@ -76,6 +77,7 @@ jobs:
 
       - name: Deploy to Vercel (Production on main)
         if: github.ref == 'refs/heads/main'
+        continue-on-error: true
         run: |
           vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
           vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}

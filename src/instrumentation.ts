@@ -4,7 +4,7 @@
  */
 
 export async function register() {
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
+  if (process.env.NEXT_RUNTIME === 'nodejs' && !process.env.VERCEL) {
     const { startBackgroundScheduler } = await import('@/lib/jobs/scheduler');
     startBackgroundScheduler(30_000); // Check every 30 seconds
   }

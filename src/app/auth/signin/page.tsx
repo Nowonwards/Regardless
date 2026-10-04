@@ -15,7 +15,7 @@ import { Logo } from '@/components/layout/logo';
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/chat';
+  const callbackUrl = searchParams.get('callbackUrl') || '/overview';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
