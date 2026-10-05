@@ -4,6 +4,7 @@ import path from 'path';
 import os from 'os';
 import sharp from 'sharp';
 import { Composio } from '@composio/core';
+import { parseSlideOgImageUrl, renderSlideImageBuffer } from './og/slide-generator';
 
 /**
  * Composio Platform client — lazy singleton.
@@ -190,11 +191,28 @@ async function publishInstagramContent(
         const base64Data = mediaUrl.split(',')[1];
         rawBuffer = Buffer.from(base64Data, 'base64');
       } else {
-        const res = await fetch(mediaUrl);
-        if (!res.ok) {
-          throw new Error(`Failed to download slide image ${i + 1} (${res.status} ${res.statusText})`);
+        const slideData = parseSlideOgImageUrl(mediaUrl);
+        if (slideData) {
+          rawBuffer = await renderSlideImageBuffer(slideData);
+        } else {
+          const res = await fetch(mediaUrl);
+          if (!res.ok) {
+            throw new Error(`Failed to download slide image ${i + 1} (${res.status} ${res.statusText})`);
+          }
+          const contentType = res.headers.get('content-type') || '';
+          rawBuffer = Buffer.from(await res.arrayBuffer());
+
+          const isHtml =
+            contentType.includes('text/html') ||
+            rawBuffer.slice(0, 50).toString().trim().toLowerCase().startsWith('<!doctype') ||
+            rawBuffer.slice(0, 50).toString().trim().toLowerCase().startsWith('<html');
+
+          if (isHtml) {
+            throw new Error(
+              `Slide image ${i + 1} returned an HTML document instead of an image. Ensure the image URL is public.`
+            );
+          }
         }
-        rawBuffer = Buffer.from(await res.arrayBuffer());
       }
 
       // Convert any image format (PNG, WebP, etc.) to standard Instagram-compliant JPEG
