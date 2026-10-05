@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { NewsIdeationForm } from '@/components/chat/NewsIdeationForm';
@@ -53,7 +53,7 @@ function ChatPageContent() {
     fetchPlatforms();
   }, []);
 
-  const fetchSessions = async (preferSessionId?: string) => {
+  const fetchSessions = useCallback(async (preferSessionId?: string) => {
     try {
       const res = await fetch('/api/sessions');
       if (res.ok) {
@@ -71,11 +71,11 @@ function ChatPageContent() {
     } catch (err) {
       console.error('Failed to fetch sessions:', err);
     }
-  };
+  }, [querySessionId]);
 
   useEffect(() => {
     fetchSessions();
-  }, []);
+  }, [fetchSessions]);
 
   // Sync state when URL query parameter changes
   useEffect(() => {

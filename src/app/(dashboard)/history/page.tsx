@@ -10,14 +10,14 @@ export default function HistoryPage() {
   const [hasMore, setHasMore] = useState(true);
   const [cursor, setCursor] = useState<string | null>(null);
 
-  const fetchHistory = useCallback(async (loadMore = false) => {
+  const fetchHistory = useCallback(async (loadMore = false, targetCursor?: string | null) => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({
         userId: 'user-1',
         limit: '20',
       });
-      if (cursor && loadMore) params.append('cursor', cursor);
+      if (targetCursor && loadMore) params.append('cursor', targetCursor);
 
       const res = await fetch(`/api/history?${params}`);
       const data = await res.json();
@@ -35,11 +35,11 @@ export default function HistoryPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [cursor]);
+  }, []);
 
   useEffect(() => {
     fetchHistory(false);
-  }, []);
+  }, [fetchHistory]);
 
   const handlePostClick = (post: PostWithRelations) => {
     // Open post preview modal
@@ -51,7 +51,7 @@ export default function HistoryPage() {
   };
 
   const handleLoadMore = () => {
-    fetchHistory(true);
+    fetchHistory(true, cursor);
   };
 
   return (
