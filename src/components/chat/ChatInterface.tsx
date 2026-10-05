@@ -84,6 +84,55 @@ const SUGGESTION_CARDS = [
   },
 ];
 
+function extractIdeasFromContent(text: string, defaultPlatform: Platform = 'INSTAGRAM'): IdeaContent[] {
+  if (!text) return [];
+  const ideas: IdeaContent[] = [];
+  const seenTitles = new Set<string>();
+
+  const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
+  let match;
+  while ((match = jsonBlockRegex.exec(text)) !== null) {
+    try {
+      const potentialJson = match[1].trim();
+      if (potentialJson.startsWith('[') || potentialJson.startsWith('{')) {
+        const parsed = JSON.parse(potentialJson);
+        const list = Array.isArray(parsed) ? parsed : [parsed];
+        for (const item of list) {
+          if (item && (item.title || item.name)) {
+            const title = String(item.title || item.name || 'Untitled Idea').trim();
+            const normalizedTitle = title.toLowerCase();
+            if (seenTitles.has(normalizedTitle)) continue;
+            seenTitles.add(normalizedTitle);
+
+            ideas.push({
+              id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
+              title,
+              description: item.description || item.concept || item.hook || '',
+              platform: (item.platform || defaultPlatform || 'INSTAGRAM').toUpperCase() as Platform,
+              hook: item.hook || title,
+              angle: item.angle || '',
+              keyPoints: Array.isArray(item.keyPoints) ? item.keyPoints : [],
+              suggestedFormat: item.suggestedFormat || 'carousel',
+              hashtags: Array.isArray(item.hashtags) ? item.hashtags : ['#tech'],
+              cta: item.cta,
+            });
+          }
+        }
+      }
+    } catch {
+      // Continue
+    }
+  }
+  return ideas;
+}
+
+function cleanAssistantContent(text: string): string {
+  if (!text) return '';
+  let cleaned = text.replace(/```(?:json)?\s*[\{\[][\s\S]*?[\}\]]\s*```/gi, '');
+  cleaned = cleaned.replace(/```(?:json)?\s*[\s\S]*?```/gi, '');
+  return cleaned.trim();
+}
+
 export function ChatInterface({
   sessionId,
   platforms: initialPlatforms,
@@ -219,55 +268,6 @@ export function ChatInterface({
     if (!ideaTitle) return undefined;
     const normalized = ideaTitle.trim().toLowerCase();
     return usedIdeas.find((u) => u.title.trim().toLowerCase() === normalized);
-  };
-
-  const extractIdeasFromContent = (text: string): IdeaContent[] => {
-    if (!text) return [];
-    const ideas: IdeaContent[] = [];
-    const seenTitles = new Set<string>();
-
-    const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
-    let match;
-    while ((match = jsonBlockRegex.exec(text)) !== null) {
-      try {
-        const potentialJson = match[1].trim();
-        if (potentialJson.startsWith('[') || potentialJson.startsWith('{')) {
-          const parsed = JSON.parse(potentialJson);
-          const list = Array.isArray(parsed) ? parsed : [parsed];
-          for (const item of list) {
-            if (item && (item.title || item.name)) {
-              const title = String(item.title || item.name || 'Untitled Idea').trim();
-              const normalizedTitle = title.toLowerCase();
-              if (seenTitles.has(normalizedTitle)) continue;
-              seenTitles.add(normalizedTitle);
-
-              ideas.push({
-                id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
-                title,
-                description: item.description || item.concept || item.hook || '',
-                platform: (item.platform || selectedPlatforms[0] || 'INSTAGRAM').toUpperCase() as Platform,
-                hook: item.hook || title,
-                angle: item.angle || '',
-                keyPoints: Array.isArray(item.keyPoints) ? item.keyPoints : [],
-                suggestedFormat: item.suggestedFormat || 'carousel',
-                hashtags: Array.isArray(item.hashtags) ? item.hashtags : ['#tech'],
-                cta: item.cta,
-              });
-            }
-          }
-        }
-      } catch {
-        // Continue
-      }
-    }
-    return ideas;
-  };
-
-  const cleanAssistantContent = (text: string): string => {
-    if (!text) return '';
-    let cleaned = text.replace(/```(?:json)?\s*[\{\[][\s\S]*?[\}\]]\s*```/gi, '');
-    cleaned = cleaned.replace(/```(?:json)?\s*[\s\S]*?```/gi, '');
-    return cleaned.trim();
   };
 
   const togglePlatform = (p: Platform) => {
