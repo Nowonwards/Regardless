@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { NewsIdeationForm } from '@/components/chat/NewsIdeationForm';
@@ -23,6 +23,7 @@ function ChatPageContent() {
   const searchParams = useSearchParams();
   const querySessionId = searchParams.get('sessionId');
 
+  const pageContainerRef = useRef<HTMLDivElement>(null);
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
   const [sessionId, setSessionId] = useState<string>(querySessionId || 'new');
   const [platforms, setPlatforms] = useState<Platform[]>([]);
@@ -31,6 +32,16 @@ function ChatPageContent() {
   const [dateRange, setDateRange] = useState<{ start: Date; end: Date } | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<'chat' | 'news-form' | 'manual'>('chat');
   const [injectedIdeas, setInjectedIdeas] = useState<IdeaContent[]>([]);
+
+  // Ensure outer page container scroll is reset to top when on chat tab
+  useEffect(() => {
+    if (activeTab === 'chat') {
+      if (pageContainerRef.current?.parentElement) {
+        pageContainerRef.current.parentElement.scrollTop = 0;
+      }
+      window.scrollTo(0, 0);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     const fetchPlatforms = async () => {
@@ -136,9 +147,22 @@ function ChatPageContent() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-background text-foreground flex flex-col space-y-6">
+    <div
+      ref={pageContainerRef}
+      className={cn(
+        'w-full flex flex-col text-foreground bg-background',
+        activeTab === 'chat'
+          ? 'h-full flex-1 min-h-0 overflow-hidden'
+          : 'min-h-full space-y-6 pb-12'
+      )}
+    >
       {/* Header row under top bar: page title "Create" and segmented control */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div
+        className={cn(
+          'flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0',
+          activeTab === 'chat' ? 'pb-3 sm:pb-4' : ''
+        )}
+      >
         <h1 className="font-sans font-black text-[34px] leading-tight tracking-tight text-foreground select-none">
           Create
         </h1>
@@ -202,7 +226,7 @@ function ChatPageContent() {
       </div>
 
       {/* Main Tab Presentation */}
-      <div className="w-full flex-1">
+      <div className={cn('w-full flex-1 min-h-0', activeTab === 'chat' && 'flex flex-col h-full')}>
         {activeTab === 'chat' && (
           <ChatInterface
             sessionId={sessionId}
