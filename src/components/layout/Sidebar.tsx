@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/theme-provider';
-import { Logo } from './logo';
+import { Logo } from './Logo';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [

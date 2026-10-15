@@ -4,7 +4,7 @@ import { RadioTower, Sparkles, Layers, Send, ShieldCheck, Activity } from 'lucid
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getAuthUser } from '@/lib/auth';
-import { Logo } from '@/components/layout/logo';
+import { Logo } from '@/components/layout/Logo';
 
 const capabilities = [
   {

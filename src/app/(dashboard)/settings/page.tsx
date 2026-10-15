@@ -46,7 +46,7 @@ function SettingsPageInner() {
         })
         .catch(console.error);
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   const fetchConnections = async () => {
     try {

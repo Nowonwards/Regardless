@@ -1,5 +1,6 @@
 import { Platform, PostContent, PlatformConnection } from '@/types';
 import { buildSlideOgImageUrl } from './og/slide-generator';
+import { getAppUrl } from './url';
 
 export interface PublishInput {
   userId: string;
@@ -46,7 +47,7 @@ export abstract class BasePublisher implements PlatformPublisher {
     hashtags: string[];
     altText: string;
   } {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl = getAppUrl();
     const totalSlides = content.slides.length;
     const mediaUrls = content.slides.map((s, idx) => {
       let url = s.imageUrl;

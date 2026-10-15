@@ -8,6 +8,7 @@ import {
   SupportedPlatform,
 } from '@/lib/composio';
 import { Platform, ConnectionStatus } from '@/types';
+import { getAppUrl } from '@/lib/url';
 
 /**
  * GET /api/platforms
@@ -88,7 +89,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid or missing platform' }, { status: 400 });
     }
 
-    const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/settings?connected=${platform}&status=success`;
+    const baseUrl = getAppUrl(request);
+    const callbackUrl = `${baseUrl}/settings?connected=${platform}&status=success`;
 
     const result = await initiatePlatformConnection(
       userId,

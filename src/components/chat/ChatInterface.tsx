@@ -84,6 +84,55 @@ const SUGGESTION_CARDS = [
   },
 ];
 
+function extractIdeasFromContent(text: string, defaultPlatform: Platform = 'INSTAGRAM'): IdeaContent[] {
+  if (!text) return [];
+  const ideas: IdeaContent[] = [];
+  const seenTitles = new Set<string>();
+
+  const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
+  let match;
+  while ((match = jsonBlockRegex.exec(text)) !== null) {
+    try {
+      const potentialJson = match[1].trim();
+      if (potentialJson.startsWith('[') || potentialJson.startsWith('{')) {
+        const parsed = JSON.parse(potentialJson);
+        const list = Array.isArray(parsed) ? parsed : [parsed];
+        for (const item of list) {
+          if (item && (item.title || item.name)) {
+            const title = String(item.title || item.name || 'Untitled Idea').trim();
+            const normalizedTitle = title.toLowerCase();
+            if (seenTitles.has(normalizedTitle)) continue;
+            seenTitles.add(normalizedTitle);
+
+            ideas.push({
+              id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
+              title,
+              description: item.description || item.concept || item.hook || '',
+              platform: (item.platform || defaultPlatform || 'INSTAGRAM').toUpperCase() as Platform,
+              hook: item.hook || title,
+              angle: item.angle || '',
+              keyPoints: Array.isArray(item.keyPoints) ? item.keyPoints : [],
+              suggestedFormat: item.suggestedFormat || 'carousel',
+              hashtags: Array.isArray(item.hashtags) ? item.hashtags : ['#tech'],
+              cta: item.cta,
+            });
+          }
+        }
+      }
+    } catch {
+      // Continue
+    }
+  }
+  return ideas;
+}
+
+function cleanAssistantContent(text: string): string {
+  if (!text) return '';
+  let cleaned = text.replace(/```(?:json)?\s*[\{\[][\s\S]*?[\}\]]\s*```/gi, '');
+  cleaned = cleaned.replace(/```(?:json)?\s*[\s\S]*?```/gi, '');
+  return cleaned.trim();
+}
+
 export function ChatInterface({
   sessionId,
   platforms: initialPlatforms,
@@ -98,8 +147,10 @@ export function ChatInterface({
   injectedIdeas,
 }: ChatInterfaceProps) {
   const router = useRouter();
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isInitialMount = useRef(true);
 
   const effectiveConnected = connectedPlatforms !== undefined ? connectedPlatforms : initialPlatforms;
 
@@ -130,20 +181,38 @@ export function ChatInterface({
   const [isDraftingBatch, setIsDraftingBatch] = useState(false);
   const [usedIdeas, setUsedIdeas] = useState<UsedIdeaInfo[]>([]);
 
-  // Auto-scroll to bottom of chat
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Auto-scroll inside messages container only (never scrolling parent containers or window)
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior,
+      });
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, streamingContent, activeSearchSources]);
+    // Avoid auto-scrolling on initial empty state mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      if (messages.length > 0) {
+        scrollToBottom('auto');
+      }
+      return;
+    }
 
-  // Adjust textarea height dynamically
+    if (messages.length > 0 || isGenerating || streamingContent || activeSearchSources.length > 0) {
+      const behavior: ScrollBehavior = isGenerating || streamingContent ? 'auto' : 'smooth';
+      scrollToBottom(behavior);
+    }
+  }, [messages, streamingContent, activeSearchSources, isGenerating]);
+
+  // Adjust textarea height dynamically with max limit
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.max(64, textareaRef.current.scrollHeight)}px`;
+      const newHeight = Math.min(160, Math.max(64, textareaRef.current.scrollHeight));
+      textareaRef.current.style.height = `${newHeight}px`;
     }
   }, [inputMessage]);
 
@@ -157,6 +226,9 @@ export function ChatInterface({
     if (!sessionId || sessionId === 'new') {
       setUsedIdeas([]);
       setMessages([]);
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = 0;
+      }
       return;
     }
 
@@ -219,55 +291,6 @@ export function ChatInterface({
     if (!ideaTitle) return undefined;
     const normalized = ideaTitle.trim().toLowerCase();
     return usedIdeas.find((u) => u.title.trim().toLowerCase() === normalized);
-  };
-
-  const extractIdeasFromContent = (text: string): IdeaContent[] => {
-    if (!text) return [];
-    const ideas: IdeaContent[] = [];
-    const seenTitles = new Set<string>();
-
-    const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
-    let match;
-    while ((match = jsonBlockRegex.exec(text)) !== null) {
-      try {
-        const potentialJson = match[1].trim();
-        if (potentialJson.startsWith('[') || potentialJson.startsWith('{')) {
-          const parsed = JSON.parse(potentialJson);
-          const list = Array.isArray(parsed) ? parsed : [parsed];
-          for (const item of list) {
-            if (item && (item.title || item.name)) {
-              const title = String(item.title || item.name || 'Untitled Idea').trim();
-              const normalizedTitle = title.toLowerCase();
-              if (seenTitles.has(normalizedTitle)) continue;
-              seenTitles.add(normalizedTitle);
-
-              ideas.push({
-                id: item.id || `idea-${crypto.randomUUID().slice(0, 8)}`,
-                title,
-                description: item.description || item.concept || item.hook || '',
-                platform: (item.platform || selectedPlatforms[0] || 'INSTAGRAM').toUpperCase() as Platform,
-                hook: item.hook || title,
-                angle: item.angle || '',
-                keyPoints: Array.isArray(item.keyPoints) ? item.keyPoints : [],
-                suggestedFormat: item.suggestedFormat || 'carousel',
-                hashtags: Array.isArray(item.hashtags) ? item.hashtags : ['#tech'],
-                cta: item.cta,
-              });
-            }
-          }
-        }
-      } catch {
-        // Continue
-      }
-    }
-    return ideas;
-  };
-
-  const cleanAssistantContent = (text: string): string => {
-    if (!text) return '';
-    let cleaned = text.replace(/```(?:json)?\s*[\{\[][\s\S]*?[\}\]]\s*```/gi, '');
-    cleaned = cleaned.replace(/```(?:json)?\s*[\s\S]*?```/gi, '');
-    return cleaned.trim();
   };
 
   const togglePlatform = (p: Platform) => {
@@ -478,14 +501,17 @@ export function ChatInterface({
   const selectedCount = selectedIdeaIds.length;
 
   return (
-    <div className="flex flex-col min-[1080px]:flex-row gap-6 w-full min-h-[520px] min-[1080px]:h-[calc(100vh-170px)]">
+    <div className="flex flex-col min-[1080px]:flex-row gap-6 w-full flex-1 min-h-0 h-full">
       {/* Thread on Left (Flex 1) */}
-      <div className="flex-1 flex flex-col min-w-0 max-[1079px]:order-2 max-[1079px]:h-[70vh] h-full">
+      <div className="flex-1 flex flex-col min-w-0 max-[1079px]:order-2 max-[1079px]:min-h-[450px] h-full min-h-0">
         {/* Scrolling Message Area */}
-        <div className="flex-1 overflow-y-auto space-y-5 pr-1 pb-4">
+        <div
+          ref={messagesContainerRef}
+          className="flex-1 min-h-0 overflow-y-auto space-y-5 pr-1 pb-4"
+        >
           {messages.length === 0 ? (
             /* Empty State */
-            <div className="flex flex-col justify-center h-full py-8 max-w-2xl mx-auto">
+            <div className="flex flex-col justify-center min-h-full py-4 max-w-2xl mx-auto">
               <h2 className="font-sans font-black text-[clamp(28px,4vw,44px)] leading-tight tracking-tight text-foreground">
                 What should we post about?
               </h2>
@@ -704,7 +730,7 @@ export function ChatInterface({
               onKeyDown={handleKeyDown}
               disabled={isGenerating}
               placeholder="Ask for ideas, paste a news link, or start from a suggestion..."
-              className="w-full min-h-[64px] p-3 text-sm font-sans bg-transparent text-foreground placeholder:text-muted-foreground resize-none border-none outline-none focus:outline-none focus:ring-0 leading-relaxed"
+              className="w-full min-h-[64px] max-h-[160px] p-3 text-sm font-sans bg-transparent text-foreground placeholder:text-muted-foreground resize-none border-none outline-none focus:outline-none focus:ring-0 leading-relaxed overflow-y-auto"
               rows={2}
             />
 
@@ -740,7 +766,7 @@ export function ChatInterface({
       </div>
 
       {/* Right Rail (300px wide, stacked, gap 18px) */}
-      <div className="w-full min-[1080px]:w-[300px] shrink-0 flex flex-col gap-[18px] overflow-y-auto max-[1079px]:order-1">
+      <div className="w-full min-[1080px]:w-[300px] shrink-0 flex flex-col gap-[18px] overflow-y-auto max-[1079px]:order-1 h-full min-h-0">
         {/* Panel 1: Channels */}
         <div className="border-2 border-border bg-card p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between pb-2 border-b-2 border-border">
@@ -844,7 +870,7 @@ export function ChatInterface({
             </button>
           </div>
 
-          <div className="flex flex-col divide-y-2 divide-border pt-1">
+          <div className="flex flex-col divide-y-2 divide-border pt-1 max-h-[260px] overflow-y-auto">
             {sessions.length === 0 ? (
               <p className="text-xs font-mono text-muted-foreground py-3">No recent chats yet</p>
             ) : (
