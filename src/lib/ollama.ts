@@ -2,15 +2,15 @@ import { Ollama } from 'ollama';
 
 export function resolveOllamaHost(customHost?: string): string {
   const envHost = customHost || process.env.OLLAMA_HOST || process.env.OLLAMA_BASE_URL;
-  if (!envHost || envHost.includes('[SENSITIVE]')) {
-    return 'http://127.0.0.1:11434';
+  if (!envHost || envHost.includes('[SENSITIVE]') || envHost.includes('127.0.0.1') || envHost.includes('localhost')) {
+    return 'https://api.ollama.com';
   }
   try {
     const trimmed = envHost.replace(/\/+$/, '');
     new URL(trimmed);
     return trimmed;
   } catch {
-    return 'http://127.0.0.1:11434';
+    return 'https://api.ollama.com';
   }
 }
 

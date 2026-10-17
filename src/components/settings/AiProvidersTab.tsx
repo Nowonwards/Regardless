@@ -16,12 +16,20 @@ import {
   Check,
   Save,
   Info,
+  Globe,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import {
   ReelProvider,
@@ -29,6 +37,44 @@ import {
   TextProvider,
   UserAiConfigResponse,
 } from '@/lib/ai-config';
+
+export const OLLAMA_CLOUD_MODELS = [
+  {
+    value: 'gemma4:31b',
+    label: 'Gemma 4 (31B Parameter)',
+    tag: 'Default • Recommended',
+  },
+  {
+    value: 'gemma4:26b',
+    label: 'Gemma 4 (26B Parameter)',
+    tag: 'High Speed',
+  },
+  {
+    value: 'llama3.3:70b',
+    label: 'Llama 3.3 (70B Parameter)',
+    tag: 'Deep Reasoning',
+  },
+  {
+    value: 'llama3.1:8b',
+    label: 'Llama 3.1 (8B Parameter)',
+    tag: 'Lightweight',
+  },
+  {
+    value: 'qwen2.5:72b',
+    label: 'Qwen 2.5 (72B Parameter)',
+    tag: 'Coding & Tech',
+  },
+  {
+    value: 'deepseek-r1:70b',
+    label: 'DeepSeek R1 (70B Parameter)',
+    tag: 'Reasoning CoT',
+  },
+  {
+    value: 'mistral-large:latest',
+    label: 'Mistral Large',
+    tag: 'Creative Writing',
+  },
+];
 
 interface ProviderCardProps {
   id: 'ollama' | 'higgsfield' | 'composio';
@@ -48,7 +94,7 @@ interface ProviderCardProps {
   capabilities: string[];
   testing: boolean;
   onTest: () => void;
-  testResult: { success: boolean; message: string } | null;
+  testResult: { success: boolean; message: string; models?: string[] } | null;
   onDisconnect: () => void;
 }
 
@@ -76,6 +122,8 @@ function ProviderCard({
   testResult,
   onDisconnect,
 }: ProviderCardProps) {
+  const isPredefinedModel = OLLAMA_CLOUD_MODELS.some((m) => m.value === modelValue);
+
   return (
     <Card
       className={cn(
@@ -131,6 +179,7 @@ function ProviderCard({
           ))}
         </div>
 
+        {/* API Key Input */}
         <div className="space-y-2">
           <Label className="text-xs font-mono font-bold uppercase tracking-wider">
             {badgeLabel}
@@ -144,11 +193,24 @@ function ProviderCard({
           />
         </div>
 
+        {/* Ollama Cloud Base URL Field */}
         {extraFieldLabel && onExtraFieldChange && (
           <div className="space-y-2">
-            <Label className="text-xs font-mono font-bold uppercase tracking-wider">
-              {extraFieldLabel}
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <Globe className="h-3 w-3 text-muted-foreground" />
+                {extraFieldLabel}
+              </Label>
+              {id === 'ollama' && extraFieldValue !== 'https://api.ollama.com' && (
+                <button
+                  type="button"
+                  onClick={() => onExtraFieldChange('https://api.ollama.com')}
+                  className="text-[10px] font-mono text-primary hover:underline font-bold"
+                >
+                  Reset to Cloud
+                </button>
+              )}
+            </div>
             <Input
               type="text"
               value={extraFieldValue || ''}
@@ -156,10 +218,62 @@ function ProviderCard({
               placeholder={extraFieldPlaceholder}
               className="rounded-none border border-border bg-background font-mono text-xs"
             />
+            {id === 'ollama' && (
+              <p className="text-[10px] font-mono text-muted-foreground">
+                Ollama Cloud API URL (no local server required)
+              </p>
+            )}
           </div>
         )}
 
-        {modelValue !== undefined && onModelChange && (
+        {/* Model Selection Dropdown for Ollama Cloud */}
+        {id === 'ollama' && onModelChange && (
+          <div className="space-y-2">
+            <Label className="text-xs font-mono font-bold uppercase tracking-wider">
+              Select Cloud Model
+            </Label>
+            <Select
+              value={isPredefinedModel ? modelValue : 'custom'}
+              onValueChange={(val) => {
+                if (val !== 'custom') {
+                  onModelChange(val);
+                }
+              }}
+            >
+              <SelectTrigger className="rounded-none border border-border bg-background font-mono text-xs h-9">
+                <SelectValue placeholder="Select Cloud Model" />
+              </SelectTrigger>
+              <SelectContent className="rounded-none border border-border bg-card">
+                {OLLAMA_CLOUD_MODELS.map((m) => (
+                  <SelectItem key={m.value} value={m.value} className="font-mono text-xs">
+                    <span className="font-bold">{m.label}</span>
+                    <span className="ml-2 text-[10px] text-muted-foreground">
+                      ({m.tag})
+                    </span>
+                  </SelectItem>
+                ))}
+                <SelectItem value="custom" className="font-mono text-xs">
+                  Custom Model Name...
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {(!isPredefinedModel || modelValue === 'custom') && (
+              <Input
+                type="text"
+                value={modelValue === 'custom' ? '' : modelValue}
+                onChange={(e) => onModelChange(e.target.value)}
+                placeholder="Enter custom model tag (e.g. gemma4:31b)"
+                className="rounded-none border border-border bg-background font-mono text-xs mt-1.5"
+              />
+            )}
+            <p className="text-[10px] font-mono text-muted-foreground">
+              Default: Google Gemma 4 (31B Parameter)
+            </p>
+          </div>
+        )}
+
+        {id !== 'ollama' && modelValue !== undefined && onModelChange && (
           <div className="space-y-2">
             <Label className="text-xs font-mono font-bold uppercase tracking-wider">
               Default Model
@@ -299,13 +413,23 @@ export function AiProvidersTab() {
 
   // Test states
   const [testingOllama, setTestingOllama] = useState(false);
-  const [testResultOllama, setTestResultOllama] = useState<{ success: boolean; message: string } | null>(null);
+  const [testResultOllama, setTestResultOllama] = useState<{
+    success: boolean;
+    message: string;
+    models?: string[];
+  } | null>(null);
 
   const [testingHf, setTestingHf] = useState(false);
-  const [testResultHf, setTestResultHf] = useState<{ success: boolean; message: string } | null>(null);
+  const [testResultHf, setTestResultHf] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
 
   const [testingComposio, setTestingComposio] = useState(false);
-  const [testResultComposio, setTestResultComposio] = useState<{ success: boolean; message: string } | null>(null);
+  const [testResultComposio, setTestResultComposio] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchConfig();
@@ -322,8 +446,18 @@ export function AiProvidersTab() {
       if (data.config) {
         const c: UserAiConfigResponse = data.config;
         setOllamaKey(c.ollama.apiKeyMasked || '');
-        setOllamaBaseUrl(c.ollama.baseUrl || 'https://api.ollama.com');
-        setOllamaModel(c.ollama.model || 'gemma4:31b');
+
+        const rawBase = c.ollama.baseUrl || 'https://api.ollama.com';
+        setOllamaBaseUrl(
+          rawBase.includes('127.0.0.1') || rawBase.includes('localhost')
+            ? 'https://api.ollama.com'
+            : rawBase
+        );
+
+        const rawModel = c.ollama.model || 'gemma4:31b';
+        setOllamaModel(
+          rawModel === 'gemma4:31b-cloud' || !rawModel ? 'gemma4:31b' : rawModel
+        );
         setOllamaConnected(c.ollama.connected);
 
         setHfKey(c.higgsfield.apiKeyMasked || '');
@@ -634,8 +768,8 @@ export function AiProvidersTab() {
             <div className="grid gap-3 sm:grid-cols-3">
               <RoutingOption
                 label="Ollama Cloud"
-                tag="Cloud Gemma / Llama"
-                desc="High speed, precision tech drafting via Ollama Cloud API Key."
+                tag="Gemma 4 (31B)"
+                desc="Google Gemma 4 31B parameter model via Ollama Cloud API Key."
                 selected={textProvider === 'ollama'}
                 onClick={() => setTextProvider('ollama')}
               />

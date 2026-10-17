@@ -46,6 +46,20 @@ export function maskApiKey(key: string | null | undefined): string | null {
   return `${prefix}••••••••${suffix}`;
 }
 
+function normalizeCloudBaseUrl(url?: string | null): string {
+  if (!url || url.includes('127.0.0.1') || url.includes('localhost')) {
+    return 'https://api.ollama.com';
+  }
+  return url;
+}
+
+function normalizeCloudModel(model?: string | null): string {
+  if (!model || model === 'gemma4:31b-cloud') {
+    return 'gemma4:31b';
+  }
+  return model;
+}
+
 /**
  * Retrieves the raw decrypted/plain AI configuration and credentials.
  */
@@ -53,8 +67,8 @@ export async function getResolvedAiCredentials(
   userId?: string
 ): Promise<ResolvedAiCredentials> {
   const envOllamaKey = process.env.OLLAMA_API_KEY || null;
-  const envOllamaBase = process.env.OLLAMA_BASE_URL || 'https://api.ollama.com';
-  const envOllamaModel = process.env.OLLAMA_MODEL || 'gemma4:31b';
+  const envOllamaBase = normalizeCloudBaseUrl(process.env.OLLAMA_BASE_URL);
+  const envOllamaModel = normalizeCloudModel(process.env.OLLAMA_MODEL);
   const envHfCreds = process.env.HF_CREDENTIALS || null;
   const envComposioKey = process.env.COMPOSIO_API_KEY || null;
 
@@ -79,8 +93,8 @@ export async function getResolvedAiCredentials(
     });
 
     const ollamaApiKey = dbSetting?.ollamaApiKey || envOllamaKey;
-    const ollamaBaseUrl = dbSetting?.ollamaBaseUrl || envOllamaBase;
-    const ollamaModel = dbSetting?.ollamaModel || envOllamaModel;
+    const ollamaBaseUrl = normalizeCloudBaseUrl(dbSetting?.ollamaBaseUrl || envOllamaBase);
+    const ollamaModel = normalizeCloudModel(dbSetting?.ollamaModel || envOllamaModel);
     const higgsfieldKey = dbSetting?.higgsfieldKey || envHfCreds;
     const composioApiKey = dbSetting?.composioApiKey || envComposioKey;
 
