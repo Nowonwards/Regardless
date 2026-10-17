@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { PlatformConnections } from '@/components/platform/PlatformConnections';
-import { User, Bell, Shield, Key, Palette, Database, Loader2 } from 'lucide-react';
+import { AiProvidersTab } from '@/components/settings/AiProvidersTab';
+import { User, Bell, Shield, Key, Palette, Database, Loader2, Sparkles } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 import { Platform } from '@/types';
 
@@ -18,9 +19,21 @@ function SettingsPageInner() {
   const { theme, setTheme, isDark } = useTheme();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('profile');
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    tabParam && ['profile', 'platforms', 'ai', 'notifications', 'advanced'].includes(tabParam)
+      ? tabParam
+      : 'profile'
+  );
   const [connections, setConnections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['profile', 'platforms', 'ai', 'notifications', 'advanced'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetchConnections();
@@ -114,9 +127,13 @@ function SettingsPageInner() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="platforms">Platforms</TabsTrigger>
+          <TabsTrigger value="ai" className="flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5" />
+            AI Providers
+          </TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
         </TabsList>
@@ -192,6 +209,10 @@ function SettingsPageInner() {
           )}
         </TabsContent>
 
+        <TabsContent value="ai" className="space-y-6">
+          <AiProvidersTab />
+        </TabsContent>
+
         <TabsContent value="notifications" className="space-y-6">
           <Card>
             <CardHeader>
@@ -253,22 +274,28 @@ function SettingsPageInner() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Key className="h-5 w-5" />
-                API Keys
+                AI Providers & Task Routing
               </CardTitle>
-              <CardDescription>Manage your API integrations</CardDescription>
+              <CardDescription>
+                Ollama Cloud, Higgsfield AI, and Composio (Google Gemini & Veo)
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Ollama API Key</Label>
-                <Input type="password" placeholder="Enter your Ollama API key" />
-                <p className="text-sm text-muted-foreground">Used for AI content generation (Ollama)</p>
-              </div>
-              <div className="space-y-2">
-                <Label>Composio API Key</Label>
-                <Input type="password" placeholder="Enter your Composio API key" />
-                <p className="text-sm text-muted-foreground">Used for platform publishing via Composio</p>
-              </div>
-              <Button>Save API Keys</Button>
+              <p className="text-xs font-mono text-muted-foreground leading-relaxed">
+                Connect your Ollama Cloud API Key for text drafting & chat, Higgsfield AI credentials
+                for reel creation & slide images, and Composio for Google Gemini & Veo video generation.
+                Customize which provider executes each generation workflow in the dedicated AI Providers tab.
+              </p>
+              <Button
+                type="button"
+                onClick={() => {
+                  setActiveTab('ai');
+                  router.push('/settings?tab=ai');
+                }}
+                className="font-mono text-xs uppercase font-bold"
+              >
+                Configure AI Providers & Routing
+              </Button>
             </CardContent>
           </Card>
 

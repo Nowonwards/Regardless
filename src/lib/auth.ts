@@ -205,5 +205,22 @@ export async function getAuthUser(): Promise<AuthUser | null> {
     console.error('[getAuthUser] NextAuth session error:', nextAuthErr);
   }
 
+  // 3. Development fallback to database user
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const devUser = await prisma.user.findFirst();
+      if (devUser) {
+        return {
+          id: devUser.id,
+          email: devUser.email,
+          name: devUser.name,
+          image: devUser.image,
+        };
+      }
+    } catch {
+      // Ignore database errors during dev fallback
+    }
+  }
+
   return null;
 }
