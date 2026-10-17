@@ -13,7 +13,13 @@ import { parseSlideOgImageUrl, renderSlideImageBuffer } from './og/slide-generat
  */
 let _composioClient: Composio | null = null;
 
-export function getComposioClient(): Composio {
+export function getComposioClient(customApiKey?: string): Composio {
+  if (customApiKey && customApiKey.trim().length > 0) {
+    return new Composio({
+      apiKey: customApiKey.trim(),
+      baseURL: 'https://backend.composio.dev',
+    });
+  }
   if (!_composioClient) {
     _composioClient = new Composio({
       apiKey: process.env.COMPOSIO_API_KEY || 'dummy_api_key_for_build',

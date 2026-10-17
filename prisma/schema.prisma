@@ -47,6 +47,7 @@ model User {
   chatSessions       ChatSession[]
   ideas              Idea[]
   notifications      Notification[]
+  aiSettings         UserAiSetting?
 }
 
 model PlatformConnection {
@@ -169,4 +170,20 @@ model Notification {
 
   @@index([userId, read])
   @@index([userId, createdAt])
+}
+
+model UserAiSetting {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ollamaApiKey   String?
+  ollamaBaseUrl  String?   @default("https://api.ollama.com")
+  ollamaModel    String?   @default("gemma4:31b")
+  higgsfieldKey  String?
+  composioApiKey String?
+  reelProvider   String    @default("higgsfield")
+  slideProvider  String    @default("composio_gemini")
+  textProvider   String    @default("ollama")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }

@@ -1,0 +1,93 @@
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { AiProvidersTab } from '@/components/settings/AiProvidersTab';
+
+describe('AiProvidersTab', () => {
+  beforeEach(() => {
+    global.fetch = jest.fn().mockImplementation((url) => {
+      if (url === '/api/settings/ai') {
+        return Promise.resolve({
+          json: () =>
+            Promise.resolve({
+              config: {
+                ollama: {
+                  connected: true,
+                  hasKey: true,
+                  apiKeyMasked: 'olla••••••••1234',
+                  baseUrl: 'https://api.ollama.com',
+                  model: 'gemma4:31b',
+                },
+                higgsfield: {
+                  connected: true,
+                  hasKey: true,
+                  apiKeyMasked: 'higg••••••••5678',
+                  model: 'bytedance/seedance-2.5/text-to-video',
+                },
+                composio: {
+                  connected: false,
+                  hasKey: false,
+                  apiKeyMasked: null,
+                  model: 'gemini-2.5-flash',
+                },
+                routing: {
+                  reelProvider: 'higgsfield',
+                  slideProvider: 'composio_gemini',
+                  textProvider: 'ollama',
+                },
+              },
+            }),
+        });
+      }
+      return Promise.resolve({ json: () => Promise.resolve({}) });
+    }) as any;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('renders the AI provider connection cards and routing matrix', async () => {
+    // Arrange & Act
+    render(<AiProvidersTab />);
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByText('AI Provider Connections')).toBeInTheDocument();
+      expect(screen.getAllByText('Ollama Cloud').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Higgsfield AI').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText('Composio (Gemini & Veo)')).toBeInTheDocument();
+      expect(screen.getByText('AI Task Routing Matrix')).toBeInTheDocument();
+      expect(screen.getByText('1. Reel Creation & Video Engine')).toBeInTheDocument();
+      expect(screen.getByText('2. Images for Carousel Slides')).toBeInTheDocument();
+      expect(screen.getByText('3. Text, Post Copy & Ideation Chat')).toBeInTheDocument();
+      expect(screen.getByText('2 OF 3 CONNECTED')).toBeInTheDocument();
+
+      // Key instructions guides
+      expect(screen.getByText('How to get your Ollama Cloud key:')).toBeInTheDocument();
+      expect(screen.getByText('How to get your Higgsfield AI key:')).toBeInTheDocument();
+      expect(screen.getByText('How to get your Composio (Gemini & Veo) key:')).toBeInTheDocument();
+      expect(screen.getByText('Connect via Composio OAuth / Dashboard')).toBeInTheDocument();
+    });
+  });
+
+  it('calls DELETE /api/settings/ai?provider=... when Disconnect is clicked', async () => {
+    // Arrange
+    const { fireEvent } = await import('@testing-library/react');
+    render(<AiProvidersTab />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('DISCONNECT').length).toBe(2);
+    });
+
+    // Act
+    const disconnectButtons = screen.getAllByText('DISCONNECT');
+    fireEvent.click(disconnectButtons[0]);
+
+    // Assert
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/settings/ai?provider=ollama', {
+        method: 'DELETE',
+      });
+    });
+  });
+});

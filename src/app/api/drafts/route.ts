@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { generateCompletion } from '@/lib/ollama';
 import { createDraftGenerationPrompt, createRevisionPrompt } from '@/lib/agents/prompts';
 import { generateSlideImage, generateGeminiText, generateReelWithGemini } from '@/lib/composio';
+import { generateHiggsfieldSlideImage, generateReelWithHiggsfield } from '@/lib/video/higgsfield';
+import { getResolvedAiCredentials } from '@/lib/ai-config';
 import { buildSlideOgImageUrl } from '@/lib/og/slide-generator';
 import { generateLocalReelVideo } from '@/lib/video/reel-generator';
 import { Platform, PostStatus, PostContent, PostFormat } from '@/types';
@@ -273,46 +275,82 @@ export async function POST(request: NextRequest) {
           targetFormat
         );
 
+        const aiCreds = await getResolvedAiCredentials(userId);
         let draftContent: PostContent;
+
         try {
-          // 1. Try Composio Gemini first
           const systemMsg = prompt.find((p) => p.role === 'system')?.content;
           const userMsg = prompt.find((p) => p.role === 'user')?.content || ideaObj.title;
-          const geminiResponse = await generateGeminiText(userMsg, systemMsg, userId);
+          let rawText: string | null = null;
 
-          if (geminiResponse) {
-            draftContent = parseGeneratedDraft(geminiResponse, ideaObj, platform, targetFormat);
+          if (aiCreds.routing.textProvider === 'ollama') {
+            try {
+              rawText = await generateCompletion(prompt, {
+                apiKey: aiCreds.ollamaApiKey || undefined,
+                host: aiCreds.ollamaBaseUrl,
+                model: aiCreds.ollamaModel,
+                temperature: 0.7,
+              });
+            } catch (ollamaErr) {
+              console.warn('[Drafts] Ollama generation failed, falling back to Gemini:', ollamaErr);
+              rawText = await generateGeminiText(userMsg, systemMsg, userId);
+            }
           } else {
-            const response = await generateCompletion(prompt, { temperature: 0.7 });
-            draftContent = parseGeneratedDraft(response, ideaObj, platform, targetFormat);
+            // Default or composio_gemini
+            rawText = await generateGeminiText(userMsg, systemMsg, userId);
+            if (!rawText) {
+              rawText = await generateCompletion(prompt, {
+                apiKey: aiCreds.ollamaApiKey || undefined,
+                host: aiCreds.ollamaBaseUrl,
+                model: aiCreds.ollamaModel,
+                temperature: 0.7,
+              });
+            }
           }
+
+          draftContent = parseGeneratedDraft(rawText || '', ideaObj, platform, targetFormat);
         } catch (genError) {
           console.warn('Draft generation LLM call failed, using structured fallback:', genError);
           draftContent = parseGeneratedDraft('', ideaObj, platform, targetFormat);
         }
 
-        // Generate AI visual images using Composio Google Gemini for each slide
+        // Generate AI visual images for each slide based on slideProvider routing
         if (draftContent.slides && draftContent.slides.length > 0) {
           draftContent.slides = await Promise.all(
             draftContent.slides.map(async (slide, idx) => {
               const headline = slide.headline || (idx === 0 ? ideaObj.title : `Takeaway ${idx + 1}`);
               const take = slide.body || slide.text || '';
-
-              // Try Composio Google Gemini image generation
               let aiImageUrl: string | null = null;
-              try {
-                aiImageUrl = await generateSlideImage(
-                  {
-                    factLine: headline,
-                    takeLine: take,
-                    slideNumber: idx + 1,
-                    totalSlides: draftContent.slides.length,
-                  },
-                  userId,
-                  '4:5'
-                );
-              } catch (imgErr) {
-                console.warn(`[Drafts] Composio Gemini slide image error for slide ${idx + 1}:`, imgErr);
+
+              if (aiCreds.routing.slideProvider === 'higgsfield') {
+                try {
+                  aiImageUrl = await generateHiggsfieldSlideImage(
+                    {
+                      factLine: headline,
+                      takeLine: take,
+                      slideNumber: idx + 1,
+                      totalSlides: draftContent.slides.length,
+                    },
+                    aiCreds.higgsfieldKey || undefined
+                  );
+                } catch (hfErr) {
+                  console.warn(`[Drafts] Higgsfield slide image error for slide ${idx + 1}:`, hfErr);
+                }
+              } else if (aiCreds.routing.slideProvider === 'composio_gemini') {
+                try {
+                  aiImageUrl = await generateSlideImage(
+                    {
+                      factLine: headline,
+                      takeLine: take,
+                      slideNumber: idx + 1,
+                      totalSlides: draftContent.slides.length,
+                    },
+                    userId,
+                    '4:5'
+                  );
+                } catch (imgErr) {
+                  console.warn(`[Drafts] Composio Gemini slide image error for slide ${idx + 1}:`, imgErr);
+                }
               }
 
               return {
@@ -348,17 +386,38 @@ export async function POST(request: NextRequest) {
           include: { versions: true },
         });
 
-        // If targetFormat is video / reel, create short video via Composio Gemini and store locally!
+        // If targetFormat is video / reel, create short video based on reelProvider routing!
         if (targetFormat === 'video') {
           try {
             const keyPoints = Array.isArray(ideaContent.keyPoints) ? ideaContent.keyPoints : [];
-            const reelResult = await generateReelWithGemini(
-              post.id,
-              ideaObj.title,
-              keyPoints,
-              userId,
-              draftContent.reel
-            );
+            let reelResult: any;
+
+            if (aiCreds.routing.reelProvider === 'higgsfield') {
+              reelResult = await generateReelWithHiggsfield(
+                post.id,
+                ideaObj.title,
+                keyPoints,
+                aiCreds.higgsfieldKey || undefined,
+                draftContent.reel
+              );
+            } else if (aiCreds.routing.reelProvider === 'local_motion') {
+              reelResult = await generateLocalReelVideo(
+                post.id,
+                draftContent.reel,
+                ideaObj.title,
+                keyPoints
+              );
+            } else {
+              // Default: composio_gemini (Veo)
+              reelResult = await generateReelWithGemini(
+                post.id,
+                ideaObj.title,
+                keyPoints,
+                userId,
+                draftContent.reel
+              );
+            }
+
             draftContent.reel = {
               durationSeconds: reelResult.durationSeconds,
               videoUrl: reelResult.videoUrl,
@@ -736,8 +795,30 @@ Slides Context: ${JSON.stringify(currentContent.slides?.map((s) => ({ headline: 
       try {
         const systemMsg = prompt.find((p) => p.role === 'system')?.content;
         const userMsg = prompt.find((p) => p.role === 'user')?.content || post.title;
-        const geminiText = await generateGeminiText(userMsg, systemMsg, userId);
-        const response = geminiText || (await generateCompletion(prompt, { temperature: 0.8 }));
+        const aiCreds = await getResolvedAiCredentials(userId);
+
+        let response = '';
+        if (aiCreds.routing.textProvider === 'ollama') {
+          try {
+            response = await generateCompletion(prompt, {
+              apiKey: aiCreds.ollamaApiKey || undefined,
+              host: aiCreds.ollamaBaseUrl,
+              model: aiCreds.ollamaModel,
+              temperature: 0.8,
+            });
+          } catch {
+            response = (await generateGeminiText(userMsg, systemMsg, userId)) || '';
+          }
+        } else {
+          const geminiText = await generateGeminiText(userMsg, systemMsg, userId);
+          response = geminiText || (await generateCompletion(prompt, {
+            apiKey: aiCreds.ollamaApiKey || undefined,
+            host: aiCreds.ollamaBaseUrl,
+            model: aiCreds.ollamaModel,
+            temperature: 0.8,
+          }));
+        }
+
         const jsonMatch = response.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);

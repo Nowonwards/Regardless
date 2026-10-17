@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { generateStreamCompletion, OllamaMessage } from '@/lib/ollama';
+import { getResolvedAiCredentials } from '@/lib/ai-config';
+import { generateGeminiText } from '@/lib/composio';
 import { createIdeationPrompt, IDEATION_SYSTEM_PROMPT, formatChatTitle } from '@/lib/agents/prompts';
 import {
   executeTavilySearch,
@@ -148,14 +150,99 @@ export async function POST(request: NextRequest) {
             );
           }
 
-          await generateStreamCompletion(
-            prompt,
-            { temperature: 0.8 },
-            (chunk) => {
-              fullContent += chunk;
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', chunk })}\n\n`));
+          const aiCreds = await getResolvedAiCredentials(user.id);
+          const systemMsg = prompt.find((p) => p.role === 'system')?.content;
+          const userMsgWithContext = prompt[prompt.length - 1]?.content || message;
+
+          // Provide multi-turn history context to Gemini if present
+          const fullPromptForGemini = conversationHistory.length > 0
+            ? `Previous conversation history:\n${conversationHistory
+                .slice(-6)
+                .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+                .join('\n\n')}\n\n---\n\n${userMsgWithContext}`
+            : userMsgWithContext;
+
+          if (!aiCreds.ollamaApiKey && !aiCreds.composioApiKey) {
+            const noProviderMsg =
+              'No AI provider is connected to your account. ' +
+              'Please visit Settings > AI Providers to connect your Ollama Cloud or Composio API key ' +
+              'so generation runs using your own account limits.';
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: 'chunk', chunk: noProviderMsg })}\n\n`)
+            );
+            fullContent = noProviderMsg;
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({
+                type: 'done',
+                done: true,
+                sessionId: session.id,
+                title: session.title,
+                sources: searchResultData?.results,
+              })}\n\n`)
+            );
+            controller.close();
+            return;
+          }
+
+          if (aiCreds.routing.textProvider === 'composio_gemini') {
+            try {
+              const geminiText = await generateGeminiText(fullPromptForGemini, systemMsg, user.id);
+              if (geminiText) {
+                fullContent = geminiText;
+                controller.enqueue(
+                  encoder.encode(`data: ${JSON.stringify({ type: 'chunk', chunk: geminiText })}\n\n`)
+                );
+              } else {
+                throw new Error('Empty response from Gemini');
+              }
+            } catch (geminiErr) {
+              console.warn('[Chat] Gemini generation failed, falling back to Ollama:', geminiErr);
+              await generateStreamCompletion(
+                prompt,
+                {
+                  apiKey: aiCreds.ollamaApiKey || undefined,
+                  host: aiCreds.ollamaBaseUrl,
+                  model: aiCreds.ollamaModel,
+                  temperature: 0.8,
+                },
+                (chunk) => {
+                  fullContent += chunk;
+                  controller.enqueue(
+                    encoder.encode(`data: ${JSON.stringify({ type: 'chunk', chunk })}\n\n`)
+                  );
+                }
+              );
             }
-          );
+          } else {
+            try {
+              await generateStreamCompletion(
+                prompt,
+                {
+                  apiKey: aiCreds.ollamaApiKey || undefined,
+                  host: aiCreds.ollamaBaseUrl,
+                  model: aiCreds.ollamaModel,
+                  temperature: 0.8,
+                },
+                (chunk) => {
+                  fullContent += chunk;
+                  controller.enqueue(
+                    encoder.encode(`data: ${JSON.stringify({ type: 'chunk', chunk })}\n\n`)
+                  );
+                }
+              );
+            } catch (ollamaErr) {
+              console.warn('[Chat] Ollama generation failed, trying Gemini fallback:', ollamaErr);
+              const geminiText = await generateGeminiText(fullPromptForGemini, systemMsg, user.id);
+              if (geminiText) {
+                fullContent = geminiText;
+                controller.enqueue(
+                  encoder.encode(`data: ${JSON.stringify({ type: 'chunk', chunk: geminiText })}\n\n`)
+                );
+              } else {
+                throw ollamaErr;
+              }
+            }
+          }
 
           await prisma.chatMessage.create({
             data: {

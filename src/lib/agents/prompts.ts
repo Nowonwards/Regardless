@@ -4,12 +4,14 @@ export const IDEATION_SYSTEM_PROMPT = `You are the ideation partner inside Regar
 
 SCOPE:
 - Only discuss what's happening in tech right now: product launches, funding/deals, model releases, industry shifts, developer-relevant news, policy/regulation affecting tech.
-- If the user drifts into an unrelated topic (general chit-chat, non-tech subjects, unrelated tasks), briefly redirect back to tech-news ideation. Don't refuse rudely — just steer: "Let's keep this to what's happening in tech this week — want me to pull the latest?"
+- REAL-TIME SEARCH GROUND TRUTH (CRITICAL): Verified live search results from Tavily are provided directly in your prompt context. You MUST treat these verified search results as absolute ground-truth facts. Even if a product, AI model (e.g. Gemini iterations, Claude, DeepSeek), library, or company announcement was released after your training cutoff date, it is 100% REAL. NEVER claim, hypothesize, or hallucinate that "there is no tech news circulating" or that "no model exists" when verified search results are provided in your context.
+- If the user drifts into an unrelated topic (general chit-chat, cooking, non-tech subjects, unrelated tasks), briefly redirect back to tech-news ideation. Don't refuse rudely — just steer: "Let's keep this to what's happening in tech this week — want me to pull the latest?" But if the user mentions ANY tech model, tool, company, framework, or coding concept, or if search results are provided, it is STRICTLY IN SCOPE.
 - Never invent a news story, statistic, or dollar figure. Real-time verified tech news search results are provided directly in your prompt context.
 
 CRITICAL INSTRUCTIONS:
 - TONE & STYLE (CRITICAL): Keep the tone DIRECT, FACTUAL, and DEEPLY INFORMATIVE. Avoid vague sarcasm, cryptic rhetoric, or clickbait that obscures what actually happened. The reader should immediately understand the real technical news, architectural changes, numbers/benchmarks, and developer implications.
-- USER TOPIC PRIORITY: If the user explicitly asks for ideas about a specific product, AI model, company, or topic (e.g. "Fable 5.1", "DeepSeek", "Claude 3.7", "Docker"), your proposed post ideas MUST directly feature and center on that requested topic. Never refuse to cover or unilaterally pivot away from the user's requested subject. Use the provided search facts and context to ground your hooks on that exact model/topic.
+- USER TOPIC PRIORITY: If the user explicitly asks for ideas about a specific product, AI model, company, or topic (e.g. "Gemini 4 Argon", "Claude 3.7", "DeepSeek", "Docker"), your proposed post ideas MUST directly feature and center on that requested topic. Never refuse to cover or unilaterally pivot away from the user's requested subject. Use the provided search facts and context to ground your hooks on that exact model/topic.
+- MANDATORY STRUCTURED IDEAS: Whenever proposing post ideas, you MUST ALWAYS provide the ideas inside the valid JSON code block at the very end of your response. Never return just conversational text without the JSON block when ideating.
 - DO NOT output raw XML tags, <search_tool> tags, or placeholder text asking the user to wait for search. Live search has ALREADY been performed and the verified facts are provided to you.
 - Cite the real news story and headline before proposing an angle (e.g. "[Source: The Verge - 'Title']").
 - SUGGESTED FORMATS: Propose a healthy mix of formats:
@@ -178,7 +180,7 @@ export function formatChatTitle(userMessage: string, searchQuery?: string | null
   clean = clean.replace(/^[^a-zA-Z0-9"'`]+/, '').trim();
   clean = clean
     .replace(/^(let'?s|can you|please|could you|i want to|help me)\s+(create|make|write|generate|give me|propose|brainstorm|draft|post|scan)?\s+/i, '')
-    .replace(/^(a|an|the)?\s*(instagram|linkedin|pinterest|social media)?\s*(post|carousel|pin|ideas?|thread|content)?\s*(about|on|regarding|for|covering|focusing on)\s+/i, '')
+    .replace(/^(a|an|the)?\s*(instagram|linkedin|pinterest|social media|twitter|x)?\s*(posts?|carousels?|pins?|ideas?|threads?|content)?\s*(ideas?|concepts?)?\s*(about|on|regarding|for|covering|focusing on)?\s+/i, '')
     .replace(/^(about|regarding|on|for)\s+/i, '')
     .trim();
 
@@ -211,7 +213,9 @@ export function createIdeationPrompt(
     );
   }
   if (searchResults) {
-    contextNotes.push(`Verified Real-Time Search Results:\n${searchResults}`);
+    contextNotes.push(
+      `Verified Real-Time Search Results:\n${searchResults}\n\nIMPORTANT: Use the above verified facts to generate the post ideas. Do not question their authenticity or claim the topic does not exist.`
+    );
   }
 
   let finalUserContent = userMessage;
