@@ -560,13 +560,9 @@ export function ChatInterface({
                           : 'bg-card text-foreground w-full'
                       )}
                     >
-                      <div className="whitespace-pre-wrap font-sans text-sm">
-                        {message.content}
-                      </div>
-
                       {/* Search Sources Display */}
                       {message.searchSources && message.searchSources.length > 0 && (
-                        <div className="mt-3 p-3 border-2 border-border bg-muted/30 space-y-2">
+                        <div className="mb-3.5 p-3 border-2 border-border bg-muted/30 space-y-2">
                           <div className="flex items-center justify-between text-xs font-mono font-bold">
                             <span className="text-foreground">Verified Tavily Live Sources ({message.searchSources.length})</span>
                             {message.searchQuery && (
@@ -604,6 +600,10 @@ export function ChatInterface({
                           </div>
                         </div>
                       )}
+
+                      <div className="whitespace-pre-wrap font-sans text-sm">
+                        {message.content}
+                      </div>
 
                       {/* Assistant Ideas Selectable Cards */}
                       {message.ideas && message.ideas.length > 0 && (
@@ -689,29 +689,59 @@ export function ChatInterface({
               })}
 
               {/* Streaming Content */}
-              {isGenerating && streamingContent && (
+              {isGenerating && (
                 <div className="flex flex-col items-start w-full">
                   <div className="p-4 border-2 border-border bg-card text-foreground w-full">
                     {activeSearchSources.length > 0 && (
-                      <div className="mb-2 text-xs font-mono text-muted-foreground">
-                        Found {activeSearchSources.length} live articles for &quot;{activeSearchQuery}&quot;
+                      <div className="mb-3.5 p-3 border-2 border-border bg-muted/30 space-y-2">
+                        <div className="flex items-center justify-between text-xs font-mono font-bold">
+                          <span className="text-foreground">
+                            Verified Tavily Live Sources ({activeSearchSources.length})
+                          </span>
+                          {activeSearchQuery && (
+                            <span className="text-muted-foreground text-[11px] truncate max-w-[200px]">
+                              &quot;{activeSearchQuery}&quot;
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                          {activeSearchSources.map((source, sIdx) => {
+                            let hostname = '';
+                            try {
+                              hostname = new URL(source.url).hostname.replace('www.', '');
+                            } catch {
+                              hostname = 'Source';
+                            }
+                            return (
+                              <div
+                                key={sIdx}
+                                className="flex items-center justify-between gap-1 p-1.5 border border-border bg-card text-[11px] truncate"
+                              >
+                                <span className="truncate">{source.title || hostname}</span>
+                                <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
-                    <div className="whitespace-pre-wrap font-sans text-sm">
-                      {cleanAssistantContent(streamingContent)}
-                    </div>
+                    {streamingContent ? (
+                      <div className="whitespace-pre-wrap font-sans text-sm">
+                        {cleanAssistantContent(streamingContent)}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground py-1">
+                        <Loader2 className="h-4 w-4 animate-spin text-foreground shrink-0" />
+                        <span>
+                          {activeSearchSources.length > 0
+                            ? 'Synthesizing verified news & generating ideas...'
+                            : activeSearchQuery
+                            ? `Searching Tavily for "${activeSearchQuery}"...`
+                            : 'Searching live tech news via Tavily...'}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
-
-              {isGenerating && !streamingContent && (
-                <div className="flex items-center gap-2 p-3 border-2 border-border bg-card text-xs font-mono text-muted-foreground w-fit">
-                  <Loader2 className="h-4 w-4 animate-spin text-foreground" />
-                  <span>
-                    {activeSearchQuery
-                      ? `Searching Tavily for "${activeSearchQuery}"...`
-                      : 'Searching live tech news via Tavily...'}
-                  </span>
                 </div>
               )}
             </>

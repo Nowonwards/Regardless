@@ -151,11 +151,20 @@ export async function POST(request: NextRequest) {
           }
 
           const aiCreds = await getResolvedAiCredentials(user.id);
+          const systemMsg = prompt.find((p) => p.role === 'system')?.content;
+          const userMsgWithContext = prompt[prompt.length - 1]?.content || message;
+
+          // Provide multi-turn history context to Gemini if present
+          const fullPromptForGemini = conversationHistory.length > 0
+            ? `Previous conversation history:\n${conversationHistory
+                .slice(-6)
+                .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+                .join('\n\n')}\n\n---\n\n${userMsgWithContext}`
+            : userMsgWithContext;
 
           if (aiCreds.routing.textProvider === 'composio_gemini') {
             try {
-              const systemMsg = prompt.find((p) => p.role === 'system')?.content;
-              const geminiText = await generateGeminiText(message, systemMsg, user.id);
+              const geminiText = await generateGeminiText(fullPromptForGemini, systemMsg, user.id);
               if (geminiText) {
                 fullContent = geminiText;
                 controller.enqueue(
@@ -201,8 +210,7 @@ export async function POST(request: NextRequest) {
               );
             } catch (ollamaErr) {
               console.warn('[Chat] Ollama generation failed, trying Gemini fallback:', ollamaErr);
-              const systemMsg = prompt.find((p) => p.role === 'system')?.content;
-              const geminiText = await generateGeminiText(message, systemMsg, user.id);
+              const geminiText = await generateGeminiText(fullPromptForGemini, systemMsg, user.id);
               if (geminiText) {
                 fullContent = geminiText;
                 controller.enqueue(
