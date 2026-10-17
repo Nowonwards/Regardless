@@ -61,6 +61,33 @@ describe('AiProvidersTab', () => {
       expect(screen.getByText('2. Images for Carousel Slides')).toBeInTheDocument();
       expect(screen.getByText('3. Text, Post Copy & Ideation Chat')).toBeInTheDocument();
       expect(screen.getByText('2 OF 3 CONNECTED')).toBeInTheDocument();
+
+      // Key instructions guides
+      expect(screen.getByText('How to get your Ollama Cloud key:')).toBeInTheDocument();
+      expect(screen.getByText('How to get your Higgsfield AI key:')).toBeInTheDocument();
+      expect(screen.getByText('How to get your Composio (Gemini & Veo) key:')).toBeInTheDocument();
+      expect(screen.getByText('Connect via Composio OAuth / Dashboard')).toBeInTheDocument();
+    });
+  });
+
+  it('calls DELETE /api/settings/ai?provider=... when Disconnect is clicked', async () => {
+    // Arrange
+    const { fireEvent } = await import('@testing-library/react');
+    render(<AiProvidersTab />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('DISCONNECT').length).toBe(2);
+    });
+
+    // Act
+    const disconnectButtons = screen.getAllByText('DISCONNECT');
+    fireEvent.click(disconnectButtons[0]);
+
+    // Assert
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/settings/ai?provider=ollama', {
+        method: 'DELETE',
+      });
     });
   });
 });

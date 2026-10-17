@@ -162,6 +162,28 @@ export async function POST(request: NextRequest) {
                 .join('\n\n')}\n\n---\n\n${userMsgWithContext}`
             : userMsgWithContext;
 
+          if (!aiCreds.ollamaApiKey && !aiCreds.composioApiKey) {
+            const noProviderMsg =
+              'No AI provider is connected to your account. ' +
+              'Please visit Settings > AI Providers to connect your Ollama Cloud or Composio API key ' +
+              'so generation runs using your own account limits.';
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: 'chunk', chunk: noProviderMsg })}\n\n`)
+            );
+            fullContent = noProviderMsg;
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({
+                type: 'done',
+                done: true,
+                sessionId: session.id,
+                title: session.title,
+                sources: searchResultData?.results,
+              })}\n\n`)
+            );
+            controller.close();
+            return;
+          }
+
           if (aiCreds.routing.textProvider === 'composio_gemini') {
             try {
               const geminiText = await generateGeminiText(fullPromptForGemini, systemMsg, user.id);

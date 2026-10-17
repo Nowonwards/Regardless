@@ -17,6 +17,7 @@ import {
   Save,
   Info,
   Globe,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -92,9 +93,14 @@ interface ProviderCardProps {
   modelValue?: string;
   onModelChange?: (val: string) => void;
   capabilities: string[];
+  helpUrl: string;
+  helpUrlLabel: string;
+  helpSteps: string[];
+  oauthAction?: React.ReactNode;
   testing: boolean;
   onTest: () => void;
   testResult: { success: boolean; message: string; models?: string[] } | null;
+  disconnecting?: boolean;
   onDisconnect: () => void;
 }
 
@@ -117,9 +123,14 @@ function ProviderCard({
   modelValue,
   onModelChange,
   capabilities,
+  helpUrl,
+  helpUrlLabel,
+  helpSteps,
+  oauthAction,
   testing,
   onTest,
   testResult,
+  disconnecting,
   onDisconnect,
 }: ProviderCardProps) {
   const isPredefinedModel = OLLAMA_CLOUD_MODELS.some((m) => m.value === modelValue);
@@ -191,6 +202,33 @@ function ProviderCard({
             placeholder={apiKeyPlaceholder}
             className="rounded-none border border-border bg-background font-mono text-xs"
           />
+        </div>
+
+        {/* How to get this key step-by-step guide */}
+        <div className="p-3 border border-border/70 bg-muted/20 space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-mono">
+            <span className="font-bold text-foreground flex items-center gap-1.5">
+              <Info className="h-3.5 w-3.5 text-primary shrink-0" />
+              How to get your {name} key:
+            </span>
+            <a
+              href={helpUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-bold flex items-center gap-1 text-[11px]"
+            >
+              <span>{helpUrlLabel}</span>
+              <ExternalLink className="h-3 w-3 shrink-0" />
+            </a>
+          </div>
+          <ol className="text-[11px] font-mono text-muted-foreground list-decimal list-inside space-y-1">
+            {helpSteps.map((step, idx) => (
+              <li key={idx} className="leading-relaxed">
+                {step}
+              </li>
+            ))}
+          </ol>
+          {oauthAction && <div className="pt-1">{oauthAction}</div>}
         </div>
 
         {/* Ollama Cloud Base URL Field */}
@@ -331,9 +369,16 @@ function ProviderCard({
               variant="outline"
               size="sm"
               onClick={onDisconnect}
+              disabled={disconnecting}
               className="rounded-none border border-destructive/30 text-destructive hover:bg-destructive/10 font-mono text-xs font-bold uppercase"
             >
-              DISCONNECT
+              {disconnecting ? (
+                <span className="flex items-center gap-1.5">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> DISCONNECTING...
+                </span>
+              ) : (
+                'DISCONNECT'
+              )}
             </Button>
           )}
         </div>
@@ -580,6 +625,40 @@ export function AiProvidersTab() {
     }
   };
 
+  const [disconnectingProvider, setDisconnectingProvider] = useState<string | null>(null);
+
+  /**
+   * Disconnects a provider by calling DELETE /api/settings/ai?provider=...
+   */
+  const handleDisconnect = async (provider: 'ollama' | 'higgsfield' | 'composio') => {
+    setDisconnectingProvider(provider);
+    try {
+      const res = await fetch(`/api/settings/ai?provider=${provider}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (provider === 'ollama') {
+          setOllamaKey('');
+          setOllamaConnected(false);
+          setTestResultOllama(null);
+        } else if (provider === 'higgsfield') {
+          setHfKey('');
+          setHfConnected(false);
+          setTestResultHf(null);
+        } else if (provider === 'composio') {
+          setComposioKey('');
+          setComposioConnected(false);
+          setTestResultComposio(null);
+        }
+      }
+    } catch (e) {
+      console.error(`Failed to disconnect ${provider}:`, e);
+    } finally {
+      setDisconnectingProvider(null);
+    }
+  };
+
   const connectedCount = [ollamaConnected, hfConnected, composioConnected].filter(Boolean).length;
 
   if (loading) {
@@ -626,13 +705,19 @@ export function AiProvidersTab() {
           modelValue={ollamaModel}
           onModelChange={setOllamaModel}
           capabilities={['Ideation', 'Post Copy', 'Streaming Chat']}
+          helpUrl="https://ollama.com/settings/keys"
+          helpUrlLabel="ollama.com/settings/keys"
+          helpSteps={[
+            'Sign in to your account at ollama.com (or create a free account).',
+            'Go to your Account Settings > API Keys section.',
+            'Copy your Cloud API key and paste it into the field above.',
+            'Cloud model defaults to gemma4:31b (Google Gemma 4 31B Parameter).',
+          ]}
           testing={testingOllama}
           onTest={() => handleTestProvider('ollama')}
           testResult={testResultOllama}
-          onDisconnect={() => {
-            setOllamaKey('');
-            setOllamaConnected(false);
-          }}
+          disconnecting={disconnectingProvider === 'ollama'}
+          onDisconnect={() => handleDisconnect('ollama')}
         />
 
         {/* Higgsfield AI */}
@@ -646,13 +731,19 @@ export function AiProvidersTab() {
           onApiKeyChange={setHfKey}
           apiKeyPlaceholder="hf_credentials_..."
           capabilities={['Seedance 2.5 Reels', 'Soul Text2Image', '9:16 Video']}
+          helpUrl="https://cloud.higgsfield.ai"
+          helpUrlLabel="cloud.higgsfield.ai"
+          helpSteps={[
+            'Log in to the Higgsfield Cloud console at cloud.higgsfield.ai.',
+            'Navigate to Developer / API Credentials.',
+            'Generate a new secret key and paste it above.',
+            'Powers 9:16 cinematic video reels and high-fidelity slide graphics.',
+          ]}
           testing={testingHf}
           onTest={() => handleTestProvider('higgsfield')}
           testResult={testResultHf}
-          onDisconnect={() => {
-            setHfKey('');
-            setHfConnected(false);
-          }}
+          disconnecting={disconnectingProvider === 'higgsfield'}
+          onDisconnect={() => handleDisconnect('higgsfield')}
         />
 
         {/* Composio & Google Gemini */}
@@ -666,13 +757,30 @@ export function AiProvidersTab() {
           onApiKeyChange={setComposioKey}
           apiKeyPlaceholder="comp_api_..."
           capabilities={['Gemini 2.5 Flash', 'Gemini Flash Image', 'Google Veo Video']}
+          helpUrl="https://app.composio.dev/settings"
+          helpUrlLabel="app.composio.dev/settings"
+          helpSteps={[
+            'Log in to your Composio dashboard at app.composio.dev.',
+            'Go to Settings > API Keys and copy your Project API key.',
+            'Or click the button below to authorize via Composio OAuth.',
+            'Enables Gemini 2.5 Flash ideation, typography images, and Veo video.',
+          ]}
+          oauthAction={
+            <a
+              href="https://app.composio.dev/settings"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-border bg-card text-foreground hover:bg-accent font-mono text-[10px] font-bold uppercase transition-colors"
+            >
+              <span>Connect via Composio OAuth / Dashboard</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          }
           testing={testingComposio}
           onTest={() => handleTestProvider('composio')}
           testResult={testResultComposio}
-          onDisconnect={() => {
-            setComposioKey('');
-            setComposioConnected(false);
-          }}
+          disconnecting={disconnectingProvider === 'composio'}
+          onDisconnect={() => handleDisconnect('composio')}
         />
       </div>
 

@@ -92,11 +92,13 @@ export async function getResolvedAiCredentials(
       where: { userId },
     });
 
-    const ollamaApiKey = dbSetting?.ollamaApiKey || envOllamaKey;
-    const ollamaBaseUrl = normalizeCloudBaseUrl(dbSetting?.ollamaBaseUrl || envOllamaBase);
-    const ollamaModel = normalizeCloudModel(dbSetting?.ollamaModel || envOllamaModel);
-    const higgsfieldKey = dbSetting?.higgsfieldKey || envHfCreds;
-    const composioApiKey = dbSetting?.composioApiKey || envComposioKey;
+    // For authenticated users, credentials must be isolated to their own account.
+    // We do NOT fall back to server admin .env keys for user connection status.
+    const ollamaApiKey = dbSetting?.ollamaApiKey?.trim() || null;
+    const ollamaBaseUrl = normalizeCloudBaseUrl(dbSetting?.ollamaBaseUrl);
+    const ollamaModel = normalizeCloudModel(dbSetting?.ollamaModel);
+    const higgsfieldKey = dbSetting?.higgsfieldKey?.trim() || null;
+    const composioApiKey = dbSetting?.composioApiKey?.trim() || null;
 
     const reelProvider = (dbSetting?.reelProvider as ReelProvider) ||
       (higgsfieldKey ? 'higgsfield' : 'composio_gemini');
@@ -120,11 +122,11 @@ export async function getResolvedAiCredentials(
   } catch (error) {
     console.error('[getResolvedAiCredentials] Error reading settings from DB:', error);
     return {
-      ollamaApiKey: envOllamaKey,
-      ollamaBaseUrl: envOllamaBase,
-      ollamaModel: envOllamaModel,
-      higgsfieldKey: envHfCreds,
-      composioApiKey: envComposioKey,
+      ollamaApiKey: null,
+      ollamaBaseUrl: normalizeCloudBaseUrl(null),
+      ollamaModel: normalizeCloudModel(null),
+      higgsfieldKey: null,
+      composioApiKey: null,
       routing: {
         reelProvider: 'higgsfield',
         slideProvider: 'composio_gemini',
@@ -165,27 +167,67 @@ export async function getUserAiConfig(userId: string): Promise<UserAiConfigRespo
 }
 
 /**
+ * Disconnects an AI provider for a user, clearing the stored API key in the database.
+ */
+export async function disconnectAiProvider(
+  userId: string,
+  provider: 'ollama' | 'higgsfield' | 'composio'
+): Promise<UserAiConfigResponse> {
+  const updateData: {
+    ollamaApiKey?: string | null;
+    higgsfieldKey?: string | null;
+    composioApiKey?: string | null;
+  } = {};
+
+  if (provider === 'ollama') updateData.ollamaApiKey = null;
+  if (provider === 'higgsfield') updateData.higgsfieldKey = null;
+  if (provider === 'composio') updateData.composioApiKey = null;
+
+  const existing = await prisma.userAiSetting.findUnique({
+    where: { userId },
+  });
+
+  if (existing) {
+    await prisma.userAiSetting.update({
+      where: { userId },
+      data: updateData,
+    });
+  }
+
+  return getUserAiConfig(userId);
+}
+
+/**
  * Saves user AI configuration and routing choices to the database.
  */
 export async function saveUserAiConfig(
   userId: string,
   payload: {
-    ollamaApiKey?: string;
+    ollamaApiKey?: string | null;
     ollamaBaseUrl?: string;
     ollamaModel?: string;
-    higgsfieldKey?: string;
-    composioApiKey?: string;
+    higgsfieldKey?: string | null;
+    composioApiKey?: string | null;
     reelProvider?: ReelProvider;
     slideProvider?: SlideProvider;
     textProvider?: TextProvider;
+    disconnect?: 'ollama' | 'higgsfield' | 'composio';
   }
 ): Promise<UserAiConfigResponse> {
+  if (payload.disconnect) {
+    return disconnectAiProvider(userId, payload.disconnect);
+  }
+
   const existing = await prisma.userAiSetting.findUnique({
     where: { userId },
   });
 
-  const shouldUpdateKey = (newKey: string | undefined, currentKey: string | null | undefined) => {
+  const shouldUpdateKey = (
+    newKey: string | null | undefined,
+    currentKey: string | null | undefined
+  ) => {
     if (newKey === undefined) return currentKey;
+    if (newKey === null || newKey === '') return null;
     if (newKey.includes('••••')) return currentKey;
     const trimmed = newKey.trim();
     return trimmed.length > 0 ? trimmed : null;
